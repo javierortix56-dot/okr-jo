@@ -3,97 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR - JO | Gestión Pro</title>
+    <title>OKR - JO | Enterprise Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-panel { background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .pacing-line { border-right: 2px dashed #64748b; height: 100%; position: absolute; top: 0; z-index: 10; opacity: 0.6; }
+    </style>
 </head>
-<body class="bg-gray-50 p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-blue-800">OKR - JO</h1>
-            <div id="global-status" class="px-4 py-2 rounded-full text-white font-bold text-sm">Cargando...</div>
-        </header>
+<body class="text-slate-800">
 
-        <section class="bg-white p-6 rounded-xl shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Nuevo Objetivo</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input id="title" type="text" placeholder="Título del Objetivo" class="p-2 border rounded">
-                <input id="target" type="number" placeholder="Meta Numérica" class="p-2 border rounded">
-                <input id="current" type="number" placeholder="Valor Actual" class="p-2 border rounded">
-                <input id="deadline" type="date" class="p-2 border rounded">
-                <button onclick="addOKR()" class="md:col-span-2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Agregar OKR</button>
+    <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i data-lucide="target" class="text-blue-400"></i>
+                <h1 class="text-xl font-bold tracking-tight">OKR - JO <span class="text-xs font-normal text-slate-400 px-2 border border-slate-700 rounded ml-2">PRO</span></h1>
             </div>
-        </section>
+            <div class="flex gap-4 text-sm">
+                <button onclick="switchTab('dashboard')" class="hover:text-blue-300 transition flex items-center gap-1"><i data-lucide="layout-dashboard" size="16"></i> Dashboard</button>
+                <button onclick="switchTab('okrs')" class="hover:text-blue-300 transition flex items-center gap-1"><i data-lucide="list-tree" size="16"></i> Mis OKRs</button>
+                <button onclick="exportData()" class="hover:text-blue-300 transition flex items-center gap-1"><i data-lucide="download" size="16"></i> Backup</button>
+            </div>
+        </div>
+    </nav>
 
-        <div id="okr-list" class="space-y-4"></div>
+    <main class="max-w-7xl mx-auto p-6">
+        
+        <div id="view-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 rounded-xl md:col-span-2">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i data-lucide="activity" class="text-blue-600"></i> Salud del Periodo
+                    </h2>
+                    <div class="flex items-center justify-around">
+                        <div class="h-48 w-48 relative">
+                            <canvas id="healthChart"></canvas>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> On Track (>90%)</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-400"></span> At Risk (70-90%)</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500"></span> Off Track (<70%)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel p-6 rounded-xl flex flex-col justify-center items-center text-center">
+                    <h3 class="text-slate-500 font-medium mb-2">Progreso Global</h3>
+                    <div id="global-progress-display" class="text-5xl font-bold text-slate-800">0%</div>
+                    <p class="text-xs text-slate-400 mt-2">Promedio ponderado de todos los objetivos</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-okrs" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Mis Objetivos</h2>
+                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow transition">
+                    <i data-lucide="plus"></i> Nuevo Objetivo
+                </button>
+            </div>
+
+            <div id="okr-container" class="space-y-6"></div>
+        </div>
+    </main>
+
+    <div id="modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all scale-100">
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Nuevo Elemento</h3>
+            <input type="hidden" id="parent-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Título</label>
+                    <input id="input-title" type="text" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div id="kr-fields" class="hidden grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Valor Inicial</label>
+                        <input id="input-start" type="number" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Meta</label>
+                        <input id="input-target" type="number" class="w-full p-2 border rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fecha Inicio</label>
+                        <input id="input-date-start" type="date" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fecha Fin</label>
+                        <input id="input-date-end" type="date" class="w-full p-2 border rounded">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                <button onclick="saveItem()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow">Guardar</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        let okrs = JSON.parse(localStorage.getItem('okrs_jo')) || [];
+        // --- 1. ESTADO Y DATOS ---
+        let data = JSON.parse(localStorage.getItem('okr_jo_pro_db')) || { objectives: [] };
+        let currentModalType = 'objective'; 
+        let chartInstance = null;
 
-        function addOKR() {
-            const okr = {
-                id: Date.now(),
-                title: document.getElementById('title').value,
-                target: parseFloat(document.getElementById('target').value),
-                current: parseFloat(document.getElementById('current').value),
-                start_date: new Date().toISOString().split('T')[0],
-                deadline: document.getElementById('deadline').value
-            };
-            okrs.push(okr);
-            save();
-            render();
-        }
-
-        function calculateStatus(okr) {
-            const start = new Date(okr.start_date);
-            const end = new Date(okr.deadline);
+        // --- 2. MOTOR DE CÁLCULO (CORE) ---
+        function calculateProgress(item) {
             const now = new Date();
+            const start = new Date(item.startDate);
+            const end = new Date(item.endDate);
+            const totalDuration = end - start;
+            const elapsed = now - start;
+
+            // Pacing (Avance Esperado)
+            const expected = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+
+            // Si es Objetivo, su avance es el promedio de sus KRs
+            if (item.krs && item.krs.length > 0) {
+                const totalKrProgress = item.krs.reduce((acc, kr) => acc + calculateProgress(kr).actual, 0);
+                const actual = totalKrProgress / item.krs.length;
+                return { actual, expected, status: getStatus(actual, expected) };
+            } 
             
-            const totalTime = end - start;
-            const elapsedTime = now - start;
-            const expectedProgress = Math.max(0, Math.min(1, elapsedTime / totalTime));
-            const actualProgress = okr.current / okr.target;
-            
-            const ratio = expectedProgress > 0 ? (actualProgress / expectedProgress) : 1;
-            
-            if (ratio >= 1) return { label: 'ON TRACK', color: 'bg-green-500', pct: actualProgress };
-            if (ratio >= 0.8) return { label: 'AT RISK', color: 'bg-yellow-500', pct: actualProgress };
-            return { label: 'OFF TRACK', color: 'bg-red-500', pct: actualProgress };
+            // Si es KR, cálculo directo
+            if (item.target !== undefined) {
+                let actual = 0;
+                if(item.target > item.start) {
+                    actual = ((item.current - item.start) / (item.target - item.start)) * 100;
+                }
+                actual = Math.min(100, Math.max(0, actual)); // Clamp 0-100
+                return { actual, expected, status: getStatus(actual, expected) };
+            }
+
+            return { actual: 0, expected: 0, status: 'OFF_TRACK' };
         }
 
+        function getStatus(actual, expected) {
+            // Lógica de Viva Goals: Si expected es muy bajo, damos margen.
+            if (expected < 10) return 'ON_TRACK'; 
+            const ratio = actual / expected;
+            if (ratio >= 0.9) return 'ON_TRACK';
+            if (ratio >= 0.7) return 'AT_RISK';
+            return 'OFF_TRACK';
+        }
+
+        function getStatusColor(status) {
+            if (status === 'ON_TRACK') return 'bg-emerald-500';
+            if (status === 'AT_RISK') return 'bg-amber-400';
+            return 'bg-rose-500';
+        }
+
+        // --- 3. RENDERIZADO VISUAL ---
         function render() {
-            const list = document.getElementById('okr-list');
-            list.innerHTML = '';
-            
-            okrs.forEach(okr => {
-                const status = calculateStatus(okr);
-                const pct = Math.round(status.pct * 100);
-                
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-lg shadow border-l-8 ${status.color.replace('bg-', 'border-')}">
-                        <div class="flex justify-between items-start mb-2">
+            const container = document.getElementById('okr-container');
+            container.innerHTML = '';
+            let globalTotal = 0;
+            let statusCounts = { ON_TRACK: 0, AT_RISK: 0, OFF_TRACK: 0 };
+
+            data.objectives.forEach(obj => {
+                const metrics = calculateProgress(obj);
+                globalTotal += metrics.actual;
+                statusCounts[metrics.status]++;
+
+                const objHtml = `
+                    <div class="glass-panel rounded-xl overflow-hidden border-l-4 ${getStatusColor(metrics.status).replace('bg-', 'border-')}">
+                        <div class="p-4 bg-white flex justify-between items-center border-b border-slate-100">
                             <div>
-                                <h3 class="font-bold text-lg">${okr.title}</h3>
-                                <p class="text-xs text-gray-500">Vence: ${okr.deadline}</p>
+                                <h3 class="font-bold text-lg text-slate-800">${obj.title}</h3>
+                                <div class="flex items-center gap-4 text-xs text-slate-500 mt-1">
+                                    <span class="flex items-center gap-1"><i data-lucide="calendar" size="12"></i> ${obj.endDate}</span>
+                                    <span class="font-mono">Progreso: ${metrics.actual.toFixed(0)}%</span>
+                                </div>
                             </div>
-                            <span class="${status.color} text-white text-[10px] px-2 py-1 rounded font-bold">${status.label}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="${getStatusColor(metrics.status)} text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                                    ${metrics.status.replace('_', ' ')}
+                                </span>
+                                <button onclick="openModal('kr', ${obj.id})" class="text-blue-600 hover:bg-blue-50 p-2 rounded transition" title="Agregar KR">
+                                    <i data-lucide="plus-circle" size="20"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="w-full bg-gray-200 h-4 rounded-full overflow-hidden mt-3">
-                            <div class="${status.color} h-full transition-all" style="width: ${pct}%"></div>
+
+                        <div class="h-1 w-full bg-slate-100 relative">
+                             <div class="${getStatusColor(metrics.status)} h-full" style="width: ${metrics.actual}%"></div>
                         </div>
-                        <p class="text-right text-sm mt-1 font-mono">${okr.current} / ${okr.target} (${pct}%)</p>
+
+                        <div class="bg-slate-50/50 p-4 space-y-3">
+                            ${obj.krs.map(kr => {
+                                const krMetrics = calculateProgress(kr);
+                                return `
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-sm relative group">
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="font-medium text-slate-700">${kr.title}</span>
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" 
+                                                value="${kr.current}" 
+                                                onchange="updateKR(${obj.id}, ${kr.id}, this.value)"
+                                                class="w-20 text-right p-1 border rounded text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                                            >
+                                            <span class="text-slate-400 text-xs">/ ${kr.target}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="relative h-2 bg-slate-200 rounded-full w-full overflow-hidden">
+                                        <div class="pacing-line" style="left: ${krMetrics.expected}%"></div>
+                                        <div class="${getStatusColor(krMetrics.status)} h-full transition-all duration-700" style="width: ${krMetrics.actual}%"></div>
+                                    </div>
+                                    <div class="flex justify-between mt-1 text-[10px] text-slate-400">
+                                        <span>Inicio: ${kr.start}</span>
+                                        <span>Esperado: ${krMetrics.expected.toFixed(0)}%</span>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                            ${obj.krs.length === 0 ? '<div class="text-center text-xs text-slate-400 py-2 italic">No hay Key Results. Añade uno para medir progreso.</div>' : ''}
+                        </div>
                     </div>
                 `;
+                container.innerHTML += objHtml;
+            });
+
+            // Actualizar Dashboard Global
+            const globalAvg = data.objectives.length ? (globalTotal / data.objectives.length) : 0;
+            document.getElementById('global-progress-display').innerText = `${globalAvg.toFixed(0)}%`;
+            updateChart(statusCounts);
+            lucide.createIcons();
+        }
+
+        // --- 4. GESTIÓN DEL CHART ---
+        function updateChart(counts) {
+            const ctx = document.getElementById('healthChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['On Track', 'At Risk', 'Off Track'],
+                    datasets: [{
+                        data: [counts.ON_TRACK, counts.AT_RISK, counts.OFF_TRACK],
+                        backgroundColor: ['#10b981', '#fbbf24', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '70%', plugins: { legend: { display: false } } }
             });
         }
 
-        function save() {
-            localStorage.setItem('okrs_jo', JSON.stringify(okrs));
+        // --- 5. INTERACCIONES ---
+        function openModal(type, parentId = null) {
+            currentModalType = type;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = type === 'objective' ? 'Crear Nuevo Objetivo' : 'Añadir Key Result';
+            document.getElementById('parent-id').value = parentId;
+            document.getElementById('kr-fields').style.display = type === 'kr' ? 'grid' : 'none';
+            
+            // Fechas por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-date-start').value = today;
         }
 
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            // Limpiar inputs
+            document.querySelectorAll('#modal input').forEach(i => i.value = '');
+        }
+
+        function saveItem() {
+            const title = document.getElementById('input-title').value;
+            const startDate = document.getElementById('input-date-start').value;
+            const endDate = document.getElementById('input-date-end').value;
+
+            if (!title) return alert('El título es obligatorio');
+
+            if (currentModalType === 'objective') {
+                data.objectives.push({
+                    id: Date.now(),
+                    title,
+                    startDate,
+                    endDate,
+                    krs: []
+                });
+            } else {
+                const parentId = parseInt(document.getElementById('parent-id').value);
+                const parent = data.objectives.find(o => o.id === parentId);
+                const start = parseFloat(document.getElementById('input-start').value) || 0;
+                const target = parseFloat(document.getElementById('input-target').value) || 100;
+                
+                parent.krs.push({
+                    id: Date.now(),
+                    title,
+                    start,
+                    target,
+                    current: start,
+                    startDate,
+                    endDate
+                });
+            }
+            
+            saveToLocal();
+            closeModal();
+            render();
+        }
+
+        function updateKR(objId, krId, newValue) {
+            const obj = data.objectives.find(o => o.id === objId);
+            const kr = obj.krs.find(k => k.id === krId);
+            kr.current = parseFloat(newValue);
+            saveToLocal();
+            render();
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('okr_jo_pro_db', JSON.stringify(data));
+        }
+
+        function switchTab(tab) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-okrs').classList.add('hidden');
+            document.getElementById('view-' + tab).classList.remove('hidden');
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "backup_okr_jo.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // Inicializar
         render();
-        lucide.createIcons();
+        switchTab('dashboard');
     </script>
 </body>
 </html>
