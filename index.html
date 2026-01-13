@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager | v7.0 Compact & Pacing</title>
+    <title>OKR Manager | v7.1 Compacto</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,16 +11,17 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         :root { --primary: #2563eb; }
-        body { font-family: 'Inter', sans-serif; font-size: 14px; color: #334155; }
+        body { font-family: 'Inter', sans-serif; font-size: 13px; color: #334155; }
         
         /* UI Components */
-        .glass-panel { background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 2px 4px -1px rgba(0,0,0,0.06); }
+        .glass-panel { background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         
         /* Barras de Progreso */
-        .progress-track { background-color: #f1f5f9; border-radius: 99px; overflow: hidden; height: 10px; position: relative; border: 1px solid #e2e8f0; }
-        .progress-bar { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
-        /* Pacing Line: La línea de avance esperado */
-        .pacing-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: #94a3b8; z-index: 10; opacity: 0.6; border-right: 1px dashed white; }
+        .progress-track { background-color: #f1f5f9; border-radius: 99px; overflow: hidden; height: 8px; position: relative; border: 1px solid #e2e8f0; }
+        .progress-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+        
+        /* LÍNEA DE PACING (AVANCE ESPERADO) - AHORA ROJA */
+        .pacing-line { position: absolute; top: -2px; bottom: -2px; width: 2px; border-right: 2px dotted #ef4444; z-index: 20; opacity: 0.8; }
         
         /* Colores de Estado */
         .bg-on-track { background-color: #10b981; } 
@@ -31,12 +32,11 @@
         .text-at-risk { color: #b45309; background: #fffbeb; border: 1px solid #fde68a; }
         .text-off-track { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
 
-        /* Chips */
-        .kpi-tag { font-size: 9px; font-weight: 800; color: var(--primary); background: #eff6ff; padding: 1px 4px; border-radius: 4px; border: 1px solid #bfdbfe; text-transform: uppercase; }
-        .owner-chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: #f8fafc; border: 1px solid #cbd5e1; cursor: pointer; }
-        .owner-chip:hover { background: #e2e8f0; border-color: #94a3b8; }
-        .contrib-tag { font-size: 9px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 1px 4px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: nowrap; }
-
+        /* Chips y Etiquetas */
+        .kpi-tag { font-size: 9px; font-weight: 800; color: var(--primary); background: #eff6ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #bfdbfe; text-transform: uppercase; }
+        .contrib-tag { font-size: 9px; font-weight: 600; color: #64748b; background: #f8fafc; padding: 0px 4px; border-radius: 3px; border: 1px solid #e2e8f0; margin-left: 4px; }
+        .owner-chip { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: #f8fafc; border: 1px solid #cbd5e1; cursor: pointer; }
+        
         /* Acordeón */
         .accordion-content { transition: grid-template-rows 0.2s ease-out; display: grid; grid-template-rows: 0fr; }
         .accordion-content.open { grid-template-rows: 1fr; }
@@ -48,156 +48,149 @@
         .spinner { border: 2px solid #f3f3f3; border-top: 2px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Input numérico compacto */
-        .kpi-input { font-family: 'Courier New', monospace; font-weight: 600; background: transparent; text-align: right; width: 50px; outline: none; color: #334155; }
-        .kpi-input:focus { border-bottom: 1px solid var(--primary); }
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Input numérico invisible */
+        .kpi-input { font-family: monospace; font-weight: 600; background: transparent; text-align: right; width: 40px; outline: none; border-bottom: 1px solid transparent; color: #334155; transition: border 0.2s; }
+        .kpi-input:hover, .kpi-input:focus { border-bottom-color: var(--primary); }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="bg-slate-50 h-screen flex overflow-hidden">
 
-    <aside class="w-16 lg:w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-30 transition-all duration-300">
-        <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-100">
-            <div class="bg-blue-600 p-1.5 rounded-lg shadow-sm"><i data-lucide="target" class="text-white" size="20"></i></div>
-            <span class="hidden lg:block ml-3 font-bold text-slate-800 text-lg tracking-tight">OKR <span class="text-blue-600">Manager</span></span>
+    <aside class="w-14 lg:w-60 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-30">
+        <div class="h-14 flex items-center justify-center lg:justify-start lg:px-5 border-b border-slate-100">
+            <div class="bg-blue-600 p-1 rounded shadow-sm"><i data-lucide="target" class="text-white" size="18"></i></div>
+            <span class="hidden lg:block ml-3 font-bold text-slate-800 text-base">OKR <span class="text-blue-600">Manager</span></span>
         </div>
         
-        <nav class="flex-1 p-3 space-y-1 mt-4">
-            <button onclick="switchView('explorer')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-semibold transition shadow-sm" id="btn-explorer">
-                <i data-lucide="layers" size="20"></i> <span class="hidden lg:block">Mis OKRs</span>
+        <nav class="flex-1 p-2 space-y-1 mt-2">
+            <button onclick="switchView('explorer')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-md bg-blue-50 text-blue-700 font-semibold transition shadow-sm text-xs lg:text-sm">
+                <i data-lucide="layers" size="18"></i> <span class="hidden lg:block">Mis OKRs</span>
             </button>
-            <button onclick="switchView('dashboard')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition font-medium" id="btn-dashboard">
-                <i data-lucide="clipboard-list" size="20"></i> <span class="hidden lg:block">Reporte Resumen</span>
+            <button onclick="switchView('dashboard')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-md hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition font-medium text-xs lg:text-sm">
+                <i data-lucide="clipboard-list" size="18"></i> <span class="hidden lg:block">Reporte</span>
             </button>
         </nav>
 
-        <div class="p-4 border-t border-slate-100">
-             <div id="sync-status" class="hidden lg:flex items-center gap-2 text-[10px] text-slate-400 mb-3 justify-center bg-slate-50 py-1 rounded-full border border-slate-100">
-                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sistema Online
+        <div class="p-3 border-t border-slate-100">
+             <div id="sync-status" class="hidden lg:flex items-center gap-2 text-[10px] text-slate-400 mb-2 justify-center bg-slate-50 py-1 rounded border border-slate-100">
+                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
              </div>
-             <button onclick="configureApi()" class="w-full py-2.5 text-xs text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-lg transition flex justify-center gap-2 items-center hover:shadow-sm">
-                <i data-lucide="settings" size="14"></i> <span class="hidden lg:block">Configurar Cloud</span>
+             <button onclick="configureApi()" class="w-full py-2 text-xs text-slate-500 hover:bg-slate-50 border border-slate-200 rounded transition flex justify-center gap-2 items-center">
+                <i data-lucide="settings" size="14"></i> <span class="hidden lg:block">Config</span>
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-4 lg:p-8 relative scroll-smooth">
+    <main class="flex-1 overflow-y-auto p-4 lg:p-6 relative scroll-smooth">
         
-        <div id="global-loader" class="absolute inset-0 bg-white/90 z-50 flex items-center justify-center backdrop-blur-sm hidden transition-opacity">
-            <div class="flex flex-col items-center gap-4 p-6 bg-white rounded-xl shadow-xl border border-slate-100">
+        <div id="global-loader" class="absolute inset-0 bg-white/90 z-50 flex items-center justify-center backdrop-blur-sm hidden">
+            <div class="flex flex-col items-center gap-3">
                 <div class="spinner"></div>
-                <span class="text-xs font-semibold text-slate-500 tracking-wide">Sincronizando datos...</span>
+                <span class="text-xs font-semibold text-slate-500">Cargando...</span>
             </div>
         </div>
 
-        <div id="view-explorer" class="max-w-6xl mx-auto">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div id="view-explorer" class="max-w-5xl mx-auto">
+            <header class="flex justify-between items-center mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Tablero de Objetivos</h1>
-                    <div class="flex items-center gap-3 mt-1.5">
-                        <div class="relative group">
-                            <select id="filter-quarter" onchange="renderExplorer()" class="appearance-none pl-3 pr-8 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-600 cursor-pointer hover:border-blue-300 transition">
-                                <option value="ALL">Anual 2026</option>
-                                <option value="Q1">Q1 (Ene-Mar)</option>
-                                <option value="Q2">Q2 (Abr-Jun)</option>
-                                <option value="Q3">Q3 (Jul-Sep)</option>
-                                <option value="Q4">Q4 (Oct-Dic)</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 group-hover:text-blue-500">
-                                <i data-lucide="chevron-down" size="14"></i>
-                            </div>
-                        </div>
-                    </div>
+                    <h1 class="text-xl font-bold text-slate-800">Tablero de Objetivos</h1>
+                    <select id="filter-quarter" onchange="renderExplorer()" class="mt-1 text-xs font-bold bg-transparent border-none text-slate-500 cursor-pointer outline-none hover:text-blue-600 transition">
+                        <option value="ALL">Vista Anual 2026</option>
+                        <option value="Q1">Trimestre 1 (Ene-Mar)</option>
+                        <option value="Q2">Trimestre 2 (Abr-Jun)</option>
+                        <option value="Q3">Trimestre 3 (Jul-Sep)</option>
+                        <option value="Q4">Trimestre 4 (Oct-Dic)</option>
+                    </select>
                 </div>
-                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-blue-600/20 flex items-center gap-2 text-sm font-semibold transition transform active:scale-95">
-                    <i data-lucide="plus-circle" size="18"></i> Nuevo Objetivo
+                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2 text-xs font-bold transition active:scale-95">
+                    <i data-lucide="plus" size="16"></i> Objetivo
                 </button>
             </header>
 
-            <div id="tree-container" class="space-y-6 pb-24"></div>
+            <div id="tree-container" class="space-y-4 pb-20"></div>
         </div>
 
-        <div id="view-dashboard" class="hidden max-w-7xl mx-auto space-y-6">
-            <header class="flex justify-between items-end border-b border-slate-200 pb-4">
-                <h1 class="text-2xl font-bold text-slate-800">Reporte Ejecutivo</h1>
-                <button onclick="exportCSV()" class="text-slate-500 hover:text-blue-600 text-xs font-semibold flex items-center gap-1 transition"><i data-lucide="download" size="14"></i> Exportar CSV</button>
+        <div id="view-dashboard" class="hidden max-w-6xl mx-auto space-y-4">
+            <header class="flex justify-between items-end border-b border-slate-200 pb-3">
+                <h1 class="text-xl font-bold text-slate-800">Reporte Ejecutivo</h1>
+                <button onclick="exportCSV()" class="text-slate-500 hover:text-blue-600 text-xs font-semibold flex items-center gap-1"><i data-lucide="download" size="14"></i> CSV</button>
             </header>
             <div class="glass-panel overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             <tr>
-                                <th class="p-4">Objetivo</th>
-                                <th class="p-4 w-32">Cierre</th>
-                                <th class="p-4 w-40">Responsable</th>
-                                <th class="p-4 w-64">Progreso Real</th>
-                                <th class="p-4 w-24 text-center">Status</th>
+                                <th class="p-3">Objetivo</th>
+                                <th class="p-3 w-28">Fecha Fin</th>
+                                <th class="p-3 w-32">Responsable</th>
+                                <th class="p-3 w-48">Progreso</th>
+                                <th class="p-3 w-20 text-center">Estado</th>
                             </tr>
                         </thead>
-                        <tbody id="report-body" class="divide-y divide-slate-100 text-sm text-slate-600"></tbody>
+                        <tbody id="report-body" class="divide-y divide-slate-100 text-xs text-slate-600"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity duration-300">
-        <div class="glass-panel w-full max-w-lg shadow-2xl transform transition-all scale-100 flex flex-col max-h-[90vh] bg-white">
-            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 id="modal-title" class="text-sm font-bold text-slate-800 uppercase tracking-wide">Nuevo Elemento</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 transition"><i data-lucide="x" size="20"></i></button>
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] bg-white animate-[fadeIn_0.2s_ease-out]">
+            <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 id="modal-title" class="text-xs font-bold text-slate-700 uppercase">Nuevo Elemento</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" size="18"></i></button>
             </div>
-            <div class="p-6 space-y-5 overflow-y-auto">
+            <div class="p-5 space-y-4 overflow-y-auto">
                 <input type="hidden" id="edit-id"><input type="hidden" id="parent-id"><input type="hidden" id="entity-type"><input type="hidden" id="context-type">
+                
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Título</label>
-                    <input id="inp-title" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Título</label>
+                    <input id="inp-title" type="text" class="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:border-blue-500 outline-none">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Responsable</label>
-                        <input id="inp-owner" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label>
+                        <input id="inp-owner" type="text" class="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:border-blue-500 outline-none">
                     </div>
                     <div id="field-weight">
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Contribución (%)</label>
-                        <input id="inp-weight" type="number" min="0" max="100" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Peso/Contribución (%)</label>
+                        <input id="inp-weight" type="number" class="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:border-blue-500 outline-none font-mono">
                     </div>
                 </div>
-                <div id="owner-suggestions" class="flex flex-wrap gap-2 pt-1 empty:hidden"></div>
-                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-xs text-slate-400 mb-1">Inicio</label><input id="inp-start" type="date" class="w-full p-2 text-xs border border-slate-300 rounded bg-white text-slate-600"></div>
-                        <div><label class="block text-xs text-slate-400 mb-1">Fin</label><input id="inp-end" type="date" class="w-full p-2 text-xs border border-slate-300 rounded bg-white font-bold text-slate-700"></div>
-                    </div>
+                <div id="owner-suggestions" class="flex flex-wrap gap-1.5 empty:hidden"></div>
+
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded border border-slate-100">
+                    <div><label class="block text-[10px] text-slate-400 mb-1">Inicio</label><input id="inp-start" type="date" class="w-full p-1.5 text-xs border border-slate-200 rounded bg-white"></div>
+                    <div><label class="block text-[10px] text-slate-400 mb-1">Fin</label><input id="inp-end" type="date" class="w-full p-1.5 text-xs border border-slate-200 rounded bg-white font-bold text-slate-700"></div>
                 </div>
-                 <div id="field-metrics" class="hidden bg-blue-50/50 p-4 rounded-lg border border-blue-100 grid grid-cols-2 gap-4 relative overflow-hidden">
-                     <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                     <div class="col-span-2 text-xs font-bold text-blue-700 uppercase tracking-wide flex items-center gap-2"><i data-lucide="hash" size="12"></i> KPIs Numéricos</div>
-                     <div><label class="block text-xs text-slate-500 mb-1">Valor Inicial</label><input id="inp-val-start" type="number" class="w-full p-2 text-sm border border-blue-200 rounded text-center bg-white font-mono" placeholder="0"></div>
-                     <div><label class="block text-xs text-slate-500 mb-1">Meta Objetivo</label><input id="inp-val-target" type="number" class="w-full p-2 text-sm border border-blue-200 rounded font-bold text-blue-700 text-center bg-white font-mono" placeholder="100"></div>
+
+                 <div id="field-metrics" class="hidden bg-blue-50 p-3 rounded border border-blue-100 grid grid-cols-2 gap-3">
+                     <div class="col-span-2 text-[10px] font-bold text-blue-600 uppercase">Metas del KPI</div>
+                     <div><label class="block text-[10px] text-blue-400 mb-1">Valor Inicial</label><input id="inp-val-start" type="number" class="w-full p-1.5 text-sm border border-blue-200 rounded text-center font-mono"></div>
+                     <div><label class="block text-[10px] text-blue-400 mb-1">Valor Objetivo</label><input id="inp-val-target" type="number" class="w-full p-1.5 text-sm border border-blue-200 rounded text-center font-bold text-blue-700 font-mono"></div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Etiquetas</label>
-                    <input id="inp-tags" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Etiquetas (separar por comas)</label>
+                    <input id="inp-tags" type="text" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none">
                 </div>
             </div>
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center mt-auto rounded-b-lg gap-3">
-                <button id="btn-delete" onclick="deleteItemFromModal()" type="button" class="hidden px-4 py-2 text-sm font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition border border-rose-200">Eliminar</button>
-                <div class="flex gap-3 ml-auto">
-                    <button onclick="closeModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
-                    <button onclick="saveDataFromModal()" class="px-6 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition">Guardar</button>
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <button id="btn-delete" onclick="deleteItemFromModal()" class="text-rose-500 hover:text-rose-700 text-xs font-bold hidden">Eliminar</button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="closeModal()" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded transition">Cancelar</button>
+                    <button onclick="saveDataFromModal()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">Guardar Cambios</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIG
         let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
         let recentOwners = JSON.parse(localStorage.getItem('okr_recent_owners')) || [];
 
-        // API
         async function loadFromGoogle() {
             if(!API_URL) return;
             toggleLoader(true);
@@ -210,66 +203,55 @@
         async function saveToGoogle() {
             if(!API_URL) return;
             const btn = document.getElementById('sync-status');
-            if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Guardando...';
+            if(btn) btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Guardando';
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(db) });
-                if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online';
-            } catch(e) { if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> Error'; }
+                if(btn) btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online';
+            } catch(e) { if(btn) btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Error'; }
         }
         function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
-        function configureApi() { const u = prompt("URL API:", API_URL); if(u){ localStorage.setItem('okr_api_url', u); API_URL = u; loadFromGoogle(); }}
+        function configureApi() { const u = prompt("URL API Google Apps Script:", API_URL); if(u){ localStorage.setItem('okr_api_url', u); API_URL = u; loadFromGoogle(); }}
 
-        // --- CÁLCULO PRECISO & PACING v7.0 ---
+        // METRICAS & PACING
         function calculateMetrics(item, type) {
             const now = new Date();
             const start = new Date(item.startDate);
             const end = new Date(item.endDate);
             const totalDays = Math.max(1, (end - start) / (1000 * 60 * 60 * 24));
             const elapsed = Math.max(0, (now - start) / (1000 * 60 * 60 * 24));
-            // Pacing: Porcentaje de tiempo transcurrido (dónde debería estar la barra)
             const pacing = Math.min(100, Math.max(0, (elapsed / totalDays) * 100));
 
             if (type === 'kpi') {
                 const s = parseFloat(item.startValue) || 0;
                 const t = parseFloat(item.targetValue) || 100;
                 const c = (item.currentValue !== undefined && item.currentValue !== "") ? parseFloat(item.currentValue) : s;
+                let raw = 0;
+                if(t === s) raw = (c >= t) ? 100 : 0;
+                else if(t > s) raw = ((c - s) / (t - s)) * 100;
+                else raw = ((s - c) / (s - t)) * 100;
                 
-                let rawProgress = 0;
-                if(t === s) { rawProgress = (c >= t) ? 100 : 0; } 
-                else if(t > s) { rawProgress = ((c - s) / (t - s)) * 100; } 
-                else { rawProgress = ((s - c) / (s - t)) * 100; }
-                
-                const visualProgress = Math.min(100, Math.max(0, rawProgress));
-                return getStatusObject(visualProgress, pacing);
+                const vis = Math.min(100, Math.max(0, raw));
+                return getStatusObject(vis, pacing);
             }
 
-            // CÁLCULO PADRES: Promedio Ponderado
             let children = [];
             const kpis = db.kpis.filter(k => (type==='objective' ? k.objectiveId===item.id && !k.projectId : k.projectId===item.id));
-            kpis.forEach(k => {
-                const m = calculateMetrics(k, 'kpi');
-                children.push({ p: m.actual, w: parseFloat(k.weight)||1, pacing: m.pacing });
-            });
-
+            kpis.forEach(k => children.push({ ...calculateMetrics(k, 'kpi'), w: parseFloat(k.weight)||1 }));
+            
             if(type === 'objective') {
                 const projs = db.projects.filter(p => p.objectiveId === item.id);
-                projs.forEach(p => {
-                    const m = calculateMetrics(p, 'project');
-                    children.push({ p: m.actual, w: parseFloat(p.weight)||1, pacing: m.pacing });
-                });
+                projs.forEach(p => children.push({ ...calculateMetrics(p, 'project'), w: parseFloat(p.weight)||1 }));
             }
-
             if(type === 'project') {
                 const tasks = db.tasks.filter(t => t.projectId === item.id);
-                tasks.forEach(t => children.push({ p: t.done?100:0, w: 1, pacing: pacing }));
+                tasks.forEach(t => children.push({ actual: t.done?100:0, pacing: pacing, w: 1 }));
             }
 
             if(!children.length) return { actual: 0, pacing: pacing, css: 'bg-slate-200', textCss: 'text-slate-400 border-slate-200', label: 'Nuevo' };
 
             const totalW = children.reduce((acc, x) => acc + x.w, 0);
-            const weightedSum = children.reduce((acc, x) => acc + (x.p * x.w), 0);
+            const weightedSum = children.reduce((acc, x) => acc + (x.actual * x.w), 0);
             const finalP = totalW > 0 ? weightedSum / totalW : 0;
-            // El pacing del padre es el máximo pacing de sus hijos (o el suyo propio si no tiene hijos con fecha)
             const maxPacing = children.length > 0 ? Math.max(...children.map(x => x.pacing)) : pacing;
 
             return getStatusObject(finalP, maxPacing);
@@ -277,9 +259,9 @@
 
         function getStatusObject(actual, pacing) {
             let label = 'Atrasado', css = 'bg-off-track', textCss = 'text-off-track';
+            // Tolerancia de inicio
             if (pacing < 5 && actual < 5) { label = 'Inicio'; css = 'bg-on-track'; textCss = 'text-on-track'; }
             else {
-                // Evitar división por cero
                 const ratio = pacing > 0 ? actual / pacing : (actual > 0 ? 1 : 0);
                 if (ratio >= 0.9) { label = 'A Tiempo'; css = 'bg-on-track'; textCss = 'text-on-track'; }
                 else if (ratio >= 0.7) { label = 'Riesgo'; css = 'bg-at-risk'; textCss = 'text-at-risk'; }
@@ -287,11 +269,8 @@
             return { actual: Math.round(actual), pacing: pacing, css, textCss, label };
         }
 
-        // --- RENDER ---
         function renderExplorer() {
-            const container = document.getElementById('tree-container');
-            container.innerHTML = '';
-            
+            const container = document.getElementById('tree-container'); container.innerHTML = '';
             const q = document.getElementById('filter-quarter').value;
             const objs = db.objectives.filter(o => {
                 if(q==='ALL') return true;
@@ -299,7 +278,7 @@
                 if(q==='Q1') return m<=3; if(q==='Q2') return m>3&&m<=6; if(q==='Q3') return m>6&&m<=9; return m>9;
             });
 
-            if(!objs.length) { container.innerHTML = `<div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl text-slate-400">Sin datos para ${q}</div>`; return; }
+            if(!objs.length) { container.innerHTML = `<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded text-slate-400 text-xs">Sin objetivos para ${q}</div>`; return; }
 
             objs.forEach(obj => {
                 const m = calculateMetrics(obj, 'objective');
@@ -307,7 +286,7 @@
                 const kpis = db.kpis.filter(k => k.objectiveId === obj.id && !k.projectId);
 
                 let childrenHTML = '';
-                kpis.forEach(k => childrenHTML += renderRow('kpi', k, calculateMetrics(k, 'kpi')));
+                kpis.forEach(k => childrenHTML += renderKpiRow(k, calculateMetrics(k, 'kpi')));
                 
                 projs.forEach(p => {
                     const pm = calculateMetrics(p, 'project');
@@ -317,69 +296,73 @@
                     let tasksUI = '';
                     if(ptasks.length || true) {
                         const list = ptasks.map(t => `
-                            <div class="flex items-center gap-2 py-1 pl-2 hover:bg-slate-50 rounded group/task transition">
-                                <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
-                                <span class="text-xs ${t.done?'line-through text-slate-400':'text-slate-600 font-medium'} flex-1 truncate">${t.title}</span>
-                                <button onclick="delTask(${t.id})" class="text-slate-300 hover:text-rose-500 px-1 opacity-0 group-hover/task:opacity-100 transition"><i data-lucide="trash-2" size="11"></i></button>
+                            <div class="flex items-center gap-2 py-1 pl-1 hover:bg-slate-50 rounded group/task">
+                                <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="w-3 h-3 text-blue-600 rounded border-slate-300 cursor-pointer">
+                                <span class="text-xs ${t.done?'line-through text-slate-400':'text-slate-600'} flex-1 truncate">${t.title}</span>
+                                <button onclick="delTask(${t.id})" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover/task:opacity-100"><i data-lucide="trash-2" size="12"></i></button>
                             </div>`).join('');
-                        tasksUI = `<div class="mt-2 mb-1 pl-2 border-l border-slate-100">
-                            ${list}
-                            <input type="text" placeholder="+ Tarea..." class="text-[11px] w-full bg-transparent py-0.5 border-b border-transparent focus:border-blue-300 outline-none transition placeholder:text-slate-300" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}">
-                        </div>`;
+                        tasksUI = `<div class="mt-1 mb-1 pl-2 border-l border-slate-100">${list}<input type="text" placeholder="+ Tarea..." class="text-[10px] w-full bg-transparent py-1 border-b border-transparent focus:border-blue-300 outline-none placeholder:text-slate-300" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}"></div>`;
                     }
                     
-                    let pkpisHTML = '';
-                    pkpis.forEach(pk => pkpisHTML += renderRow('kpi', pk, calculateMetrics(pk, 'kpi')));
+                    let pkpisHTML = ''; pkpis.forEach(pk => pkpisHTML += renderKpiRow(pk, calculateMetrics(pk, 'kpi')));
 
                     childrenHTML += `
-                        <div class="ml-3 mt-2 mb-3">
+                        <div class="ml-2 mt-2 mb-2">
                             <div class="glass-panel p-0 overflow-hidden border-l-[3px] border-l-blue-100">
-                                ${renderRow('project', p, pm)}
-                                <div id="proj-content-${p.id}" class="accordion-content ${p.isCollapsed ? '' : 'open'} bg-slate-50/40">
-                                    <div class="accordion-inner p-2 pt-0">
-                                        ${tasksUI}
-                                        ${pkpisHTML}
+                                <div class="p-2 bg-white flex items-center gap-2">
+                                    <button onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')" class="text-slate-400 hover:text-blue-600"><i id="icon-p-${p.id}" data-lucide="chevron-right" size="14" class="rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i></button>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <div class="flex items-center gap-1 overflow-hidden">
+                                                <i data-lucide="folder" class="text-blue-400" size="14"></i>
+                                                <span class="text-xs font-semibold text-slate-700 truncate cursor-pointer hover:text-blue-600" onclick="openEdit('project', ${p.id})">${p.title}</span>
+                                                ${p.weight?`<span class="contrib-tag">w:${p.weight}</span>`:''}
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                 <button onclick="openModal('kpi', ${p.id}, 'project')" class="text-[9px] text-slate-400 hover:text-blue-600 bg-slate-50 border border-slate-200 px-1 rounded flex items-center gap-0.5"><i data-lucide="plus" size="8"></i> KPI</button>
+                                                 <span class="text-[10px] font-bold text-slate-600">${pm.actual}%</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress-track h-[5px]"><div class="pacing-line" style="left: ${pm.pacing}%"></div><div class="progress-bar ${pm.css} opacity-80" style="width: ${pm.actual}%"></div></div>
                                     </div>
                                 </div>
+                                <div id="proj-${p.id}" class="accordion-content ${p.isCollapsed?'':'open'} bg-slate-50/50"><div class="accordion-inner p-2 pt-0">${tasksUI}${pkpisHTML}</div></div>
                             </div>
                         </div>`;
                 });
 
                 container.innerHTML += `
-                    <div class="glass-panel mb-5 overflow-hidden transition hover:shadow-md">
-                        <div class="p-4 pb-3 flex items-start gap-3">
-                            <button onclick="toggleAccordion('obj-content-${obj.id}', 'icon-obj-${obj.id}')" class="mt-0.5 text-slate-400 hover:text-blue-600 transition"><i id="icon-obj-${obj.id}" data-lucide="chevron-down" size="18" class="rotate-icon"></i></button>
+                    <div class="glass-panel overflow-hidden hover:shadow-md transition">
+                        <div class="p-3 pb-2 flex items-start gap-2">
+                            <button onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')" class="text-slate-400 hover:text-blue-600 mt-0.5"><i id="icon-o-${obj.id}" data-lucide="chevron-down" size="18" class="rotate-icon"></i></button>
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start mb-2">
-                                    <div class="flex-1 overflow-hidden">
-                                        <div class="flex items-center gap-2">
-                                            <i data-lucide="mountain" class="text-blue-600 flex-shrink-0" size="16"></i>
-                                            <h3 class="font-bold text-[15px] text-slate-800 cursor-pointer hover:text-blue-600 transition truncate" onclick="openEdit('objective', ${obj.id})" title="${obj.title}">${obj.title}</h3>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-1.5 mb-1">
+                                            <i data-lucide="mountain" class="text-blue-600" size="16"></i>
+                                            <h3 class="font-bold text-sm text-slate-800 cursor-pointer hover:text-blue-600" onclick="openEdit('objective', ${obj.id})">${obj.title}</h3>
                                             ${renderTags(obj.tags)}
                                         </div>
-                                        <div class="flex gap-3 text-[11px] text-slate-500 mt-1 font-medium items-center">
-                                            <span class="flex items-center gap-1 truncate"><i data-lucide="user" size="11"></i> ${obj.owner||'--'}</span>
-                                            <span class="flex items-center gap-1"><i data-lucide="calendar" size="11"></i> ${obj.endDate}</span>
-                                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${m.textCss}">${m.label}</span>
+                                        <div class="flex gap-3 text-[10px] text-slate-500">
+                                            <span class="flex items-center gap-1"><i data-lucide="user" size="10"></i> ${obj.owner||'--'}</span>
+                                            <span class="flex items-center gap-1"><i data-lucide="calendar" size="10"></i> ${obj.endDate}</span>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-2 pl-2">
-                                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition duration-300">
-                                            <button onclick="openModal('project', ${obj.id})" class="px-1.5 py-0.5 rounded border border-slate-200 text-[10px] font-semibold text-slate-500 hover:bg-slate-50 transition flex items-center gap-0.5"><i data-lucide="folder-plus" size="10"></i> Proy</button>
-                                            <button onclick="openModal('kpi', ${obj.id}, 'objective')" class="px-1.5 py-0.5 rounded border border-slate-200 text-[10px] font-semibold text-slate-500 hover:bg-slate-50 transition flex items-center gap-0.5"><i data-lucide="bar-chart-2" size="10"></i> KPI</button>
-                                        </div>
-                                        <span class="text-sm font-bold text-slate-700 text-right">${m.actual}%</span>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${m.textCss}">${m.label}</span>
+                                        <span class="text-sm font-bold text-slate-700">${m.actual}%</span>
                                     </div>
                                 </div>
-                                <div class="progress-track">
-                                    <div class="pacing-line" style="left: ${m.pacing}%"></div>
-                                    <div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div>
-                                </div>
+                                <div class="progress-track"><div class="pacing-line" style="left: ${m.pacing}%"></div><div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div></div>
                             </div>
                         </div>
-                        <div id="obj-content-${obj.id}" class="accordion-content open">
-                            <div class="accordion-inner bg-slate-50/30 border-t border-slate-50 p-3 pt-1">
-                                ${childrenHTML || '<div class="text-xs text-slate-400 italic p-2">Sin contenido.</div>'}
+                        <div id="obj-${obj.id}" class="accordion-content open">
+                            <div class="accordion-inner bg-slate-50 border-t border-slate-100 p-3 pt-1">
+                                <div class="flex justify-end gap-2 mb-2">
+                                    <button onclick="openModal('project', ${obj.id})" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1"><i data-lucide="folder-plus" size="10"></i> Proyecto</button>
+                                    <button onclick="openModal('kpi', ${obj.id}, 'objective')" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1"><i data-lucide="bar-chart-2" size="10"></i> KPI</button>
+                                </div>
+                                ${childrenHTML || '<div class="text-[10px] text-slate-400 italic text-center p-2">Sin contenido. Añade Proyectos o KPIs.</div>'}
                             </div>
                         </div>
                     </div>`;
@@ -387,129 +370,55 @@
             lucide.createIcons();
         }
 
-        function renderRow(type, item, m) {
-            const weightDisplay = item.weight ? `<span class="contrib-tag ml-1.5" title="Contribución: ${item.weight}%">w:${item.weight}</span>` : '';
-
-            if (type === 'project') {
-                return `
-                <div class="p-2 bg-white group rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <button onclick="toggleProjAccordion(${item.id})" class="text-slate-400 hover:text-blue-600 transition p-0.5 rounded hover:bg-slate-50">
-                            <i id="icon-proj-${item.id}" data-lucide="chevron-right" size="14" class="rotate-icon ${item.isCollapsed ? '' : 'rotate-90'}"></i>
-                        </button>
-                        <div class="flex-1 min-w-0 relative">
-                             <div class="flex justify-between items-center mb-1.5">
-                                <div class="flex items-center gap-1.5 overflow-hidden flex-1">
-                                    <i data-lucide="folder-kanban" class="text-blue-500 flex-shrink-0" size="14"></i>
-                                    <span class="text-[13px] font-semibold text-slate-700 truncate cursor-pointer hover:text-blue-600 transition" onclick="openEdit('project', ${item.id})" title="${item.title}">${item.title}</span>
-                                    ${weightDisplay}
-                                    ${renderTags(item.tags)}
-                                </div>
-                                <div class="flex items-center gap-2 pl-2">
-                                    <button onclick="openModal('kpi', ${item.id}, 'project')" class="opacity-0 group-hover:opacity-100 text-[9px] bg-slate-50 border border-slate-200 text-slate-400 hover:text-blue-600 px-1.5 py-0.5 rounded transition font-medium flex gap-0.5 items-center"><i data-lucide="plus" size="9"></i> KPI</button>
-                                    <span class="text-xs font-bold text-slate-600">${m.actual}%</span>
-                                </div>
-                            </div>
-                            <div class="progress-track h-[6px]">
-                                <div class="pacing-line" style="left: ${m.pacing}%"></div>
-                                <div class="progress-bar ${m.css} opacity-90" style="width: ${m.actual}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-            }
-
-            // --- KPI COMPACTO ---
+        function renderKpiRow(item, m) {
             return `
-            <div class="flex items-center gap-2 p-2 mb-1 rounded-lg border border-slate-100 bg-white hover:border-blue-200 transition group ml-0.5">
-                <div class="w-5 flex justify-center flex-shrink-0"><span class="kpi-tag">KPI</span></div>
-                <div class="flex-1 min-w-0 relative grid grid-cols-[1fr_auto] gap-x-3 items-center">
-                    
+            <div class="flex items-center gap-2 p-1.5 mb-1 rounded bg-white border border-slate-100 hover:border-blue-200 transition group">
+                <span class="kpi-tag">KPI</span>
+                <div class="flex-1 min-w-0 grid grid-cols-[1fr_auto] gap-x-2 items-center">
                     <div class="overflow-hidden">
-                        <div class="flex items-center gap-1.5 mb-1 text-xs truncate">
-                            <span class="font-medium text-slate-700 truncate cursor-pointer hover:text-blue-600 transition" onclick="openEdit('kpi', ${item.id})" title="${item.title}">${item.title}</span>
-                            ${weightDisplay}
+                        <div class="flex items-center gap-1 text-[11px] mb-0.5">
+                            <span class="font-medium text-slate-700 truncate cursor-pointer hover:text-blue-600" onclick="openEdit('kpi', ${item.id})">${item.title}</span>
+                            ${item.weight?`<span class="contrib-tag">w:${item.weight}</span>`:''}
                         </div>
-                        <div class="progress-track h-[6px]">
-                            <div class="pacing-line" style="left: ${m.pacing}%"></div>
-                            <div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div>
-                        </div>
+                        <div class="progress-track h-[5px]"><div class="pacing-line" style="left: ${m.pacing}%"></div><div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div></div>
                     </div>
-
-                    <div class="flex items-center justify-end gap-1 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 group-hover:border-blue-200 transition">
-                        <input type="number" value="${item.currentValue}" onchange="updateKpiVal(${item.id}, this.value)" 
-                        class="kpi-input text-xs" placeholder="${item.startValue||0}">
-                        <span class="text-[10px] text-slate-400 font-semibold">/ ${item.targetValue}</span>
+                    <div class="flex items-center gap-1 bg-slate-50 px-1 rounded border border-slate-100">
+                        <input type="number" value="${item.currentValue}" onchange="updateKpiVal(${item.id}, this.value)" class="kpi-input text-[11px]" placeholder="0">
+                        <span class="text-[9px] text-slate-400 font-semibold">/ ${item.targetValue}</span>
                     </div>
-                    
-                    <div class="absolute right-0 top-0 transform -translate-y-1/2 bg-white px-1 text-[9px] font-bold ${m.textCss} rounded shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                        ${m.actual}%
-                    </div>
-
                 </div>
             </div>`;
         }
 
         function renderDashboard() {
             const tbody = document.getElementById('report-body'); tbody.innerHTML = '';
-            if(!db.objectives.length) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">Sin datos.</td></tr>'; return; }
             db.objectives.forEach(obj => {
                 const m = calculateMetrics(obj, 'objective');
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-4"><div class="font-bold text-slate-700 truncate max-w-xs" title="${obj.title}">${obj.title}</div><div class="text-xs text-slate-400">${obj.tags?.join(', ')||''}</div></td>
-                        <td class="p-4 text-xs font-mono text-slate-500">${obj.endDate}</td>
-                        <td class="p-4"><div class="owner-chip inline-block">${obj.owner||'--'}</div></td>
-                        <td class="p-4">
-                            <div class="flex items-center gap-3">
-                                <div class="flex-1 progress-track h-2"><div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div></div>
-                                <span class="text-xs font-bold w-8 text-right">${m.actual}%</span>
-                            </div>
-                        </td>
-                        <td class="p-4 text-center"><span class="text-[10px] font-bold px-2 py-1 rounded ${m.textCss}">${m.label}</span></td>
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                        <td class="p-3"><div class="font-bold text-slate-700 truncate max-w-xs">${obj.title}</div></td>
+                        <td class="p-3 font-mono text-slate-500">${obj.endDate}</td>
+                        <td class="p-3"><div class="owner-chip inline-block text-[10px]">${obj.owner||'--'}</div></td>
+                        <td class="p-3"><div class="flex items-center gap-2"><div class="flex-1 progress-track h-1.5"><div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div></div><span class="text-[10px] font-bold">${m.actual}%</span></div></td>
+                        <td class="p-3 text-center"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${m.textCss}">${m.label}</span></td>
                     </tr>`;
             });
         }
 
-        // --- ACCIONES ---
+        // ACCIONES
         function toggleAccordion(id, iconId) { document.getElementById(id).classList.toggle('open'); document.getElementById(iconId).classList.toggle('rotate-90'); }
-        function toggleProjAccordion(pid) { const p = db.projects.find(x => x.id === pid); if(p) { p.isCollapsed = !p.isCollapsed; renderExplorer(); } }
         function updateKpiVal(id, v) { const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); } } 
         function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); } }
         function addTask(pid, t) { if(t){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); } }
         function delTask(id) { if(confirm('¿Borrar tarea?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
-        function cloneProject(pid) {
-            const p = db.projects.find(x=>x.id===pid); if(!p) return;
-            const q = prompt("Prefijo para clon (Ej: Q2 - ):", "Copia - "); if(q===null) return;
-            const newPid = Date.now();
-            db.projects.push({...p, id:newPid, title: q + p.title, startDate:'', endDate:'', isCollapsed:false});
-            db.kpis.filter(k=>k.projectId===pid).forEach(k => db.kpis.push({...k, id:Date.now()+Math.random(), projectId:newPid, currentValue:k.startValue}));
-            db.tasks.filter(t=>t.projectId===pid).forEach(t => db.tasks.push({...t, id:Date.now()+Math.random(), projectId:newPid, done:false}));
-            saveToGoogle(); renderExplorer();
+        function switchView(v) { document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer'); document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard'); if(v==='dashboard') renderDashboard(); }
+        function exportCSV() {
+            let csv = "Objetivo,Periodo,Dueño,Progreso\n";
+            db.objectives.forEach(o=>{ const m = calculateMetrics(o,'objective'); csv += `"${o.title}","${o.endDate}","${o.owner}","${m.actual}%"\n`; });
+            const b = new Blob([csv],{type:'text/csv'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='okr_report.csv'; a.click();
         }
 
-        // --- FUNCION DE BORRADO ---
-        function deleteItemFromModal() {
-            const id = parseInt(document.getElementById('edit-id').value);
-            const type = document.getElementById('entity-type').value;
-            if(!id) return;
-            if(!confirm('ADVERTENCIA: ¿Eliminar este elemento?\n\nSe borrará TODO su contenido (hijos, tareas, etc) de forma permanente.')) return;
-
-            if(type === 'objective') {
-                db.objectives = db.objectives.filter(x => x.id !== id);
-                db.projects = db.projects.filter(x => x.objectiveId !== id);
-                db.kpis = db.kpis.filter(x => x.objectiveId !== id);
-            } else if (type === 'project') {
-                db.projects = db.projects.filter(x => x.id !== id);
-                db.kpis = db.kpis.filter(x => x.projectId !== id);
-                db.tasks = db.tasks.filter(x => x.projectId !== id);
-            } else if (type === 'kpi') {
-                db.kpis = db.kpis.filter(x => x.id !== id);
-            }
-            saveToGoogle(); closeModal(); renderExplorer();
-        }
-
-        // --- MODAL ---
+        // GESTION MODAL & BORRADO
         function openModal(type, pid, ctx) {
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('edit-id').value = ''; document.getElementById('entity-type').value = type;
@@ -532,6 +441,24 @@
             if(type==='kpi'){ document.getElementById('inp-val-start').value=i.startValue; document.getElementById('inp-val-target').value=i.targetValue; }
         }
         function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
+        function deleteItemFromModal() {
+            const id = parseInt(document.getElementById('edit-id').value);
+            const type = document.getElementById('entity-type').value;
+            if(!id) return;
+            if(!confirm('¿Estás seguro de ELIMINAR este elemento y todo su contenido?')) return;
+            if(type === 'objective') {
+                db.objectives = db.objectives.filter(x => x.id !== id);
+                db.projects = db.projects.filter(x => x.objectiveId !== id);
+                db.kpis = db.kpis.filter(x => x.objectiveId !== id);
+            } else if (type === 'project') {
+                db.projects = db.projects.filter(x => x.id !== id);
+                db.kpis = db.kpis.filter(x => x.projectId !== id);
+                db.tasks = db.tasks.filter(x => x.projectId !== id);
+            } else if (type === 'kpi') {
+                db.kpis = db.kpis.filter(x => x.id !== id);
+            }
+            saveToGoogle(); closeModal(); renderExplorer();
+        }
         function saveDataFromModal() {
             const id = document.getElementById('edit-id').value;
             const type = document.getElementById('entity-type').value;
@@ -563,22 +490,8 @@
             }
             saveToGoogle(); closeModal(); renderExplorer();
         }
-
-        // Utils
-        function renderOwnerSuggestions() {
-            const sug = document.getElementById('owner-suggestions'); sug.innerHTML='';
-            recentOwners.forEach(o => {
-                const c = document.createElement('div'); c.className='owner-chip'; c.innerText=o; 
-                c.onclick=()=>document.getElementById('inp-owner').value=o; sug.appendChild(c);
-            });
-        }
-        function renderTags(t) { return t?.map(x=>`<span class="text-[9px] bg-slate-100 px-1 rounded text-slate-500 border border-slate-200">${x}</span>`).join('')||''; }
-        function switchView(v) { document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer'); document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard'); if(v==='dashboard') renderDashboard(); }
-        function exportCSV() {
-            let csv = "Objetivo,Periodo,Dueño,Progreso\n";
-            db.objectives.forEach(o=>{ const m = calculateMetrics(o,'objective'); csv += `"${o.title}","${o.endDate}","${o.owner}","${m.actual}%"\n`; });
-            const b = new Blob([csv],{type:'text/csv'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='okr_report.csv'; a.click();
-        }
+        function renderOwnerSuggestions() { const sug = document.getElementById('owner-suggestions'); sug.innerHTML=''; recentOwners.forEach(o => { const c = document.createElement('div'); c.className='owner-chip'; c.innerText=o; c.onclick=()=>document.getElementById('inp-owner').value=o; sug.appendChild(c); }); }
+        function renderTags(t) { return t?.map(x=>`<span class="text-[9px] bg-slate-100 px-1 rounded text-slate-500 border border-slate-200 ml-1">${x}</span>`).join('')||''; }
 
         // Init
         if(API_URL) loadFromGoogle(); else renderExplorer();
