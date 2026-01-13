@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager | v7.1 Compacto</title>
+    <title>OKR Manager | v7.2 Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
         .progress-track { background-color: #f1f5f9; border-radius: 99px; overflow: hidden; height: 8px; position: relative; border: 1px solid #e2e8f0; }
         .progress-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
         
-        /* LÍNEA DE PACING (AVANCE ESPERADO) - AHORA ROJA */
+        /* LÍNEA DE PACING (AVANCE ESPERADO) - ROJA */
         .pacing-line { position: absolute; top: -2px; bottom: -2px; width: 2px; border-right: 2px dotted #ef4444; z-index: 20; opacity: 0.8; }
         
         /* Colores de Estado */
@@ -48,10 +48,9 @@
         .spinner { border: 2px solid #f3f3f3; border-top: 2px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Input numérico invisible */
-        .kpi-input { font-family: monospace; font-weight: 600; background: transparent; text-align: right; width: 40px; outline: none; border-bottom: 1px solid transparent; color: #334155; transition: border 0.2s; }
-        .kpi-input:hover, .kpi-input:focus { border-bottom-color: var(--primary); }
-        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Input numérico */
+        .kpi-input { font-family: monospace; font-weight: 600; background: transparent; text-align: right; width: 45px; outline: none; border-bottom: 1px solid #cbd5e1; color: #334155; }
+        .kpi-input:focus { border-bottom-color: var(--primary); }
     </style>
 </head>
 <body class="bg-slate-50 h-screen flex overflow-hidden">
@@ -212,7 +211,7 @@
         function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
         function configureApi() { const u = prompt("URL API Google Apps Script:", API_URL); if(u){ localStorage.setItem('okr_api_url', u); API_URL = u; loadFromGoogle(); }}
 
-        // METRICAS & PACING
+        // METRICAS
         function calculateMetrics(item, type) {
             const now = new Date();
             const start = new Date(item.startDate);
@@ -259,7 +258,6 @@
 
         function getStatusObject(actual, pacing) {
             let label = 'Atrasado', css = 'bg-off-track', textCss = 'text-off-track';
-            // Tolerancia de inicio
             if (pacing < 5 && actual < 5) { label = 'Inicio'; css = 'bg-on-track'; textCss = 'text-on-track'; }
             else {
                 const ratio = pacing > 0 ? actual / pacing : (actual > 0 ? 1 : 0);
@@ -269,6 +267,7 @@
             return { actual: Math.round(actual), pacing: pacing, css, textCss, label };
         }
 
+        // RENDER
         function renderExplorer() {
             const container = document.getElementById('tree-container'); container.innerHTML = '';
             const q = document.getElementById('filter-quarter').value;
@@ -309,13 +308,14 @@
                     childrenHTML += `
                         <div class="ml-2 mt-2 mb-2">
                             <div class="glass-panel p-0 overflow-hidden border-l-[3px] border-l-blue-100">
-                                <div class="p-2 bg-white flex items-center gap-2">
+                                <div class="p-2 bg-white flex items-center gap-2 group">
                                     <button onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')" class="text-slate-400 hover:text-blue-600"><i id="icon-p-${p.id}" data-lucide="chevron-right" size="14" class="rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i></button>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex justify-between items-center mb-1">
                                             <div class="flex items-center gap-1 overflow-hidden">
                                                 <i data-lucide="folder" class="text-blue-400" size="14"></i>
                                                 <span class="text-xs font-semibold text-slate-700 truncate cursor-pointer hover:text-blue-600" onclick="openEdit('project', ${p.id})">${p.title}</span>
+                                                <button onclick="openEdit('project', ${p.id})" class="text-slate-300 hover:text-blue-600 ml-1"><i data-lucide="pencil" size="10"></i></button>
                                                 ${p.weight?`<span class="contrib-tag">w:${p.weight}</span>`:''}
                                             </div>
                                             <div class="flex items-center gap-2">
@@ -338,9 +338,10 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start mb-2">
                                     <div class="flex-1">
-                                        <div class="flex items-center gap-1.5 mb-1">
+                                        <div class="flex items-center gap-1.5 mb-1 group">
                                             <i data-lucide="mountain" class="text-blue-600" size="16"></i>
                                             <h3 class="font-bold text-sm text-slate-800 cursor-pointer hover:text-blue-600" onclick="openEdit('objective', ${obj.id})">${obj.title}</h3>
+                                            <button onclick="openEdit('objective', ${obj.id})" class="text-slate-300 hover:text-blue-600 ml-1 opacity-0 group-hover:opacity-100 transition"><i data-lucide="pencil" size="12"></i></button>
                                             ${renderTags(obj.tags)}
                                         </div>
                                         <div class="flex gap-3 text-[10px] text-slate-500">
@@ -373,19 +374,20 @@
         function renderKpiRow(item, m) {
             return `
             <div class="flex items-center gap-2 p-1.5 mb-1 rounded bg-white border border-slate-100 hover:border-blue-200 transition group">
-                <span class="kpi-tag">KPI</span>
-                <div class="flex-1 min-w-0 grid grid-cols-[1fr_auto] gap-x-2 items-center">
-                    <div class="overflow-hidden">
-                        <div class="flex items-center gap-1 text-[11px] mb-0.5">
+                <span class="kpi-tag flex-shrink-0">KPI</span>
+                <div class="flex-1 min-w-0 flex flex-col gap-1">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-1 text-[11px] overflow-hidden">
                             <span class="font-medium text-slate-700 truncate cursor-pointer hover:text-blue-600" onclick="openEdit('kpi', ${item.id})">${item.title}</span>
+                             <button onclick="openEdit('kpi', ${item.id})" class="text-slate-300 hover:text-blue-600 ml-1"><i data-lucide="pencil" size="10"></i></button>
                             ${item.weight?`<span class="contrib-tag">w:${item.weight}</span>`:''}
                         </div>
-                        <div class="progress-track h-[5px]"><div class="pacing-line" style="left: ${m.pacing}%"></div><div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div></div>
+                        <div class="flex items-center gap-1 bg-slate-50 px-1 rounded border border-slate-100">
+                            <input type="number" value="${item.currentValue}" onchange="updateKpiVal(${item.id}, this.value)" class="kpi-input text-[10px]" placeholder="0">
+                            <span class="text-[9px] text-slate-400 font-semibold">/ ${item.targetValue}</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1 bg-slate-50 px-1 rounded border border-slate-100">
-                        <input type="number" value="${item.currentValue}" onchange="updateKpiVal(${item.id}, this.value)" class="kpi-input text-[11px]" placeholder="0">
-                        <span class="text-[9px] text-slate-400 font-semibold">/ ${item.targetValue}</span>
-                    </div>
+                    <div class="progress-track h-[5px]"><div class="pacing-line" style="left: ${m.pacing}%"></div><div class="progress-bar ${m.css}" style="width: ${m.actual}%"></div></div>
                 </div>
             </div>`;
         }
