@@ -3,158 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager | Enterprise View</title>
+    <title>OKR Manager | Enterprise v4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        :root {
-            --primary: #2563eb; /* Blue 600 */
-            --bg-subtle: #f8fafc;
-        }
-
+        :root { --primary: #2563eb; --bg-subtle: #f8fafc; }
         body { font-family: 'Inter', sans-serif; font-size: 14px; color: #334155; }
         
-        /* UI Components */
-        .glass-panel { 
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 10px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-        }
+        /* Glass UI */
+        .glass-panel { background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 2px 4px -1px rgba(0,0,0,0.06); }
         
-        /* High Visibility Progress Bar */
-        .progress-track { background-color: #e2e8f0; border-radius: 6px; overflow: hidden; height: 12px; position: relative; }
-        .progress-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
-        .pacing-line { 
-            position: absolute; top: 0; bottom: 0; 
-            border-right: 2px solid #64748b; 
-            z-index: 10; opacity: 0.6; 
-        }
+        /* Barras de Progreso Mejoradas */
+        .progress-track { background-color: #f1f5f9; border-radius: 99px; overflow: hidden; height: 14px; position: relative; border: 1px solid #e2e8f0; }
+        .pacing-line { position: absolute; top: 0; bottom: 0; border-right: 2px dashed #94a3b8; z-index: 20; opacity: 0.5; }
+        
+        /* Colores de Estado Sólidos */
+        .bg-on-track { background-color: #10b981; } /* Emerald 500 */
+        .bg-at-risk { background-color: #f59e0b; } /* Amber 500 */
+        .bg-off-track { background-color: #ef4444; } /* Red 500 */
 
-        /* Status Colors (More Vivid) */
-        .bg-on-track { background-color: #16a34a; } /* Green 600 */
-        .bg-at-risk { background-color: #d97706; } /* Amber 600 */
-        .bg-off-track { background-color: #dc2626; } /* Red 600 */
+        .text-on-track { color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; }
+        .text-at-risk { color: #b45309; background: #fffbeb; border: 1px solid #fde68a; }
+        .text-off-track { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
 
-        .text-on-track { color: #16a34a; background: #dcfce7; }
-        .text-at-risk { color: #d97706; background: #fef3c7; }
-        .text-off-track { color: #dc2626; background: #fee2e2; }
-
-        /* Chips & Tags */
+        /* Chips */
         .kpi-tag { font-size: 10px; font-weight: 800; color: var(--primary); background: #eff6ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bfdbfe; }
-        .contrib-tag { font-size: 10px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
-        
-        .owner-chip {
-            font-size: 11px; padding: 3px 10px; border-radius: 999px;
-            background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
-            cursor: pointer; transition: all 0.1s;
-        }
-        .owner-chip:hover { background: #e2e8f0; border-color: #cbd5e1; }
+        .contrib-tag { font-size: 10px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .owner-chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: #f8fafc; border: 1px solid #cbd5e1; cursor: pointer; }
+        .owner-chip:hover { background: #e2e8f0; border-color: #94a3b8; }
 
-        /* Table Styles */
-        .report-table { width: 100%; border-collapse: collapse; }
-        .report-table th { text-align: left; padding: 12px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-        .report-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .report-table tr:last-child td { border-bottom: none; }
-
-        /* Accordion & Utils */
+        /* Acordeón */
         .accordion-content { transition: grid-template-rows 0.2s ease-out; display: grid; grid-template-rows: 0fr; }
         .accordion-content.open { grid-template-rows: 1fr; }
         .accordion-inner { overflow: hidden; }
         .rotate-icon { transition: transform 0.2s; }
-        
+        .rotate-90 { transform: rotate(-90deg); }
+
         /* Loader */
-        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid var(--primary); border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-slate-50 h-screen flex overflow-hidden">
 
-    <aside class="w-16 lg:w-60 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-30 transition-all duration-300">
+    <aside class="w-16 lg:w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-30 transition-all duration-300">
         <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-100">
-            <div class="bg-blue-600 p-1.5 rounded-lg shadow-sm"><i data-lucide="bar-chart-3" class="text-white" size="20"></i></div>
-            <span class="hidden lg:block ml-3 font-bold text-slate-800 text-lg">OKR <span class="text-blue-600">Ent</span></span>
+            <div class="bg-blue-600 p-1.5 rounded-lg shadow-sm"><i data-lucide="target" class="text-white" size="20"></i></div>
+            <span class="hidden lg:block ml-3 font-bold text-slate-800 text-lg tracking-tight">OKR <span class="text-blue-600">Manager</span></span>
         </div>
         
         <nav class="flex-1 p-3 space-y-1 mt-4">
-            <button onclick="switchView('explorer')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-semibold transition" id="btn-explorer">
+            <button onclick="switchView('explorer')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-semibold transition shadow-sm" id="btn-explorer">
                 <i data-lucide="layers" size="20"></i> <span class="hidden lg:block">Mis OKRs</span>
             </button>
             <button onclick="switchView('dashboard')" class="w-full flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition font-medium" id="btn-dashboard">
-                <i data-lucide="table-2" size="20"></i> <span class="hidden lg:block">Reporte Resumen</span>
+                <i data-lucide="clipboard-list" size="20"></i> <span class="hidden lg:block">Reporte Resumen</span>
             </button>
         </nav>
 
         <div class="p-4 border-t border-slate-100">
-             <div id="sync-status" class="hidden lg:flex items-center gap-2 text-[10px] text-slate-400 mb-2 justify-center">
-                 <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online
+             <div id="sync-status" class="hidden lg:flex items-center gap-2 text-[10px] text-slate-400 mb-3 justify-center bg-slate-50 py-1 rounded-full border border-slate-100">
+                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sistema Online
              </div>
-             <button onclick="configureApi()" class="w-full py-2 text-xs text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-lg transition flex justify-center gap-2 items-center">
-                <i data-lucide="settings" size="14"></i> <span class="hidden lg:block">Configuración</span>
+             <button onclick="configureApi()" class="w-full py-2.5 text-xs text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-lg transition flex justify-center gap-2 items-center hover:shadow-sm">
+                <i data-lucide="settings" size="14"></i> <span class="hidden lg:block">Configurar Cloud</span>
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-4 lg:p-8 relative">
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 relative scroll-smooth">
         
-        <div id="global-loader" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center backdrop-blur-sm hidden">
-            <div class="flex flex-col items-center gap-3">
-                <div class="spinner w-8 h-8 border-4 border-blue-600 border-t-transparent"></div>
-                <span class="text-xs font-medium text-slate-500 animate-pulse">Sincronizando...</span>
+        <div id="global-loader" class="absolute inset-0 bg-white/90 z-50 flex items-center justify-center backdrop-blur-sm hidden transition-opacity">
+            <div class="flex flex-col items-center gap-4 p-6 bg-white rounded-xl shadow-xl border border-slate-100">
+                <div class="spinner"></div>
+                <span class="text-xs font-semibold text-slate-500 tracking-wide">Sincronizando datos...</span>
             </div>
         </div>
 
         <div id="view-explorer" class="max-w-6xl mx-auto">
             <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Objetivos Estratégicos</h1>
-                    <div class="flex items-center gap-3 mt-1">
-                        <div class="relative">
-                            <select id="filter-quarter" onchange="renderExplorer()" class="appearance-none pl-2 pr-8 py-1 text-xs font-semibold bg-white border border-slate-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-600 cursor-pointer">
-                                <option value="ALL">Todo el Año</option>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Tablero de Objetivos</h1>
+                    <div class="flex items-center gap-3 mt-1.5">
+                        <div class="relative group">
+                            <select id="filter-quarter" onchange="renderExplorer()" class="appearance-none pl-3 pr-8 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-600 cursor-pointer hover:border-blue-300 transition">
+                                <option value="ALL">Anual 2026</option>
                                 <option value="Q1">Q1 (Ene-Mar)</option>
                                 <option value="Q2">Q2 (Abr-Jun)</option>
                                 <option value="Q3">Q3 (Jul-Sep)</option>
                                 <option value="Q4">Q4 (Oct-Dic)</option>
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                                <i data-lucide="chevron-down" size="12"></i>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 group-hover:text-blue-500">
+                                <i data-lucide="chevron-down" size="14"></i>
                             </div>
                         </div>
-                        <span class="text-xs text-slate-400">|</span>
-                        <p class="text-xs text-slate-400">Gestión de rendimiento ponderada</p>
+                        <span class="text-slate-300">|</span>
+                        <p class="text-xs text-slate-500">Gestión de Rendimiento</p>
                     </div>
                 </div>
-                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-lg shadow-blue-600/20 flex items-center gap-2 text-sm font-semibold transition transform active:scale-95">
-                    <i data-lucide="plus" size="18"></i> Nuevo Objetivo
+                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-blue-600/20 flex items-center gap-2 text-sm font-semibold transition transform active:scale-95">
+                    <i data-lucide="plus-circle" size="18"></i> Nuevo Objetivo
                 </button>
             </header>
 
-            <div id="tree-container" class="space-y-6 pb-20">
+            <div id="tree-container" class="space-y-6 pb-24">
                 </div>
         </div>
 
         <div id="view-dashboard" class="hidden max-w-7xl mx-auto space-y-6">
-            <header>
-                <h1 class="text-2xl font-bold text-slate-800">Resumen de Objetivos</h1>
-                <p class="text-sm text-slate-500">Vista consolidada de avance y contribuciones.</p>
+            <header class="flex justify-between items-end border-b border-slate-200 pb-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Reporte Ejecutivo</h1>
+                    <p class="text-sm text-slate-500 mt-1">Resumen consolidado de avance y estado por objetivo.</p>
+                </div>
+                <button onclick="exportCSV()" class="text-slate-500 hover:text-blue-600 text-xs font-semibold flex items-center gap-1 transition">
+                    <i data-lucide="download" size="14"></i> Exportar CSV
+                </button>
             </header>
 
             <div class="glass-panel overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="report-table">
-                        <thead>
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                             <tr>
-                                <th>Objetivo</th>
-                                <th style="width: 100px;">Periodo</th>
-                                <th style="width: 150px;">Dueño</th>
-                                <th style="width: 300px;">Avance Real</th>
-                                <th style="width: 100px;">Estado</th>
+                                <th class="p-4">Objetivo</th>
+                                <th class="p-4 w-32">Cierre</th>
+                                <th class="p-4 w-40">Responsable</th>
+                                <th class="p-4 w-64">Progreso Real</th>
+                                <th class="p-4 w-24 text-center">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="report-body">
+                        <tbody id="report-body" class="divide-y divide-slate-100 text-sm text-slate-600">
                             </tbody>
                     </table>
                 </div>
@@ -162,11 +144,14 @@
         </div>
     </main>
 
-    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-lg shadow-2xl transform transition-all scale-100 overflow-hidden flex flex-col max-h-[90vh] bg-white">
-            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 id="modal-title" class="text-base font-bold text-slate-800">Elemento</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition"><i data-lucide="x" size="20"></i></button>
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-lg shadow-2xl transform transition-all scale-100 flex flex-col max-h-[90vh] bg-white">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-2">
+                    <div class="w-1 h-4 bg-blue-600 rounded-full"></div>
+                    <h3 id="modal-title" class="text-sm font-bold text-slate-800 uppercase tracking-wide">Nuevo Elemento</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 transition p-1 hover:bg-rose-50 rounded-md"><i data-lucide="x" size="20"></i></button>
             </div>
             
             <div class="p-6 space-y-5 overflow-y-auto">
@@ -177,7 +162,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Título</label>
-                    <input id="inp-title" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Nombre descriptivo...">
+                    <input id="inp-title" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition placeholder:text-slate-300" placeholder="Ej: Aumentar la satisfacción del cliente...">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -186,77 +171,76 @@
                         <input id="inp-owner" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nombre">
                     </div>
                     <div id="field-weight">
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 flex justify-between">
-                            Contribución (%)
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 flex justify-between group cursor-help">
+                            Contribución (%) <i data-lucide="info" size="12" class="text-slate-300 group-hover:text-blue-500"></i>
                         </label>
-                        <input id="inp-weight" type="number" min="1" max="100" value="1" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1-100">
+                        <input id="inp-weight" type="number" min="0" max="100" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono" placeholder="Ej: 25">
                     </div>
                 </div>
                 
-                <div id="owner-suggestions" class="flex flex-wrap gap-2"></div>
+                <div id="owner-suggestions" class="flex flex-wrap gap-2 pt-1 empty:hidden"></div>
 
                 <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
                     <div class="flex justify-between items-center mb-3">
-                         <label class="block text-xs font-bold text-slate-400 uppercase">Trimestre</label>
+                         <label class="block text-xs font-bold text-slate-400 uppercase">Vencimiento (Q)</label>
                          <div class="flex gap-1">
-                             <button type="button" onclick="setQuarterDate(1)" class="text-[10px] font-bold px-2 py-1 bg-white border rounded hover:border-blue-500 hover:text-blue-600">Q1</button>
-                             <button type="button" onclick="setQuarterDate(2)" class="text-[10px] font-bold px-2 py-1 bg-white border rounded hover:border-blue-500 hover:text-blue-600">Q2</button>
-                             <button type="button" onclick="setQuarterDate(3)" class="text-[10px] font-bold px-2 py-1 bg-white border rounded hover:border-blue-500 hover:text-blue-600">Q3</button>
-                             <button type="button" onclick="setQuarterDate(4)" class="text-[10px] font-bold px-2 py-1 bg-white border rounded hover:border-blue-500 hover:text-blue-600">Q4</button>
+                             <button type="button" onclick="setQuarterDate(1)" class="text-[10px] font-bold px-2 py-1 bg-white border border-slate-200 rounded text-slate-500 hover:border-blue-500 hover:text-blue-600 transition">Q1</button>
+                             <button type="button" onclick="setQuarterDate(2)" class="text-[10px] font-bold px-2 py-1 bg-white border border-slate-200 rounded text-slate-500 hover:border-blue-500 hover:text-blue-600 transition">Q2</button>
+                             <button type="button" onclick="setQuarterDate(3)" class="text-[10px] font-bold px-2 py-1 bg-white border border-slate-200 rounded text-slate-500 hover:border-blue-500 hover:text-blue-600 transition">Q3</button>
+                             <button type="button" onclick="setQuarterDate(4)" class="text-[10px] font-bold px-2 py-1 bg-white border border-slate-200 rounded text-slate-500 hover:border-blue-500 hover:text-blue-600 transition">Q4</button>
                          </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs text-slate-400 mb-1">Inicio</label>
-                            <input id="inp-start" type="date" class="w-full p-2 text-xs border border-slate-300 rounded bg-white">
+                            <input id="inp-start" type="date" class="w-full p-2 text-xs border border-slate-300 rounded bg-white text-slate-600">
                         </div>
                         <div>
                             <label class="block text-xs text-slate-400 mb-1">Fin</label>
-                            <input id="inp-end" type="date" class="w-full p-2 text-xs border border-slate-300 rounded bg-white font-medium text-slate-700">
+                            <input id="inp-end" type="date" class="w-full p-2 text-xs border border-slate-300 rounded bg-white font-bold text-slate-700">
                         </div>
                     </div>
                 </div>
                 
-                <div id="field-metrics" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-100 grid grid-cols-2 gap-4">
-                     <div class="col-span-2 text-xs font-bold text-blue-800 uppercase">Configuración Numérica KPI</div>
+                 <div id="field-metrics" class="hidden bg-blue-50/50 p-4 rounded-lg border border-blue-100 grid grid-cols-2 gap-4 relative overflow-hidden">
+                     <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+                     <div class="col-span-2 text-xs font-bold text-blue-700 uppercase tracking-wide flex items-center gap-2"><i data-lucide="hash" size="12"></i> Métricas Numéricas</div>
                      <div>
                         <label class="block text-xs text-slate-500 mb-1">Valor Inicial</label>
-                        <input id="inp-val-start" type="number" class="w-full p-2 text-sm border border-blue-200 rounded text-center bg-white font-mono">
+                        <input id="inp-val-start" type="number" class="w-full p-2 text-sm border border-blue-200 rounded text-center bg-white font-mono placeholder:text-slate-300" placeholder="0">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-500 mb-1">Meta Objetivo</label>
-                        <input id="inp-val-target" type="number" class="w-full p-2 text-sm border border-blue-200 rounded font-bold text-blue-700 text-center bg-white font-mono">
+                        <label class="block text-xs text-slate-500 mb-1">Meta / Objetivo</label>
+                        <input id="inp-val-target" type="number" class="w-full p-2 text-sm border border-blue-200 rounded font-bold text-blue-700 text-center bg-white font-mono placeholder:text-blue-200" placeholder="100">
                     </div>
                 </div>
                 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Etiquetas</label>
-                    <input id="inp-tags" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ventas, Marketing...">
+                    <input id="inp-tags" type="text" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Estrategia, Ventas...">
                 </div>
             </div>
 
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 mt-auto">
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 mt-auto rounded-b-lg">
                 <button onclick="closeModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
-                <button onclick="saveDataFromModal()" class="px-5 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">Guardar</button>
+                <button onclick="saveDataFromModal()" class="px-6 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition flex items-center gap-2">Guardar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN API
+        // --- CONFIG ---
         let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
-        
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
         let recentOwners = JSON.parse(localStorage.getItem('okr_recent_owners')) || [];
 
-        // --- API SYNC ---
+        // --- API ---
         async function loadFromGoogle() {
-            if(!API_URL) return alert("Error: URL de API no configurada.");
+            if(!API_URL) return;
             toggleLoader(true);
             try {
                 const res = await fetch(API_URL);
-                const data = await res.json();
-                db = data;
+                db = await res.json();
                 renderExplorer();
             } catch(e) { console.error(e); } finally { toggleLoader(false); }
         }
@@ -266,501 +250,400 @@
             const btn = document.getElementById('sync-status');
             if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Guardando...';
             try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(db)
-                });
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(db) });
                 if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online';
             } catch(e) {
-                if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Error';
+                if(btn) btn.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> Error';
             }
         }
+        function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
+        function configureApi() { const u = prompt("URL API:", API_URL); if(u){ localStorage.setItem('okr_api_url', u); API_URL = u; loadFromGoogle(); }}
 
-        function toggleLoader(show) {
-            const el = document.getElementById('global-loader');
-            if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
-        }
-
-        function configureApi() {
-            const url = prompt("URL Google Apps Script:", API_URL);
-            if(url) { localStorage.setItem('okr_api_url', url); API_URL = url; loadFromGoogle(); }
-        }
-
-        // --- CORE LOGIC (WEIGHTED PERCENTAGE) ---
+        // --- CALCULO ROBUSTO ---
         function calculateMetrics(item, type) {
             const now = new Date();
             const start = new Date(item.startDate);
             const end = new Date(item.endDate);
             const totalDays = Math.max(1, (end - start) / (1000 * 60 * 60 * 24));
-            const elapsedDays = Math.max(0, (now - start) / (1000 * 60 * 60 * 24));
-            let pacing = Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
+            const elapsed = Math.max(0, (now - start) / (1000 * 60 * 60 * 24));
+            const pacing = Math.min(100, Math.max(0, (elapsed / totalDays) * 100));
 
+            // Calculo KPI Numérico (Blindado contra NaN)
             if (type === 'kpi') {
-                let actual = 0;
-                if (item.targetValue > item.startValue) {
-                    actual = ((item.currentValue - item.startValue) / (item.targetValue - item.startValue)) * 100;
-                }
-                return getStatusObject(Math.min(100, Math.max(0, actual)), pacing);
+                const s = parseFloat(item.startValue) || 0;
+                const t = parseFloat(item.targetValue) || 100;
+                const c = parseFloat(item.currentValue) || s; // Default a inicio si vacío
+                
+                let progress = 0;
+                if(t > s) progress = ((c - s) / (t - s)) * 100;
+                else if(t < s) progress = ((s - c) / (s - t)) * 100; // Meta descendente (ej: reducir errores)
+                
+                return getStatusObject(Math.min(100, Math.max(0, progress)), pacing);
             }
 
-            let childrenMetrics = [];
-            // Recolectar hijos para cálculo ponderado
-            const childKpis = db.kpis.filter(k => 
-                (type === 'objective' && k.objectiveId === item.id && !k.projectId) || 
-                (type === 'project' && k.projectId === item.id)
-            );
-            childKpis.forEach(k => {
+            // Calculo Ponderado Recursivo
+            let children = [];
+            
+            // KPIs Hijos
+            const kpis = db.kpis.filter(k => (type==='objective' ? k.objectiveId===item.id && !k.projectId : k.projectId===item.id));
+            kpis.forEach(k => {
                 const m = calculateMetrics(k, 'kpi');
-                childrenMetrics.push({ progress: m.actual, weight: k.weight || 1, pacing: m.pacing });
+                children.push({ p: m.actual, w: parseFloat(k.weight)||1, pacing: m.pacing });
             });
 
-            if (type === 'objective') {
-                const childProjs = db.projects.filter(p => p.objectiveId === item.id);
-                childProjs.forEach(p => {
+            // Proyectos Hijos (Solo para Objetivos)
+            if(type === 'objective') {
+                const projs = db.projects.filter(p => p.objectiveId === item.id);
+                projs.forEach(p => {
                     const m = calculateMetrics(p, 'project');
-                    childrenMetrics.push({ progress: m.actual, weight: p.weight || 1, pacing: m.pacing });
+                    children.push({ p: m.actual, w: parseFloat(p.weight)||1, pacing: m.pacing });
                 });
             }
 
-            // Las tareas impactan al Proyecto. Si no hay KPIs en el proyecto, las tareas son el 100%.
-            // Si hay KPIs, las tareas se consideran con peso 1 por defecto (o configurable).
-            if (type === 'project') {
-                const childTasks = db.tasks.filter(t => t.projectId === item.id);
-                childTasks.forEach(t => {
-                    // Cada tarea cuenta como 1 unidad de contribución
-                    childrenMetrics.push({ progress: t.done ? 100 : 0, weight: 1, pacing: pacing });
-                });
+            // Tareas (Solo para Proyectos) - Se tratan como items de peso 1
+            if(type === 'project') {
+                const tasks = db.tasks.filter(t => t.projectId === item.id);
+                tasks.forEach(t => children.push({ p: t.done?100:0, w: 1, pacing: pacing }));
             }
 
-            if (childrenMetrics.length === 0) return { actual: 0, pacing: 0, css: 'bg-slate-200', label: 'Nuevo', textCss: 'text-slate-400' };
+            if(!children.length) return { actual: 0, pacing: 0, css: 'bg-slate-200', textCss: 'text-slate-400 border-slate-200', label: 'Nuevo' };
 
-            const totalWeight = childrenMetrics.reduce((sum, c) => sum + parseFloat(c.weight), 0);
-            const weightedSum = childrenMetrics.reduce((sum, c) => sum + (c.progress * parseFloat(c.weight)), 0);
-            const avgActual = totalWeight > 0 ? (weightedSum / totalWeight) : 0;
-            const maxPacing = Math.max(...childrenMetrics.map(c => c.pacing));
+            const totalW = children.reduce((acc, x) => acc + x.w, 0);
+            const weightedSum = children.reduce((acc, x) => acc + (x.p * x.w), 0);
+            const finalP = totalW > 0 ? weightedSum / totalW : 0;
+            const maxPacing = Math.max(...children.map(x => x.pacing));
 
-            return getStatusObject(avgActual, maxPacing);
+            return getStatusObject(finalP, maxPacing);
         }
 
         function getStatusObject(actual, pacing) {
-            let label = 'Atrasado'; let css = 'bg-off-track'; let textCss = 'text-off-track';
-            
-            if (pacing < 10) { label = 'Inicio'; css = 'bg-on-track'; textCss = 'text-on-track'; }
+            let label = 'Retrasado', css = 'bg-off-track', textCss = 'text-off-track';
+            if (pacing < 5) { label = 'Inicio'; css = 'bg-on-track'; textCss = 'text-on-track'; }
             else {
-                const ratio = actual / pacing;
-                if (ratio >= 0.9) { label = 'En Curso'; css = 'bg-on-track'; textCss = 'text-on-track'; }
-                else if (ratio >= 0.7) { label = 'Riesgo'; css = 'bg-at-risk'; textCss = 'text-at-risk'; }
+                const r = actual / pacing;
+                if (r >= 0.9) { label = 'A Tiempo'; css = 'bg-on-track'; textCss = 'text-on-track'; }
+                else if (r >= 0.7) { label = 'Riesgo'; css = 'bg-at-risk'; textCss = 'text-at-risk'; }
             }
             return { actual: Math.round(actual), pacing: Math.round(pacing), css, textCss, label };
         }
 
-        // --- RENDERIZADO EXPLORER ---
+        // --- RENDER ---
         function renderExplorer() {
             const container = document.getElementById('tree-container');
             container.innerHTML = '';
             
-            const qFilter = document.getElementById('filter-quarter').value;
-            let filteredObjs = db.objectives;
+            const q = document.getElementById('filter-quarter').value;
+            const objs = db.objectives.filter(o => {
+                if(q==='ALL') return true;
+                const m = new Date(o.endDate).getMonth() + 1;
+                if(q==='Q1') return m<=3; if(q==='Q2') return m>3&&m<=6; if(q==='Q3') return m>6&&m<=9; return m>9;
+            });
 
-            if (qFilter !== 'ALL') {
-                filteredObjs = db.objectives.filter(obj => {
-                    const d = new Date(obj.endDate);
-                    const m = d.getMonth() + 1;
-                    if (qFilter === 'Q1') return m <= 3;
-                    if (qFilter === 'Q2') return m > 3 && m <= 6;
-                    if (qFilter === 'Q3') return m > 6 && m <= 9;
-                    if (qFilter === 'Q4') return m > 9;
-                    return true;
-                });
-            }
-            
-            if(!filteredObjs.length) {
-                container.innerHTML = `<div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm bg-white">Sin objetivos para ${qFilter}.</div>`;
-                return;
-            }
+            if(!objs.length) { container.innerHTML = `<div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl text-slate-400">Sin datos para ${q}</div>`; return; }
 
-            filteredObjs.forEach(obj => {
+            objs.forEach(obj => {
                 const m = calculateMetrics(obj, 'objective');
-                const projects = db.projects.filter(p => p.objectiveId === obj.id);
-                const directKpis = db.kpis.filter(k => k.objectiveId === obj.id && !k.projectId);
+                const projs = db.projects.filter(p => p.objectiveId === obj.id);
+                const kpis = db.kpis.filter(k => k.objectiveId === obj.id && !k.projectId);
+
+                let childrenHTML = '';
+                kpis.forEach(k => childrenHTML += renderRow('kpi', k, calculateMetrics(k, 'kpi')));
                 
-                let childrenHtml = '';
-                directKpis.forEach(k => { childrenHtml += renderRow('kpi', k, calculateMetrics(k, 'kpi')); });
-                
-                projects.forEach(p => {
+                projs.forEach(p => {
                     const pm = calculateMetrics(p, 'project');
-                    const pKpis = db.kpis.filter(k => k.projectId === p.id);
-                    const pTasks = db.tasks.filter(t => t.projectId === p.id);
+                    const pkpis = db.kpis.filter(k => k.projectId === p.id);
+                    const ptasks = db.tasks.filter(t => t.projectId === p.id);
                     
-                    // Sección Tareas
-                    let taskSection = '';
-                    if(pTasks.length > 0 || true) {
-                        let tasksHtml = pTasks.map(t => `
-                            <div class="flex items-center gap-3 py-1 pl-1 hover:bg-slate-50 rounded group/item">
-                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
-                                <span class="text-xs ${t.done ? 'line-through text-slate-400' : 'text-slate-600 font-medium'}">${t.title}</span>
-                                <button onclick="deleteTask(${t.id})" class="ml-auto opacity-0 group-hover/item:opacity-100 text-slate-300 hover:text-red-500 px-2"><i data-lucide="x" size="12"></i></button>
-                            </div>
-                        `).join('');
-                        
-                        taskSection = `
-                        <div class="mt-3 mb-2">
-                             <div class="flex items-center gap-2 mb-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tareas & Hitos</span>
-                                <span class="text-[10px] bg-slate-100 px-1.5 rounded text-slate-500">${pTasks.filter(t=>t.done).length}/${pTasks.length}</span>
-                             </div>
-                             <div class="pl-2 border-l border-slate-100 space-y-0.5">
-                                ${tasksHtml}
-                                <input type="text" placeholder="+ Añadir tarea..." class="text-xs w-full bg-transparent border-none focus:ring-0 placeholder-slate-300 py-1" onkeydown="if(event.key==='Enter'){addTask(${p.id}, this.value); this.value='';}">
-                             </div>
+                    // Task UI
+                    let tasksUI = '';
+                    if(ptasks.length || true) {
+                        const list = ptasks.map(t => `
+                            <div class="flex items-center gap-3 py-1.5 pl-2 hover:bg-slate-50 rounded group/task transition">
+                                <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                                <span class="text-xs ${t.done?'line-through text-slate-400':'text-slate-600 font-medium'} flex-1">${t.title}</span>
+                                <button onclick="delTask(${t.id})" class="text-slate-300 hover:text-rose-500 px-2 opacity-0 group-hover/task:opacity-100 transition"><i data-lucide="trash-2" size="12"></i></button>
+                            </div>`).join('');
+                        tasksUI = `<div class="mt-3 mb-2 pl-2 border-l border-slate-200">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Checklist (${ptasks.filter(t=>t.done).length}/${ptasks.length})</div>
+                            ${list}
+                            <input type="text" placeholder="+ Tarea..." class="text-xs w-full bg-transparent py-1 border-b border-transparent focus:border-blue-400 outline-none transition placeholder:text-slate-300" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}">
                         </div>`;
                     }
+                    
+                    let pkpisHTML = '';
+                    pkpis.forEach(pk => pkpisHTML += renderRow('kpi', pk, calculateMetrics(pk, 'kpi')));
 
-                    let kpiHtml = '';
-                    pKpis.forEach(pk => { kpiHtml += renderRow('kpi', pk, calculateMetrics(pk, 'kpi')); });
-
-                    childrenHtml += `
-                        <div class="ml-4 pl-4 border-l-2 border-slate-100 mt-4 mb-4">
-                            ${renderRow('project', p, pm)}
-                            <div class="pl-2 mt-2">
-                                ${taskSection}
-                                ${kpiHtml}
+                    // Proyecto Row con Colapso
+                    childrenHTML += `
+                        <div class="ml-4 mt-3 mb-4">
+                            <div class="glass-panel p-0 overflow-hidden border-l-4 border-l-blue-100">
+                                ${renderRow('project', p, pm)}
+                                <div id="proj-content-${p.id}" class="accordion-content ${p.isCollapsed ? '' : 'open'} bg-slate-50/50">
+                                    <div class="accordion-inner p-3 pt-0">
+                                        ${tasksUI}
+                                        ${pkpisHTML}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
 
+                // Objetivo Card
                 container.innerHTML += `
-                <div class="glass-panel mb-6 overflow-hidden">
-                    <div class="p-4 flex items-start gap-4">
-                        <button onclick="toggleAccordion('content-${obj.id}')" class="mt-1 text-slate-400 hover:text-blue-600 transition"><i id="icon-content-${obj.id}" data-lucide="chevron-down" size="20"></i></button>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="target" class="text-blue-600" size="18"></i>
-                                        <h3 class="font-bold text-base text-slate-800 cursor-pointer hover:text-blue-600 transition" onclick="openEdit('objective', ${obj.id})">${obj.title}</h3>
-                                        ${renderTags(obj.tags)}
+                    <div class="glass-panel mb-6 overflow-hidden transition hover:shadow-md">
+                        <div class="p-5 flex items-start gap-4">
+                            <button onclick="toggleAccordion('obj-content-${obj.id}', 'icon-obj-${obj.id}')" class="mt-1 text-slate-400 hover:text-blue-600 transition"><i id="icon-obj-${obj.id}" data-lucide="chevron-down" size="20" class="rotate-icon"></i></button>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="mountain" class="text-blue-600" size="18"></i>
+                                            <h3 class="font-bold text-base text-slate-800 cursor-pointer hover:text-blue-600 transition" onclick="openEdit('objective', ${obj.id})">${obj.title}</h3>
+                                            ${renderTags(obj.tags)}
+                                        </div>
+                                        <div class="flex gap-4 text-xs text-slate-500 mt-1.5 font-medium">
+                                            <span class="flex items-center gap-1.5"><i data-lucide="user" size="12"></i> ${obj.owner||'--'}</span>
+                                            <span class="flex items-center gap-1.5"><i data-lucide="calendar" size="12"></i> ${obj.endDate}</span>
+                                        </div>
                                     </div>
-                                    <div class="flex gap-4 text-xs text-slate-500 mt-1 font-medium">
-                                        <span class="flex items-center gap-1.5"><i data-lucide="user" size="12"></i> ${obj.owner || 'Sin asignar'}</span>
-                                        <span class="flex items-center gap-1.5"><i data-lucide="calendar" size="12"></i> ${obj.endDate}</span>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${m.textCss}">${m.label}</span>
+                                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition duration-300" style="opacity: 1">
+                                            <button onclick="openModal('project', ${obj.id})" class="px-2 py-1 rounded border border-slate-200 text-[10px] font-semibold text-slate-500 hover:border-blue-400 hover:text-blue-600 bg-white transition flex items-center gap-1"><i data-lucide="folder-plus" size="12"></i> Proy</button>
+                                            <button onclick="openModal('kpi', ${obj.id}, 'objective')" class="px-2 py-1 rounded border border-slate-200 text-[10px] font-semibold text-slate-500 hover:border-blue-400 hover:text-blue-600 bg-white transition flex items-center gap-1"><i data-lucide="bar-chart-2" size="12"></i> KPI</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="flex flex-col items-end gap-2">
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded ${m.textCss}">${m.label}</span>
-                                    
-                                    <div class="flex gap-1"> 
-                                        <button onclick="openModal('project', ${obj.id})" class="px-2 py-1 rounded border border-slate-200 text-[10px] font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-600 bg-white transition flex items-center gap-1">
-                                            <i data-lucide="folder-plus" size="12"></i> Proy
-                                        </button>
-                                        <button onclick="openModal('kpi', ${obj.id}, 'objective')" class="px-2 py-1 rounded border border-slate-200 text-[10px] font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-600 bg-white transition flex items-center gap-1">
-                                            <i data-lucide="bar-chart-2" size="12"></i> KPI
-                                        </button>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-1 progress-track">
+                                        <div class="pacing-line" style="left: ${m.pacing}%"></div>
+                                        <div class="progress-fill ${m.css}" style="width: ${m.actual}%"></div>
                                     </div>
+                                    <span class="text-sm font-bold text-slate-700 w-10 text-right">${m.actual}%</span>
                                 </div>
                             </div>
-                            
-                            <div class="flex items-center gap-4">
-                                <div class="flex-1 progress-track">
-                                    <div class="pacing-line" style="left: ${m.pacing}%"></div>
-                                    <div class="progress-fill ${m.css}" style="width: ${m.actual}%;"></div>
-                                </div>
-                                <span class="text-sm font-bold text-slate-700 w-10 text-right">${m.actual}%</span>
+                        </div>
+                        <div id="obj-content-${obj.id}" class="accordion-content open">
+                            <div class="accordion-inner bg-slate-50/30 border-t border-slate-100 p-4 pt-2">
+                                ${childrenHTML || '<div class="text-xs text-slate-400 italic p-2">Sin contenido.</div>'}
                             </div>
                         </div>
-                    </div>
-                    
-                    <div id="content-${obj.id}" class="accordion-content open">
-                        <div class="accordion-inner bg-slate-50/50 border-t border-slate-100 p-4 pt-2">
-                            ${childrenHtml || '<div class="text-xs text-slate-400 p-2 italic">No hay proyectos ni KPIs asociados.</div>'}
-                        </div>
-                    </div>
-                </div>`;
+                    </div>`;
             });
             lucide.createIcons();
         }
 
         function renderRow(type, item, m) {
             const isKpi = type === 'kpi';
-            const icon = isKpi ? '<span class="kpi-tag">KPI</span>' : '<i data-lucide="folder-kanban" class="text-blue-500 fill-blue-50" size="16"></i>';
-            const bg = isKpi ? 'bg-white border-transparent' : 'bg-white border-slate-200 shadow-sm';
-            
-            const valInput = isKpi ? `
-                <div class="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 group-hover:border-blue-300 transition">
-                    <input type="number" value="${item.currentValue}" onchange="updateKpiVal(${item.id}, this.value)" 
-                    class="w-16 text-right bg-transparent text-xs font-mono font-bold focus:outline-none text-slate-700">
-                    <span class="text-[10px] text-slate-400 font-medium">/ ${item.targetValue}</span>
-                </div>
-            ` : '';
+            // Cálculo visual de peso relativo (simple, no exacto, solo referencia)
+            const weightDisplay = item.weight ? `<span class="text-[9px] text-slate-400 font-medium ml-2" title="Contribución al padre">(Impacto: ${item.weight}%)</span>` : '';
 
-            const addBtn = !isKpi ? `
-                <button onclick="openModal('kpi', ${item.id}, 'project')" class="text-[10px] bg-slate-50 border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 px-2 py-0.5 rounded transition font-semibold flex items-center gap-1">
-                    <i data-lucide="plus" size="10"></i> KPI
-                </button>
-                <button onclick="cloneProject(${item.id})" class="text-slate-400 hover:text-blue-600 px-1" title="Clonar Proyecto a otro Q"><i data-lucide="copy" size="12"></i></button>
-            ` : '';
-
-            // Mostrar % de Contribución
-            const contrib = (!isKpi || item.weight > 0) ? `<span class="contrib-tag" title="Contribución al padre">${item.weight}%</span>` : '';
-
-            return `
-            <div class="flex items-center gap-3 p-3 mb-2 rounded border ${bg} group hover:border-blue-300 transition">
-                <div class="w-8 flex justify-center flex-shrink-0">${icon}</div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <span class="text-sm font-semibold text-slate-700 truncate cursor-pointer hover:text-blue-600 transition" onclick="openEdit('${type}', ${item.id})">${item.title}</span>
-                            ${contrib}
-                            ${renderTags(item.tags)}
-                            ${addBtn}
-                        </div>
-                        <div class="flex items-center gap-3">
-                            ${valInput}
-                            <div class="w-2 h-2 rounded-full ${m.css}"></div>
+            if (type === 'project') {
+                return `
+                <div class="p-3 bg-white group">
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleProjAccordion(${item.id})" class="text-slate-400 hover:text-blue-600 transition p-1 rounded hover:bg-slate-50">
+                            <i id="icon-proj-${item.id}" data-lucide="chevron-right" size="16" class="rotate-icon ${item.isCollapsed ? '' : 'rotate-90'}"></i>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <i data-lucide="folder-kanban" class="text-blue-500" size="16"></i>
+                                    <span class="text-sm font-semibold text-slate-700 truncate cursor-pointer hover:text-blue-600 transition" onclick="openEdit('project', ${item.id})">${item.title}</span>
+                                    ${weightDisplay}
+                                    ${renderTags(item.tags)}
+                                    <button onclick="cloneProject(${item.id})" class="text-slate-300 hover:text-blue-600" title="Clonar"><i data-lucide="copy" size="12"></i></button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openModal('kpi', ${item.id}, 'project')" class="text-[10px] bg-slate-50 border border-slate-200 text-slate-500 hover:text-blue-600 px-2 py-0.5 rounded transition font-medium flex gap-1"><i data-lucide="plus" size="10"></i> KPI</button>
+                                    <div class="w-2 h-2 rounded-full ${m.css}"></div>
+                                </div>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full w-full relative overflow-hidden">
+                                <div class="pacing-line" style="left: ${m.pacing}%"></div>
+                                <div class="h-full rounded-full ${m.css} opacity-90" style="width: ${m.actual}%"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="h-2 bg-slate-100 rounded-full w-full relative overflow-hidden">
+                </div>`;
+            }
+
+            // KPI Row
+            const valInput = `
+                <div class="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 hover:border-blue-300 transition">
+                    <input type="number" value="${item.currentValue}" onchange="updateKpiVal(${item.id}, this.value)" 
+                    class="w-16 text-right bg-transparent text-xs font-mono font-bold focus:outline-none text-slate-700 placeholder:text-slate-300" placeholder="${item.startValue||0}">
+                    <span class="text-[10px] text-slate-400 font-medium">/ ${item.targetValue}</span>
+                </div>`;
+
+            return `
+            <div class="flex items-center gap-3 p-3 mb-2 rounded border border-slate-200 bg-white hover:border-blue-300 transition group ml-1">
+                <div class="w-6 flex justify-center"><span class="kpi-tag">KPI</span></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="text-xs font-semibold text-slate-700 truncate cursor-pointer hover:text-blue-600 transition" onclick="openEdit('kpi', ${item.id})">${item.title}</span>
+                            ${weightDisplay}
+                        </div>
+                        ${valInput}
+                    </div>
+                    <div class="h-1.5 bg-slate-100 rounded-full w-full relative overflow-hidden">
                         <div class="pacing-line" style="left: ${m.pacing}%"></div>
-                        <div class="h-full rounded-full ${m.css} opacity-80" style="width: ${m.actual}%"></div>
+                        <div class="h-full rounded-full ${m.css}" style="width: ${m.actual}%"></div>
                     </div>
                 </div>
             </div>`;
         }
 
-        // --- DASHBOARD TABLE ---
         function renderDashboard() {
             const tbody = document.getElementById('report-body');
             tbody.innerHTML = '';
+            if(!db.objectives.length) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">Sin datos.</td></tr>'; return; }
             
-            if(!db.objectives.length) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-slate-400">Sin datos.</td></tr>';
-                return;
-            }
-
             db.objectives.forEach(obj => {
                 const m = calculateMetrics(obj, 'objective');
                 tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <div class="font-bold text-sm text-slate-700">${obj.title}</div>
-                            <div class="text-xs text-slate-400">${obj.tags ? obj.tags.join(', ') : ''}</div>
-                        </td>
-                        <td class="text-xs text-slate-500 font-medium">${obj.endDate}</td>
-                        <td><div class="owner-chip inline-block">${obj.owner || 'N/A'}</div></td>
-                        <td>
-                             <div class="flex items-center gap-3">
-                                <div class="flex-1 h-3 bg-slate-100 rounded-full relative overflow-hidden">
-                                    <div class="h-full rounded-full ${m.css}" style="width: ${m.actual}%"></div>
-                                </div>
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4"><div class="font-bold text-slate-700">${obj.title}</div><div class="text-xs text-slate-400">${obj.tags?.join(', ')||''}</div></td>
+                        <td class="p-4 text-xs font-mono text-slate-500">${obj.endDate}</td>
+                        <td class="p-4"><div class="owner-chip inline-block">${obj.owner||'--'}</div></td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1 h-2 bg-slate-100 rounded-full relative overflow-hidden"><div class="h-full rounded-full ${m.css}" style="width: ${m.actual}%"></div></div>
                                 <span class="text-xs font-bold w-8 text-right">${m.actual}%</span>
                             </div>
                         </td>
-                        <td><span class="text-[10px] font-bold px-2 py-1 rounded ${m.textCss}">${m.label}</span></td>
-                    </tr>
-                `;
+                        <td class="p-4 text-center"><span class="text-[10px] font-bold px-2 py-1 rounded ${m.textCss}">${m.label}</span></td>
+                    </tr>`;
             });
         }
 
-        // --- CLONACIÓN DE PROYECTOS ---
-        function cloneProject(projId) {
-            const p = db.projects.find(x => x.id === projId);
-            if (!p) return;
-            
-            const newQ = prompt("¿Clonar para qué periodo? (Ej: Q2)", "Q2");
-            if (!newQ) return;
-
-            // 1. Clonar Proyecto (Reset fechas y título)
-            const newProjId = Date.now();
-            const newProj = { ...p, id: newProjId, title: `${newQ} - ${p.title}`, startDate: "", endDate: "" };
-            
-            // 2. Clonar KPIs hijos (Reset valores)
-            const childKpis = db.kpis.filter(k => k.projectId === projId);
-            childKpis.forEach(k => {
-                db.kpis.push({ 
-                    ...k, 
-                    id: Date.now() + Math.random(), 
-                    projectId: newProjId, 
-                    currentValue: k.startValue, // Reset a inicio
-                    startDate: "", endDate: ""
-                });
-            });
-
-            // 3. Clonar Tareas hijas (Reset a unchecked)
-            const childTasks = db.tasks.filter(t => t.projectId === projId);
-            childTasks.forEach(t => {
-                db.tasks.push({ ...t, id: Date.now() + Math.random(), projectId: newProjId, done: false });
-            });
-
-            db.projects.push(newProj);
-            saveToGoogle();
-            renderExplorer();
-            alert("Proyecto clonado. Por favor edita las nuevas fechas.");
+        // --- ACCIONES ---
+        function toggleAccordion(id, iconId) {
+            document.getElementById(id).classList.toggle('open');
+            document.getElementById(iconId).classList.toggle('rotate-90');
         }
-
-        // --- INTERACCIONES Y UTILIDADES ---
-        function toggleAccordion(id) {
-            const el = document.getElementById(id);
-            const icon = document.getElementById('icon-' + id);
-            el.classList.toggle('open');
-            if(icon) icon.style.transform = el.classList.contains('open') ? 'rotate(0deg)' : 'rotate(-90deg)';
+        function toggleProjAccordion(pid) {
+            const p = db.projects.find(x => x.id === pid);
+            if(p) { p.isCollapsed = !p.isCollapsed; renderExplorer(); } // No guardamos collapse en DB para no saturar, o sí si prefieres
         }
-
-        function updateKpiVal(id, val) {
-            const k = db.kpis.find(x => x.id === id);
-            if(k) { k.currentValue = parseFloat(val); saveToGoogle(); renderExplorer(); }
-        }
-        function toggleTask(id) {
-            const t = db.tasks.find(x => x.id === id);
-            if(t) { t.done = !t.done; saveToGoogle(); renderExplorer(); }
-        }
-        function addTask(projId, title) {
-            if(!title) return;
-            db.tasks.push({ id: Date.now(), projectId: projId, title, done: false });
+        function updateKpiVal(id, v) { const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=parseFloat(v); saveToGoogle(); renderExplorer(); } }
+        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); } }
+        function addTask(pid, t) { if(t){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); } }
+        function delTask(id) { if(confirm('¿Borrar?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
+        
+        function cloneProject(pid) {
+            const p = db.projects.find(x=>x.id===pid); if(!p) return;
+            const q = prompt("Nuevo prefijo (Ej: Q2 - ):", "Q2 - "); if(!q) return;
+            const newPid = Date.now();
+            db.projects.push({...p, id:newPid, title: q + p.title, startDate:'', endDate:'', isCollapsed:false});
+            db.kpis.filter(k=>k.projectId===pid).forEach(k => db.kpis.push({...k, id:Date.now()+Math.random(), projectId:newPid, currentValue:k.startValue}));
+            db.tasks.filter(t=>t.projectId===pid).forEach(t => db.tasks.push({...t, id:Date.now()+Math.random(), projectId:newPid, done:false}));
             saveToGoogle(); renderExplorer();
-        }
-        function deleteTask(id) {
-            if(confirm('¿Eliminar?')) {
-                db.tasks = db.tasks.filter(t => t.id !== id);
-                saveToGoogle(); renderExplorer();
-            }
-        }
-        function renderTags(tags) {
-            return tags ? tags.map(t => `<span class="text-[9px] text-slate-400 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded">${t}</span>`).join('') : '';
         }
 
         // --- MODAL ---
-        function openModal(type, parentId, context) {
+        function openModal(type, pid, ctx) {
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('edit-id').value = '';
             document.getElementById('entity-type').value = type;
-            document.getElementById('parent-id').value = parentId || '';
-            document.getElementById('context-type').value = context || '';
-
-            const titles = { 'objective': 'Nuevo Objetivo Estratégico', 'project': 'Nuevo Proyecto / Iniciativa', 'kpi': 'Nuevo Indicador Clave (KPI)' };
-            document.getElementById('modal-title').innerText = titles[type];
+            document.getElementById('parent-id').value = pid||'';
+            document.getElementById('context-type').value = ctx||'';
+            document.getElementById('modal-title').innerText = type==='objective'?'Nuevo Objetivo':type==='project'?'Nuevo Proyecto':'Nuevo KPI';
             
-            document.getElementById('field-weight').classList.toggle('hidden', type === 'objective');
             document.getElementById('field-metrics').classList.toggle('hidden', type !== 'kpi');
             
             const d = new Date().toISOString().split('T')[0];
-            document.getElementById('inp-start').value = d;
-            document.getElementById('inp-end').value = d;
-            ['inp-title','inp-owner','inp-tags','inp-val-start','inp-val-target'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('inp-weight').value = ""; // Dejar vacío para forzar input visualmente o usar placeholder
-
-            updateOwnerSuggestions();
+            document.getElementById('inp-start').value = d; document.getElementById('inp-end').value = d;
+            ['inp-title','inp-owner','inp-tags','inp-val-start','inp-val-target','inp-weight'].forEach(i=>document.getElementById(i).value='');
+            
+            // Render Sugerencias Dueño
+            const sug = document.getElementById('owner-suggestions'); sug.innerHTML='';
+            recentOwners.forEach(o => {
+                const c = document.createElement('div'); c.className='owner-chip'; c.innerText=o; 
+                c.onclick=()=>document.getElementById('inp-owner').value=o; sug.appendChild(c);
+            });
         }
-
         function openEdit(type, id) {
-            const item = (type === 'objective' ? db.objectives : type === 'project' ? db.projects : db.kpis).find(x=>x.id===id);
-            if(!item) return;
+            const i = (type==='objective'?db.objectives:type==='project'?db.projects:db.kpis).find(x=>x.id===id); if(!i)return;
             openModal(type, null, null);
-            document.getElementById('edit-id').value = id;
-            document.getElementById('modal-title').innerText = "Editar " + type;
-            document.getElementById('inp-title').value = item.title;
-            document.getElementById('inp-owner').value = item.owner || '';
-            document.getElementById('inp-weight').value = item.weight || 1;
-            document.getElementById('inp-start').value = item.startDate;
-            document.getElementById('inp-end').value = item.endDate;
-            document.getElementById('inp-tags').value = item.tags ? item.tags.join(', ') : '';
-            if(type === 'kpi') {
-                document.getElementById('inp-val-start').value = item.startValue;
-                document.getElementById('inp-val-target').value = item.targetValue;
-            }
+            document.getElementById('edit-id').value=id; document.getElementById('modal-title').innerText='Editar '+type;
+            document.getElementById('inp-title').value=i.title; document.getElementById('inp-owner').value=i.owner||'';
+            document.getElementById('inp-weight').value=i.weight||''; 
+            document.getElementById('inp-start').value=i.startDate; document.getElementById('inp-end').value=i.endDate;
+            document.getElementById('inp-tags').value=i.tags?.join(', ')||'';
+            if(type==='kpi'){ document.getElementById('inp-val-start').value=i.startValue; document.getElementById('inp-val-target').value=i.targetValue; }
         }
         function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
-
+        
         function saveDataFromModal() {
             const id = document.getElementById('edit-id').value;
             const type = document.getElementById('entity-type').value;
-            const ownerName = document.getElementById('inp-owner').value.trim();
+            const pid = parseInt(document.getElementById('parent-id').value);
+            const w = parseFloat(document.getElementById('inp-weight').value)||0; // Si vacio, 0 peso (informativo)
             
-            if(ownerName && !recentOwners.includes(ownerName)) {
-                recentOwners.unshift(ownerName);
-                if(recentOwners.length > 8) recentOwners.pop();
-                localStorage.setItem('okr_recent_owners', JSON.stringify(recentOwners));
-            }
-
             const common = {
                 title: document.getElementById('inp-title').value,
-                owner: ownerName,
-                weight: parseFloat(document.getElementById('inp-weight').value) || 1, // Ahora tratado como % o peso relativo
+                owner: document.getElementById('inp-owner').value,
+                weight: w,
                 startDate: document.getElementById('inp-start').value,
                 endDate: document.getElementById('inp-end').value,
                 tags: document.getElementById('inp-tags').value.split(',').map(s=>s.trim()).filter(Boolean)
             };
+            
+            // Guardar dueño reciente
+            if(common.owner && !recentOwners.includes(common.owner)) { recentOwners.unshift(common.owner); recentOwners=recentOwners.slice(0,8); localStorage.setItem('okr_recent_owners', JSON.stringify(recentOwners)); }
 
-            if(id) { 
+            if(id) {
                 const numId = parseInt(id);
-                let col = type === 'objective' ? db.objectives : type === 'project' ? db.projects : db.kpis;
-                let idx = col.findIndex(x => x.id === numId);
-                if(idx !== -1) {
-                    col[idx] = { ...col[idx], ...common };
+                const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis;
+                const idx = list.findIndex(x=>x.id===numId);
+                if(idx!==-1) {
+                    list[idx] = {...list[idx], ...common};
                     if(type==='kpi') {
-                        col[idx].startValue = parseFloat(document.getElementById('inp-val-start').value);
-                        col[idx].targetValue = parseFloat(document.getElementById('inp-val-target').value);
+                         list[idx].startValue = document.getElementById('inp-val-start').value; // Guardar como string raw para no perder "0"
+                         list[idx].targetValue = document.getElementById('inp-val-target').value;
                     }
                 }
-            } else { 
-                const pid = parseInt(document.getElementById('parent-id').value);
-                const ctx = document.getElementById('context-type').value;
-                const newItem = { id: Date.now(), ...common };
-                if(type === 'objective') db.objectives.push(newItem);
-                else if(type === 'project') { newItem.objectiveId = pid; db.projects.push(newItem); }
-                else if(type === 'kpi') {
-                    newItem.startValue = parseFloat(document.getElementById('inp-val-start').value);
-                    newItem.targetValue = parseFloat(document.getElementById('inp-val-target').value);
+            } else {
+                const newItem = { id:Date.now(), ...common };
+                if(type==='objective') db.objectives.push(newItem);
+                else if(type==='project') { newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); }
+                else { 
+                    newItem.startValue = document.getElementById('inp-val-start').value;
+                    newItem.targetValue = document.getElementById('inp-val-target').value;
                     newItem.currentValue = newItem.startValue;
-                    if(ctx === 'objective') newItem.objectiveId = pid; else newItem.projectId = pid;
+                    if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid;
                     db.kpis.push(newItem);
                 }
             }
             saveToGoogle(); closeModal(); renderExplorer();
         }
 
-        // --- UTILIDADES EXTRA ---
+        // Utils
         function setQuarterDate(q) {
-            const year = new Date().getFullYear();
-            let dateStr = q === 1 ? `${year}-03-31` : q === 2 ? `${year}-06-30` : q === 3 ? `${year}-09-30` : `${year}-12-31`;
-            document.getElementById('inp-end').value = dateStr;
+            const y = new Date().getFullYear();
+            const d = q===1?`${y}-03-31`:q===2?`${y}-06-30`:q===3?`${y}-09-30`:`${y}-12-31`;
+            document.getElementById('inp-end').value = d;
         }
-
-        function updateOwnerSuggestions() {
-            const container = document.getElementById('owner-suggestions');
-            container.innerHTML = '';
-            recentOwners.forEach(name => {
-                const chip = document.createElement('div');
-                chip.className = 'owner-chip';
-                chip.innerText = name;
-                chip.onclick = () => document.getElementById('inp-owner').value = name;
-                container.appendChild(chip);
+        function renderTags(t) { return t?.map(x=>`<span class="text-[9px] bg-slate-100 px-1 rounded text-slate-500 border border-slate-200">${x}</span>`).join('')||''; }
+        function switchView(v) {
+            document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer');
+            document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard');
+            if(v==='dashboard') renderDashboard();
+        }
+        function exportCSV() {
+            let csv = "Objetivo,Periodo,Dueño,Progreso\n";
+            db.objectives.forEach(o=>{
+                const m = calculateMetrics(o,'objective');
+                csv += `"${o.title}","${o.endDate}","${o.owner}","${m.actual}%"\n`;
             });
+            const b = new Blob([csv],{type:'text/csv'});
+            const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='okr_report.csv'; a.click();
         }
 
-        function switchView(view) {
-            document.getElementById('view-explorer').classList.toggle('hidden', view !== 'explorer');
-            document.getElementById('view-dashboard').classList.toggle('hidden', view !== 'dashboard');
-            
-            const btnEx = document.getElementById('btn-explorer');
-            const btnDb = document.getElementById('btn-dashboard');
-            const activeClass = ['bg-blue-50', 'text-blue-700', 'font-semibold'];
-            const inactiveClass = ['hover:bg-slate-50', 'text-slate-500', 'hover:text-slate-900', 'font-medium'];
-            
-            if(view === 'explorer') {
-                btnEx.classList.add(...activeClass); btnEx.classList.remove(...inactiveClass);
-                btnDb.classList.remove(...activeClass); btnDb.classList.add(...inactiveClass);
-            } else {
-                btnDb.classList.add(...activeClass); btnDb.classList.remove(...inactiveClass);
-                btnEx.classList.remove(...activeClass); btnEx.classList.add(...inactiveClass);
-                renderDashboard(); // Render Tabla
-            }
-        }
-        
         // Init
-        if(API_URL) loadFromGoogle();
-        else renderExplorer();
+        if(API_URL) loadFromGoogle(); else renderExplorer();
     </script>
 </body>
 </html>
