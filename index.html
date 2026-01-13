@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OKR - JO | Gestión Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-800">OKR - JO</h1>
+            <div id="global-status" class="px-4 py-2 rounded-full text-white font-bold text-sm">Cargando...</div>
+        </header>
+
+        <section class="bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Nuevo Objetivo</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input id="title" type="text" placeholder="Título del Objetivo" class="p-2 border rounded">
+                <input id="target" type="number" placeholder="Meta Numérica" class="p-2 border rounded">
+                <input id="current" type="number" placeholder="Valor Actual" class="p-2 border rounded">
+                <input id="deadline" type="date" class="p-2 border rounded">
+                <button onclick="addOKR()" class="md:col-span-2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Agregar OKR</button>
+            </div>
+        </section>
+
+        <div id="okr-list" class="space-y-4"></div>
+    </div>
+
+    <script>
+        let okrs = JSON.parse(localStorage.getItem('okrs_jo')) || [];
+
+        function addOKR() {
+            const okr = {
+                id: Date.now(),
+                title: document.getElementById('title').value,
+                target: parseFloat(document.getElementById('target').value),
+                current: parseFloat(document.getElementById('current').value),
+                start_date: new Date().toISOString().split('T')[0],
+                deadline: document.getElementById('deadline').value
+            };
+            okrs.push(okr);
+            save();
+            render();
+        }
+
+        function calculateStatus(okr) {
+            const start = new Date(okr.start_date);
+            const end = new Date(okr.deadline);
+            const now = new Date();
+            
+            const totalTime = end - start;
+            const elapsedTime = now - start;
+            const expectedProgress = Math.max(0, Math.min(1, elapsedTime / totalTime));
+            const actualProgress = okr.current / okr.target;
+            
+            const ratio = expectedProgress > 0 ? (actualProgress / expectedProgress) : 1;
+            
+            if (ratio >= 1) return { label: 'ON TRACK', color: 'bg-green-500', pct: actualProgress };
+            if (ratio >= 0.8) return { label: 'AT RISK', color: 'bg-yellow-500', pct: actualProgress };
+            return { label: 'OFF TRACK', color: 'bg-red-500', pct: actualProgress };
+        }
+
+        function render() {
+            const list = document.getElementById('okr-list');
+            list.innerHTML = '';
+            
+            okrs.forEach(okr => {
+                const status = calculateStatus(okr);
+                const pct = Math.round(status.pct * 100);
+                
+                list.innerHTML += `
+                    <div class="bg-white p-5 rounded-lg shadow border-l-8 ${status.color.replace('bg-', 'border-')}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-lg">${okr.title}</h3>
+                                <p class="text-xs text-gray-500">Vence: ${okr.deadline}</p>
+                            </div>
+                            <span class="${status.color} text-white text-[10px] px-2 py-1 rounded font-bold">${status.label}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 h-4 rounded-full overflow-hidden mt-3">
+                            <div class="${status.color} h-full transition-all" style="width: ${pct}%"></div>
+                        </div>
+                        <p class="text-right text-sm mt-1 font-mono">${okr.current} / ${okr.target} (${pct}%)</p>
+                    </div>
+                `;
+            });
+        }
+
+        function save() {
+            localStorage.setItem('okrs_jo', JSON.stringify(okrs));
+        }
+
+        render();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
