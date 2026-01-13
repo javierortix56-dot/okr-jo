@@ -32,7 +32,9 @@
         /* Chips */
         .kpi-tag { font-size: 10px; font-weight: 800; color: var(--primary); background: #eff6ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bfdbfe; }
         .contrib-tag { font-size: 10px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; }
-        
+        .owner-chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: #f8fafc; border: 1px solid #cbd5e1; cursor: pointer; }
+        .owner-chip:hover { background: #e2e8f0; border-color: #94a3b8; }
+
         /* Acordeón */
         .accordion-content { transition: grid-template-rows 0.2s ease-out; display: grid; grid-template-rows: 0fr; }
         .accordion-content.open { grid-template-rows: 1fr; }
@@ -220,7 +222,7 @@
             if (type === 'kpi') {
                 const s = parseFloat(item.startValue) || 0;
                 const t = parseFloat(item.targetValue) || 100;
-                // Importante: Permitir 0 como valor válido, no falsy
+                // Importante: Permitir 0 como valor válido
                 const c = (item.currentValue !== undefined && item.currentValue !== "") ? parseFloat(item.currentValue) : s;
                 
                 let rawProgress = 0;
@@ -269,7 +271,6 @@
         }
 
         function getStatusObject(actual, pacing) {
-            // Regla simple: Verde si actual >= pacing * 0.9
             let label = 'Atrasado', css = 'bg-off-track', textCss = 'text-off-track';
             if (pacing < 5) { label = 'Inicio'; css = 'bg-on-track'; textCss = 'text-on-track'; }
             else {
@@ -467,7 +468,7 @@
         // --- ACCIONES ---
         function toggleAccordion(id, iconId) { document.getElementById(id).classList.toggle('open'); document.getElementById(iconId).classList.toggle('rotate-90'); }
         function toggleProjAccordion(pid) { const p = db.projects.find(x => x.id === pid); if(p) { p.isCollapsed = !p.isCollapsed; renderExplorer(); } }
-        function updateKpiVal(id, v) { const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); } } // Guardamos raw, calc hace parse
+        function updateKpiVal(id, v) { const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); } } 
         function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); } }
         function addTask(pid, t) { if(t){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); } }
         function delTask(id) { if(confirm('¿Borrar?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
