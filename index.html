@@ -1,486 +1,515 @@
 <!DOCTYPE html>
-<html lang="es" class="bg-slate-50">
+<html lang="es" class="bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viva Goals Clone | OKR Manager</title>
+    <title>OKR Manager | Viva Clone v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap');
-        body { family: 'Segoe UI', sans-serif; }
-        /* Utilidades personalizadas para simular Viva Goals */
-        .glass-card { background: white; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s; }
-        .glass-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.08); border-color: #cbd5e1; }
-        .pacing-marker { position: absolute; top: 0; bottom: 0; border-right: 2px dashed #94a3b8; z-index: 10; opacity: 0.7; }
-        .avatar-circle { width: 24px; height: 24px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
-        .nested-connector { border-left: 2px solid #e2e8f0; margin-left: 1.5rem; padding-left: 1.5rem; }
-        /* Colores de estado estilo MS */
-        .status-on-track { background-color: #10b981; } /* Verde */
-        .status-at-risk { background-color: #f59e0b; } /* Amarillo/Naranja */
-        .status-off-track { background-color: #ef4444; } /* Rojo */
-        .bg-on-track-subtle { background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-        .bg-at-risk-subtle { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-        .bg-off-track-subtle { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        body { font-family: 'Segoe UI', sans-serif; }
+        
+        /* Estilos Compactos y Clean */
+        .glass-card { background: white; border: 1px solid #e2e8f0; transition: all 0.2s; }
+        .glass-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        
+        /* Línea de Pacing (Dónde deberías estar) */
+        .pacing-marker { position: absolute; top: 0; bottom: 0; border-right: 2px dashed #64748b; z-index: 10; opacity: 0.5; }
+        
+        /* Colores de Estado */
+        .status-on-track { background-color: #10b981; }
+        .status-at-risk { background-color: #f59e0b; }
+        .status-off-track { background-color: #ef4444; }
+        .text-on-track { color: #059669; background-color: #ecfdf5; }
+        .text-at-risk { color: #b45309; background-color: #fffbeb; }
+        .text-off-track { color: #b91c1c; background-color: #fef2f2; }
+
+        /* Utilidad para ocultar/mostrar con animación */
+        .accordion-content { transition: max-height 0.3s ease-in-out; overflow: hidden; }
+        .rotate-icon { transition: transform 0.2s; }
+        .expanded .rotate-icon { transform: rotate(90deg); }
     </style>
 </head>
 <body class="text-slate-700 h-screen flex overflow-hidden">
 
-    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl flex-shrink-0">
-        <div class="p-6 flex items-center gap-3 font-bold text-white text-xl tracking-tight">
-            <i data-lucide="target" class="text-blue-400"></i>
-            <span>Viva Goals <span class="text-xs font-normal opacity-50">Clone</span></span>
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl flex-shrink-0 z-20">
+        <div class="p-5 flex items-center gap-3 font-bold text-white text-lg border-b border-slate-800">
+            <i data-lucide="layers" class="text-blue-400"></i>
+            <span>OKR Manager <span class="text-xs font-normal opacity-50 ml-1">v2.0</span></span>
         </div>
-        <nav class="flex-1 px-4 space-y-2">
-            <button onclick="switchView('dashboard')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition text-left" id="nav-dashboard">
-                <i data-lucide="layout-dashboard" size="20"></i> Dashboard
+        <nav class="flex-1 px-3 py-4 space-y-1">
+            <button onclick="switchView('explorer')" class="w-full flex items-center gap-3 px-3 py-2 rounded-md bg-slate-800 text-white shadow-sm text-sm font-medium transition" id="nav-explorer">
+                <i data-lucide="list-tree" size="18"></i> Mis OKRs
             </button>
-            <button onclick="switchView('explorer')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-800 text-white transition text-left shadow-inner" id="nav-explorer">
-                <i data-lucide="list-tree" size="20"></i> Explorador OKR
+            <button onclick="switchView('dashboard')" class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800 hover:text-white text-sm font-medium transition" id="nav-dashboard">
+                <i data-lucide="layout-dashboard" size="18"></i> Dashboard
             </button>
         </nav>
-        <div class="p-4">
-             <button onclick="exportData()" class="w-full flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white transition py-2 border border-slate-700 rounded">
+        <div class="p-4 border-t border-slate-800">
+             <button onclick="exportData()" class="w-full flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white transition py-2 border border-slate-700 rounded hover:bg-slate-800">
                 <i data-lucide="download" size="14"></i> Backup Datos
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-[#f3f4f6] p-8">
+    <main class="flex-1 overflow-y-auto bg-[#f8fafc] p-6">
         
-        <div id="view-dashboard" class="hidden space-y-8 max-w-5xl mx-auto">
-             <header>
-                <h2 class="text-3xl font-bold text-slate-800">Resumen Ejecutivo</h2>
-                <p class="text-slate-500">Estado de salud de todos los objetivos y proyectos.</p>
-            </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-card p-6 rounded-xl flex flex-col items-center justify-center">
-                    <span class="text-sm text-slate-500 font-semibold uppercase tracking-wider">Progreso Global</span>
-                    <div id="dash-global-progress" class="text-5xl font-bold text-blue-600 mt-2">0%</div>
-                </div>
-                <div class="glass-card p-6 rounded-xl md:col-span-2 flex items-center justify-around">
-                    <div class="h-40 w-40">
-                        <canvas id="statusChart"></canvas>
-                    </div>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[#10b981]"></span> On Track (A tiempo)</div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[#f59e0b]"></span> At Risk (Riesgo)</div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-[#ef4444]"></span> Off Track (Retrasado)</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <div id="view-explorer" class="space-y-6 max-w-6xl mx-auto">
-            <header class="flex justify-between items-end">
+        <div id="view-explorer" class="max-w-5xl mx-auto space-y-6">
+            <header class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-3xl font-bold text-slate-800">Explorador de Objetivos</h2>
-                    <p class="text-slate-500">Vista jerárquica: Objetivos > Proyectos > KPIs</p>
+                    <h2 class="text-2xl font-bold text-slate-800">Mis Objetivos</h2>
+                    <p class="text-xs text-slate-500">Gestión jerárquica de rendimiento</p>
                 </div>
-                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 font-semibold transition">
-                    <i data-lucide="plus-circle" size="18"></i> Nuevo Objetivo
+                <button onclick="openModal('objective')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-sm flex items-center gap-2 text-sm font-semibold transition">
+                    <i data-lucide="plus" size="16"></i> Nuevo Objetivo
                 </button>
             </header>
 
-            <div id="tree-container" class="space-y-8">
+            <div id="tree-container" class="space-y-4">
                 </div>
+        </div>
+
+        <div id="view-dashboard" class="hidden max-w-5xl mx-auto space-y-6">
+             <header>
+                <h2 class="text-2xl font-bold text-slate-800">Resumen Ejecutivo</h2>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div class="glass-card p-6 rounded-lg flex flex-col items-center justify-center bg-white shadow-sm">
+                    <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Avance Global</span>
+                    <div id="dash-global-progress" class="text-4xl font-bold text-blue-600 mt-2">0%</div>
+                </div>
+                <div class="glass-card p-6 rounded-lg md:col-span-2 flex items-center justify-around bg-white shadow-sm">
+                    <div class="h-32 w-32">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="space-y-2 text-xs font-medium">
+                        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#10b981]"></span> On Track</div>
+                        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#f59e0b]"></span> At Risk</div>
+                        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#ef4444]"></span> Off Track</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
-    <div id="modal-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex justify-end transition-opacity">
-        <div id="modal-panel" class="bg-white w-full max-w-md h-full shadow-2xl p-8 overflow-y-auto transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-            <div class="flex justify-between items-center mb-8">
-                <h3 id="modal-title" class="text-2xl font-bold text-slate-800">Crear...</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-800 bg-slate-100 p-2 rounded-full transition"><i data-lucide="x"></i></button>
+    <div id="modal-backdrop" class="fixed inset-0 bg-black/30 backdrop-blur-[2px] hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 id="modal-title" class="text-lg font-bold text-slate-800">Crear Elemento</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" size="20"></i></button>
             </div>
             
-            <input type="hidden" id="parent-id">
-            <input type="hidden" id="entity-type">
-
-            <div class="space-y-6 flex-1">
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="parent-id">
+                <input type="hidden" id="entity-type">
+                
                 <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Título</label>
-                    <input id="inp-title" type="text" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold" placeholder="Ej: Aumentar ventas Q3">
-                </div>
-                 <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><i data-lucide="user" size="16"></i> Responsable (Owner)</label>
-                    <input id="inp-owner" type="text" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nombre o email">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Título</label>
+                    <input id="inp-title" type="text" class="w-full p-2 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Escribe el nombre...">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Inicio</label>
-                        <input id="inp-start-date" type="date" class="w-full p-3 border border-slate-300 rounded-lg text-sm">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Responsable</label>
+                        <input id="inp-owner" type="text" class="w-full p-2 text-sm border border-slate-300 rounded" placeholder="Ej: JP">
+                    </div>
+                    <div id="field-tags">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Etiqueta</label>
+                        <input id="inp-tags" type="text" class="w-full p-2 text-sm border border-slate-300 rounded" placeholder="Ej: Q1, Venta">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Inicio</label>
+                        <input id="inp-start-date" type="date" class="w-full p-2 text-sm border border-slate-300 rounded text-slate-600">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Fin (Deadline)</label>
-                        <input id="inp-end-date" type="date" class="w-full p-3 border border-slate-300 rounded-lg text-sm">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fin</label>
+                        <input id="inp-end-date" type="date" class="w-full p-2 text-sm border border-slate-300 rounded text-slate-600">
                     </div>
                 </div>
 
-                <div id="field-tags" class="hidden">
-                    <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><i data-lucide="tag" size="16"></i> Etiquetas</label>
-                    <input id="inp-tags" type="text" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Separadas por coma: Urgente, Q3, Marketing">
-                </div>
-
-                <div id="field-metrics" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-4">
-                    <h4 class="font-bold text-blue-800 flex items-center gap-2"><i data-lucide="bar-chart-2" size="18"></i> Configuración de KPI</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Valor Inicial</label>
-                            <input id="inp-val-start" type="number" class="w-full p-2 border border-slate-300 bg-white rounded font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Meta (Target)</label>
-                            <input id="inp-val-target" type="number" class="w-full p-2 border border-slate-300 bg-white rounded font-mono font-bold text-blue-700">
-                        </div>
+                <div id="field-metrics" class="hidden bg-blue-50 p-3 rounded border border-blue-100 grid grid-cols-2 gap-3">
+                     <div class="col-span-2 text-xs font-bold text-blue-800 flex items-center gap-1"><i data-lucide="hash" size="12"></i> Métricas Numéricas</div>
+                     <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Inicial</label>
+                        <input id="inp-val-start" type="number" class="w-full p-1.5 text-sm border border-slate-300 rounded bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Meta</label>
+                        <input id="inp-val-target" type="number" class="w-full p-1.5 text-sm border border-slate-300 rounded bg-white font-bold text-blue-700">
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 pt-4 border-t flex gap-4">
-                <button onclick="closeModal()" class="flex-1 py-3 text-slate-700 font-semibold hover:bg-slate-100 rounded-lg transition">Cancelar</button>
-                <button onclick="saveEntity()" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition">Guardar</button>
+            <div class="px-6 py-3 bg-slate-50 flex justify-end gap-2 border-t">
+                <button onclick="closeModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded transition">Cancelar</button>
+                <button onclick="saveEntity()" class="px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded hover:bg-blue-700 shadow-sm transition">Guardar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. SIMULACIÓN DE BASE DE DATOS (Estructura Relacional en Memoria) ---
-        // Esto es lo más robusto que podemos hacer sin un backend real.
-        let db = JSON.parse(localStorage.getItem('viva_goals_clone_db')) || {
-            objectives: [], // Nivel 1: Objetivos Estratégicos
-            projects: [],   // Nivel 2: Proyectos/Iniciativas (Hijos de Objetivos)
-            kpis: []        // Nivel 3: KPIs/Resultados Clave (Hijos de Proyectos)
-        };
+        // 1. BASE DE DATOS LOCAL
+        let db = JSON.parse(localStorage.getItem('okr_v2_db')) || { objectives: [], projects: [], kpis: [] };
+        let chartInstance = null;
 
-        let chartInstance = null; // Variable global para el gráfico
+        // 2. COLORES PARA ETIQUETAS (Pasteles)
+        const tagColors = [
+            'bg-blue-100 text-blue-700 border-blue-200',
+            'bg-green-100 text-green-700 border-green-200',
+            'bg-purple-100 text-purple-700 border-purple-200',
+            'bg-orange-100 text-orange-700 border-orange-200',
+            'bg-pink-100 text-pink-700 border-pink-200'
+        ];
 
-        // --- 2. MOTOR DE CÁLCULO (El corazón del sistema) ---
-
-        // Función auxiliar para obtener iniciales del responsable
-        function getInitials(name) {
-            if (!name) return 'N/A';
-            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+        function getTagClass(text) {
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) hash = text.charCodeAt(i) + ((hash << 5) - hash);
+            const index = Math.abs(hash) % tagColors.length;
+            return tagColors[index];
         }
 
-        // Calcula el estado de un KPI basado en números
-        function calculateKpiMetrics(kpi) {
+        // 3. LÓGICA DE CÁLCULO
+        function calculateMetrics(item, type) {
             const now = new Date();
-            const start = new Date(kpi.startDate);
-            const end = new Date(kpi.endDate);
-            
-            // Pacing (Avance esperado según el tiempo transcurrido)
-            const totalDuration = Math.max(1, end - start);
+            const start = new Date(item.startDate);
+            const end = new Date(item.endDate);
+            const totalTime = Math.max(1, end - start);
             const elapsed = Math.max(0, now - start);
-            let pacingPct = (elapsed / totalDuration) * 100;
-            pacingPct = Math.min(100, Math.max(0, pacingPct)); // Clamp 0-100
+            
+            // Pacing
+            let pacing = (elapsed / totalTime) * 100;
+            pacing = Math.min(100, Math.max(0, pacing));
 
-            // Avance Real
-            let actualPct = 0;
-            if (kpi.targetValue > kpi.startValue) {
-                actualPct = ((kpi.currentValue - kpi.startValue) / (kpi.targetValue - kpi.startValue)) * 100;
+            if (type === 'kpi') {
+                let actual = 0;
+                if (item.targetValue > item.startValue) {
+                    actual = ((item.currentValue - item.startValue) / (item.targetValue - item.startValue)) * 100;
+                }
+                actual = Math.min(100, Math.max(0, actual));
+                return getStatusObj(actual, pacing);
             }
-            actualPct = Math.min(100, Math.max(0, actualPct));
 
-            return determineStatus(actualPct, pacingPct);
-        }
-
-        // Calcula el estado de padres (Obj/Proy) promediando a sus hijos
-        function calculateParentMetrics(childrenMetrics) {
-            if (childrenMetrics.length === 0) return { actual: 0, pacing: 0, status: 'off-track', css: 'status-off-track', label: 'Sin definir' };
+            // Para padres (Objetivos y Proyectos): Promedio de hijos
+            let childrenMetrics = [];
             
+            // Si es Objetivo, busca Proyectos Y KPIs directos
+            if (type === 'objective') {
+                const childProjs = db.projects.filter(p => p.objectiveId === item.id);
+                const childKpis = db.kpis.filter(k => k.objectiveId === item.id); // KPIs directos
+                
+                // Recursión: Calcular métricas de Proyectos hijos
+                const projMetrics = childProjs.map(p => calculateMetrics(p, 'project'));
+                const kpiMetrics = childKpis.map(k => calculateMetrics(k, 'kpi'));
+                
+                childrenMetrics = [...projMetrics, ...kpiMetrics];
+            } 
+            // Si es Proyecto, solo busca KPIs
+            else if (type === 'project') {
+                const childKpis = db.kpis.filter(k => k.projectId === item.id);
+                childrenMetrics = childKpis.map(k => calculateMetrics(k, 'kpi'));
+            }
+
+            if (childrenMetrics.length === 0) return { actual: 0, pacing: 0, css: 'status-off-track', label: 'Sin Definir', textCss: 'text-gray-500 bg-gray-100' };
+
             const avgActual = childrenMetrics.reduce((sum, m) => sum + m.actual, 0) / childrenMetrics.length;
-            // Usamos el pacing máximo de los hijos como referencia del padre
-            const maxPacing = Math.max(...childrenMetrics.map(m => m.pacing)); 
+            const maxPacing = Math.max(...childrenMetrics.map(m => m.pacing)); // Tomamos el pacing más exigente o promedio
             
-            return determineStatus(avgActual, maxPacing);
+            return getStatusObj(avgActual, maxPacing);
         }
 
-        // Lógica de semáforo (inspirada en Viva Goals)
-        function determineStatus(actual, pacing) {
-            let status = 'off-track', css = 'status-off-track', label = 'Retrasado';
-            // Si el pacing es muy bajo (inicio del periodo), somos permisivos
-            if (pacing < 10) {
-                status = 'on-track'; css = 'status-on-track'; label = 'A tiempo';
+        function getStatusObj(actual, pacing) {
+            let css = 'status-off-track';
+            let textCss = 'text-off-track';
+            let label = 'Retrasado';
+
+            if (pacing < 5) { // Periodo de gracia al inicio
+                css = 'status-on-track'; textCss = 'text-on-track'; label = 'A Tiempo';
             } else {
                 const ratio = actual / pacing;
-                if (ratio >= 0.9) { status = 'on-track'; css = 'status-on-track'; label = 'A tiempo'; }
-                else if (ratio >= 0.7) { status = 'at-risk'; css = 'status-at-risk'; label = 'En riesgo'; }
+                if (ratio >= 0.9) { css = 'status-on-track'; textCss = 'text-on-track'; label = 'A Tiempo'; }
+                else if (ratio >= 0.7) { css = 'status-at-risk'; textCss = 'text-at-risk'; label = 'Riesgo'; }
             }
-            return { actual: Math.round(actual), pacing: Math.round(pacing), status, css, label };
+            return { actual: Math.round(actual), pacing: Math.round(pacing), css, textCss, label };
         }
 
-
-        // --- 3. RENDERIZADO DEL ÁRBOL (EXPLORADOR) ---
-        // Esta es la función más compleja: recursividad visual.
+        // 4. RENDERIZADO (Diseño Compacto y Acordeón)
         function renderTree() {
             const container = document.getElementById('tree-container');
             container.innerHTML = '';
             let globalSum = 0; let globalCount = 0;
-            let statusCounts = { 'on-track': 0, 'at-risk': 0, 'off-track': 0 };
+            let statusCounts = { 'A Tiempo': 0, 'Riesgo': 0, 'Retrasado': 0 };
 
-            // 1. Iterar Objetivos (Nivel Superior)
+            if (db.objectives.length === 0) {
+                container.innerHTML = `<div class="text-center p-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg text-sm">No tienes objetivos. Crea uno nuevo arriba.</div>`;
+                updateDashboard(0, { 'A Tiempo':0, 'Riesgo':0, 'Retrasado':0 });
+                return;
+            }
+
             db.objectives.forEach(obj => {
-                // 1.1. Buscar Proyectos hijos de este Objetivo
-                const objProjects = db.projects.filter(p => p.objectiveId === obj.id);
+                // Métricas del Objetivo
+                const metrics = calculateMetrics(obj, 'objective');
+                globalSum += metrics.actual; if(metrics.actual > 0 || hasChildren(obj.id)) globalCount++;
+                statusCounts[metrics.label]++;
+
+                // Hijos: Proyectos y KPIs directos
+                const projects = db.projects.filter(p => p.objectiveId === obj.id);
+                const directKpis = db.kpis.filter(k => k.objectiveId === obj.id);
+
+                // Render HTML Hijos
+                let childrenHTML = '';
                 
-                let projectMetricsList = [];
-                let projectsHTML = '';
+                // 1. KPIs Directos
+                directKpis.forEach(k => {
+                    const m = calculateMetrics(k, 'kpi');
+                    childrenHTML += renderRowHTML('kpi', k, m, true);
+                });
 
-                // 2. Iterar Proyectos (Nivel Medio)
-                objProjects.forEach(proj => {
-                    // 2.1. Buscar KPIs hijos de este Proyecto
-                    const projKpis = db.kpis.filter(k => k.projectId === proj.id);
-                    const kpiMetricsList = projKpis.map(calculateKpiMetrics);
-                    const projMetrics = calculateParentMetrics(kpiMetricsList);
-                    projectMetricsList.push(projMetrics);
+                // 2. Proyectos
+                projects.forEach(p => {
+                    const m = calculateMetrics(p, 'project');
+                    const pKpis = db.kpis.filter(k => k.projectId === p.id);
+                    
+                    let projChildrenHTML = '';
+                    pKpis.forEach(pk => {
+                         const pm = calculateMetrics(pk, 'kpi');
+                         projChildrenHTML += renderRowHTML('kpi', pk, pm, true); // Indented
+                    });
 
-                    // 3. Generar HTML de KPIs (Nivel Inferior)
-                    const kpisHTML = projKpis.map(kpi => {
-                        const m = calculateKpiMetrics(kpi);
-                        return generateCardHTML('kpi', kpi, m);
-                    }).join('');
-
-                    // Generar HTML del Proyecto envolviendo sus KPIs
-                    projectsHTML += `
-                        <div class="nested-connector mt-4">
-                            ${generateCardHTML('project', proj, projMetrics)}
-                            <div class="nested-connector mt-3 space-y-2">
-                                ${kpisHTML || '<div class="text-xs text-slate-400 italic pl-4">Sin KPIs asignados.</div>'}
+                    childrenHTML += `
+                        <div class="mt-2 ml-4 pl-3 border-l-2 border-slate-100">
+                            ${renderRowHTML('project', p, m, false)}
+                            <div class="mt-1 space-y-1">
+                                ${projChildrenHTML}
                             </div>
                         </div>
                     `;
                 });
 
-                // Calcular métricas del Objetivo basadas en sus Proyectos
-                const objMetrics = calculateParentMetrics(projectMetricsList);
-                globalSum += objMetrics.actual; if(objMetrics.actual >0 || objProjects.length >0) globalCount++;
-                statusCounts[objMetrics.status]++;
-
-                // Generar HTML final del bloque Objetivo
+                // Render Objetivo Card (Padre)
+                const expandedClass = 'expanded'; // Por defecto expandido
                 const objHTML = `
-                    <div class="mb-8">
-                        ${generateCardHTML('objective', obj, objMetrics)}
-                        ${projectsHTML}
+                    <div class="glass-card rounded-lg bg-white mb-4 group overflow-hidden" id="node-${obj.id}">
+                        <div class="p-3 flex items-start gap-3 cursor-pointer select-none hover:bg-slate-50 transition" onclick="toggleNode(${obj.id})">
+                            <div class="mt-1 text-slate-400 rotate-icon"><i data-lucide="chevron-right" size="18"></i></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="target" class="text-blue-600" size="18"></i>
+                                        <h3 class="font-bold text-slate-800 text-base leading-tight">${obj.title}</h3>
+                                        ${renderTags(obj.tags)}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="text-[10px] font-bold px-2 py-0.5 rounded ${metrics.textCss}">${metrics.label}</div>
+                                        <div class="w-6 h-6 rounded-full bg-slate-200 text-[10px] flex items-center justify-center font-bold text-slate-600" title="${obj.owner}">${getInitials(obj.owner)}</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 flex items-center gap-3">
+                                    <div class="flex-1 h-2 bg-slate-100 rounded-full relative overflow-hidden">
+                                        <div class="pacing-marker" style="left: ${metrics.pacing}%"></div>
+                                        <div class="${metrics.css} h-full rounded-full" style="width: ${metrics.actual}%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-700 w-8 text-right">${metrics.actual}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="px-3 py-1 bg-slate-50 border-t border-slate-100 flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button onclick="openModal('project', ${obj.id})" class="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 bg-white border px-2 py-0.5 rounded hover:border-blue-300 transition">
+                                <i data-lucide="folder-plus" size="12"></i> Proyecto
+                            </button>
+                            <button onclick="openModal('kpi', ${obj.id}, 'objective')" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 bg-white border px-2 py-0.5 rounded hover:border-indigo-300 transition">
+                                <i data-lucide="bar-chart-2" size="12"></i> KPI Directo
+                            </button>
+                        </div>
+
+                        <div id="children-${obj.id}" class="accordion-content bg-slate-50/50 p-2 pt-0" style="max-height: 2000px;">
+                            <div class="pl-2 pr-1 pb-2">
+                                ${childrenHTML || '<div class="text-[10px] text-slate-400 italic pl-8 py-2">Sin resultados clave ni proyectos.</div>'}
+                            </div>
+                        </div>
                     </div>
                 `;
                 container.innerHTML += objHTML;
+                
+                // Asegurar estado inicial del icono acordeón
+                setTimeout(() => document.getElementById(`node-${obj.id}`).classList.add('expanded'), 0);
             });
 
-             if (db.objectives.length === 0) {
-                container.innerHTML = `<div class="text-center p-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">No hay objetivos definidos. Comienza creando uno.</div>`;
-            }
-
-            // Actualizar datos para el dashboard
-            updateDashboardData(globalCount ? Math.round(globalSum/globalCount) : 0, statusCounts);
+            updateDashboard(globalCount ? Math.round(globalSum/globalCount) : 0, statusCounts);
             lucide.createIcons();
         }
 
-        // Generador de Tarjetas HTML (Similar a Viva Goals)
-        function generateCardHTML(type, entity, metrics) {
+        // Renderizado de Filas (Proyecto o KPI)
+        function renderRowHTML(type, item, metrics, isIndented) {
             const isKpi = type === 'kpi';
-            const isObj = type === 'objective';
+            const icon = isKpi ? '<i data-lucide="hash" size="14" class="text-slate-400"></i>' : '<i data-lucide="folder-kanban" size="14" class="text-indigo-500"></i>';
+            const bgClass = isKpi ? 'bg-white' : 'bg-slate-100';
+            const marginClass = isKpi ? 'my-1' : 'my-2';
             
-            // Iconos y estilos según tipo
-            let iconStr = '<i data-lucide="target" class="text-blue-600"></i>';
-            let bgColor = 'bg-white'; let titleSize = 'text-xl';
-            let addChildBtn = '';
-            
-            if (type === 'project') {
-                iconStr = '<i data-lucide="folder-kanban" class="text-indigo-500"></i>';
-                bgColor = 'bg-slate-50'; titleSize = 'text-lg';
-                addChildBtn = `<button onclick="openModal('kpi', ${entity.id})" class="text-xs flex items-center gap-1 text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded transition font-semibold"><i data-lucide="plus" size="14"></i> KPI</button>`;
-            } else if (isKpi) {
-                iconStr = '<i data-lucide="bar-chart-2" class="text-slate-400"></i>';
-                bgColor = 'bg-white border-l-4 ' + metrics.css.replace('background-color:', 'border-color:'); titleSize = 'text-base';
-            } else {
-                 addChildBtn = `<button onclick="openModal('project', ${entity.id})" class="text-xs flex items-center gap-1 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded transition font-semibold"><i data-lucide="plus" size="14"></i> Proyecto</button>`;
-            }
+            // Input valor para KPI
+            const valInput = isKpi ? `
+                <input type="number" value="${item.currentValue}" onchange="updateVal(${item.id}, this.value)" 
+                class="w-16 text-right text-xs p-0.5 border rounded bg-slate-50 font-mono text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none" title="Actual / Meta: ${item.targetValue}">
+                <span class="text-[10px] text-slate-400">/ ${item.targetValue}</span>
+            ` : '';
 
-            // Renderizado de Etiquetas
-            let tagsHTML = '';
-            if (entity.tags && entity.tags.length > 0) {
-                tagsHTML = '<div class="flex gap-1 mt-2">' + entity.tags.map(t => `<span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">${t}</span>`).join('') + '</div>';
-            }
-
-            // Input para actualizar valor (Solo KPIs)
-            let valueInputHTML = '';
-            if (isKpi) {
-                valueInputHTML = `
-                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-                    <input type="number" value="${entity.currentValue}" 
-                        onchange="updateKpiValue(${entity.id}, this.value)"
-                        class="w-20 text-right p-1 border-0 bg-white rounded focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-700"
-                    >
-                    <span class="text-xs text-slate-500 font-mono pr-1">/ ${entity.targetValue}</span>
-                </div>`;
-            }
-
-            // Sub-etiqueta de estado (estilo Viva Goals)
-            let statusSubLabel = `bg-${metrics.status}-subtle`;
+            // Botón añadir hijo solo para Proyecto
+            const addBtn = !isKpi ? `
+                <button onclick="openModal('kpi', ${item.id}, 'project')" class="ml-2 text-[10px] text-indigo-400 hover:text-indigo-700 bg-white border border-indigo-100 px-1.5 rounded transition">
+                    + KPI
+                </button>
+            ` : '';
 
             return `
-            <div class="glass-card rounded-xl p-5 ${bgColor} relative overflow-hidden group">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="flex gap-3 items-start">
-                        <div class="mt-1">${iconStr}</div>
-                        <div>
-                            <h3 class="${titleSize} font-bold text-slate-800 leading-tight">${entity.title}</h3>
-                             <div class="flex items-center gap-3 text-xs text-slate-500 mt-1 font-medium">
-                                <span class="flex items-center gap-1"><i data-lucide="user" size="12"></i> ${entity.owner || 'Sin asignar'}</span>
-                                <span class="flex items-center gap-1"><i data-lucide="calendar" size="12"></i> Fin: ${entity.endDate || 'N/A'}</span>
-                            </div>
-                            ${tagsHTML}
+            <div class="flex items-center gap-3 p-2 rounded border border-slate-100 ${bgClass} ${marginClass} hover:border-slate-300 transition group relative">
+                <div class="mt-0.5">${icon}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="text-sm font-medium text-slate-700 truncate">${item.title}</span>
+                            ${renderTags(item.tags)}
+                            ${addBtn}
                         </div>
-                    </div>
-                     <div class="flex flex-col items-end gap-2">
                         <div class="flex items-center gap-2">
-                             ${valueInputHTML}
-                             <div class="avatar-circle tooltip" title="${entity.owner || ''}">${getInitials(entity.owner)}</div>
+                            ${valInput}
+                             <div class="w-5 h-5 rounded-full bg-white border border-slate-200 text-[9px] flex items-center justify-center text-slate-500" title="${item.owner}">${getInitials(item.owner)}</div>
                         </div>
-                        ${addChildBtn}
                     </div>
-                </div>
-
-                <div class="flex items-center gap-3 mt-2">
-                    <div class="flex-1 relative h-3 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                    <div class="mt-1.5 flex items-center gap-2 h-1.5 bg-slate-200 rounded-full w-full relative overflow-hidden">
                         <div class="pacing-marker" style="left: ${metrics.pacing}%"></div>
-                        <div class="${metrics.css} h-full rounded-full transition-all duration-700 relative z-20 shadow-sm" style="width: ${metrics.actual}%"></div>
-                    </div>
-                    <div class="flex flex-col items-end w-20">
-                        <span class="text-lg font-black text-slate-800 leading-none">${metrics.actual}%</span>
-                         <span class="text-[10px] px-1.5 rounded-md font-bold uppercase tracking-wider mt-0.5 ${statusSubLabel}">${metrics.label}</span>
+                        <div class="${metrics.css} h-full rounded-full" style="width: ${metrics.actual}%"></div>
                     </div>
                 </div>
+                <div class="text-[10px] font-bold w-6 text-right ${metrics.textCss.split(' ')[0]}">${metrics.actual}%</div>
             </div>
             `;
         }
 
-        // --- 4. GESTIÓN DE DATOS Y MODALES ---
-
-        function updateKpiValue(id, newValue) {
-            const kpi = db.kpis.find(k => k.id === id);
-            if(kpi) {
-                kpi.currentValue = parseFloat(newValue) || 0;
-                saveDb(); renderTree();
+        // 5. INTERACCIONES UI
+        function toggleNode(id) {
+            const node = document.getElementById(`node-${id}`);
+            const content = document.getElementById(`children-${id}`);
+            
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null; // Colapsar
+                node.classList.remove('expanded');
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px"; // Expandir
+                node.classList.add('expanded');
             }
         }
 
-        function openModal(type, parentId = null) {
+        function renderTags(tags) {
+            if (!tags || tags.length === 0) return '';
+            return tags.map(t => `<span class="text-[9px] px-1.5 py-0.5 rounded border ${getTagClass(t)} font-bold uppercase tracking-wide">${t}</span>`).join('');
+        }
+
+        function updateVal(id, val) {
+            const k = db.kpis.find(x => x.id === id);
+            if (k) { k.currentValue = parseFloat(val); saveData(); renderTree(); }
+        }
+
+        // Modales y Guardado
+        let currentParentContext = null; // 'objective' o 'project'
+
+        function openModal(type, parentId = null, context = null) {
             document.getElementById('modal-backdrop').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-panel').classList.remove('translate-x-full'), 10);
-            
             document.getElementById('entity-type').value = type;
             document.getElementById('parent-id').value = parentId || '';
-            
-            // Títulos dinámicos
-            const titles = { 'objective': 'Nuevo Objetivo Estratégico', 'project': 'Nueva Iniciativa/Proyecto', 'kpi': 'Nuevo KPI (Resultado Clave)' };
-            document.getElementById('modal-title').innerText = titles[type];
+            currentParentContext = context; // Guardamos si el KPI es para Obj o Proj
 
-            // Mostrar/Ocultar campos según tipo
             const isKpi = type === 'kpi';
+            document.getElementById('modal-title').innerText = isKpi ? 'Nuevo KPI' : (type === 'project' ? 'Nuevo Proyecto' : 'Nuevo Objetivo');
             document.getElementById('field-tags').classList.toggle('hidden', isKpi);
             document.getElementById('field-metrics').classList.toggle('hidden', !isKpi);
-
-            // Fechas por defecto (Hoy y fin de trimestre aprox)
-            const today = new Date();
-            const nextQ = new Date(today); nextQ.setMonth(nextQ.getMonth() + 3);
-            document.getElementById('inp-start-date').value = today.toISOString().split('T')[0];
-            document.getElementById('inp-end-date').value = nextQ.toISOString().split('T')[0];
-
-            // Limpiar inputs previos
-            ['inp-title', 'inp-owner', 'inp-tags', 'inp-val-start', 'inp-val-target'].forEach(id => document.getElementById(id).value = '');
+            
+            // Fechas default
+            const d = new Date().toISOString().split('T')[0];
+            document.getElementById('inp-start-date').value = d;
+            document.getElementById('inp-end-date').value = d;
+            
+            // Limpiar
+            ['inp-title','inp-owner','inp-tags','inp-val-start','inp-val-target'].forEach(id => document.getElementById(id).value = '');
         }
 
-        function closeModal() {
-             document.getElementById('modal-panel').classList.add('translate-x-full');
-             setTimeout(() => document.getElementById('modal-backdrop').classList.add('hidden'), 300);
-        }
+        function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
 
         function saveEntity() {
             const type = document.getElementById('entity-type').value;
-            const parentId = Number(document.getElementById('parent-id').value);
+            const pid = parseInt(document.getElementById('parent-id').value);
             const title = document.getElementById('inp-title').value;
+            if(!title) return;
 
-            if (!title) return alert('El título es obligatorio');
-
-            const newEntity = {
+            const base = {
                 id: Date.now(),
-                title: title,
+                title,
                 owner: document.getElementById('inp-owner').value,
                 startDate: document.getElementById('inp-start-date').value,
-                endDate: document.getElementById('inp-end-date').value,
+                endDate: document.getElementById('inp-end-date').value
             };
 
             if (type === 'objective') {
-                newEntity.tags = document.getElementById('inp-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
-                db.objectives.push(newEntity);
+                base.tags = parseTags(document.getElementById('inp-tags').value);
+                db.objectives.push(base);
             } else if (type === 'project') {
-                newEntity.objectiveId = parentId;
-                newEntity.tags = document.getElementById('inp-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
-                db.projects.push(newEntity);
+                base.objectiveId = pid;
+                base.tags = parseTags(document.getElementById('inp-tags').value);
+                db.projects.push(base);
             } else if (type === 'kpi') {
-                newEntity.projectId = parentId;
-                newEntity.startValue = parseFloat(document.getElementById('inp-val-start').value) || 0;
-                newEntity.targetValue = parseFloat(document.getElementById('inp-val-target').value) || 100;
-                newEntity.currentValue = newEntity.startValue; // Empieza en el valor inicial
-                db.kpis.push(newEntity);
+                base.startValue = parseFloat(document.getElementById('inp-val-start').value) || 0;
+                base.targetValue = parseFloat(document.getElementById('inp-val-target').value) || 100;
+                base.currentValue = base.startValue;
+                
+                // ASIGNACIÓN INTELIGENTE: ¿Es hijo de Objetivo o de Proyecto?
+                if (currentParentContext === 'objective') {
+                    base.objectiveId = pid; // KPI directo al objetivo
+                } else {
+                    base.projectId = pid; // KPI de proyecto
+                }
+                db.kpis.push(base);
             }
 
-            saveDb(); closeModal(); renderTree();
+            saveData(); closeModal(); renderTree();
         }
 
-        // --- 5. UTILIDADES E INICIALIZACIÓN ---
-        function saveDb() { localStorage.setItem('viva_goals_clone_db', JSON.stringify(db)); }
-
-        function switchView(view) {
-            document.getElementById('view-dashboard').classList.add('hidden');
-            document.getElementById('view-explorer').classList.add('hidden');
-            document.getElementById('view-' + view).classList.remove('hidden');
-            
-            // Actualizar estilos de navegación
-            const navDash = document.getElementById('nav-dashboard');
-            const navExpl = document.getElementById('nav-explorer');
-            if (view === 'dashboard') {
-                navDash.classList.add('bg-slate-800', 'text-white', 'shadow-inner'); navExpl.classList.remove('bg-slate-800', 'text-white', 'shadow-inner');
-            } else {
-                navExpl.classList.add('bg-slate-800', 'text-white', 'shadow-inner'); navDash.classList.remove('bg-slate-800', 'text-white', 'shadow-inner');
-            }
+        // Helpers
+        function saveData() { localStorage.setItem('okr_v2_db', JSON.stringify(db)); }
+        function parseTags(str) { return str ? str.split(',').map(s=>s.trim()).filter(s=>s) : []; }
+        function getInitials(n) { return n ? n.split(' ').map(x=>x[0]).join('').substring(0,2).toUpperCase() : '?'; }
+        function hasChildren(oid) {
+            return db.projects.some(p=>p.objectiveId===oid) || db.kpis.some(k=>k.objectiveId===oid);
         }
-
-        function updateDashboardData(globalProgress, counts) {
-            document.getElementById('dash-global-progress').innerText = `${globalProgress}%`;
-            
+        function exportData() {
+            const s = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+            const a = document.createElement('a'); a.href = s; a.download = "okr_data.json"; a.click();
+        }
+        function switchView(v) {
+            document.getElementById('view-explorer').classList.toggle('hidden', v !== 'explorer');
+            document.getElementById('view-dashboard').classList.toggle('hidden', v !== 'dashboard');
+            document.getElementById('nav-explorer').className = v === 'explorer' ? 'w-full flex items-center gap-3 px-3 py-2 rounded-md bg-slate-800 text-white shadow-sm text-sm font-medium transition' : 'w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800 hover:text-white text-sm font-medium transition';
+            document.getElementById('nav-dashboard').className = v === 'dashboard' ? 'w-full flex items-center gap-3 px-3 py-2 rounded-md bg-slate-800 text-white shadow-sm text-sm font-medium transition' : 'w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800 hover:text-white text-sm font-medium transition';
+        }
+        function updateDashboard(val, counts) {
+            document.getElementById('dash-global-progress').innerText = val + '%';
             const ctx = document.getElementById('statusChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['On Track', 'At Risk', 'Off Track'],
-                    datasets: [{
-                        data: [counts['on-track'], counts['at-risk'], counts['off-track']],
-                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderwidth: 0
-                    }]
+                    labels: Object.keys(counts),
+                    datasets: [{ data: Object.values(counts), backgroundColor: ['#10b981','#f59e0b','#ef4444'], borderWidth: 0 }]
                 },
-                options: { responsive: true, cutout: '75%', plugins: { legend: { display: false } } }
+                options: { cutout: '70%', plugins: { legend: { display: false } } }
             });
         }
-        
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "viva_goals_data.json");
-            dlAnchorElem.click();
-        }
 
-        // Arrancar la aplicación
+        // Init
         renderTree();
-        switchView('explorer'); // Empezar en la vista de árbol
     </script>
 </body>
 </html>
