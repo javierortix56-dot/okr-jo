@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v9.6 | Fixed Connection</title>
+    <title>OKR Manager v9.8 | Final Calculation Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -12,21 +12,12 @@
         :root { --obj: #2563eb; --proj: #7c3aed; --kpi: #f97316; }
         body { font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; }
         
-        /* FIX VISUAL ACORDEÓN (Evita espacios blancos y saltos raros) */
-        .accordion-wrapper {
-            display: grid;
-            grid-template-rows: 0fr;
-            transition: grid-template-rows 0.3s ease-out;
-            overflow: hidden; 
-        }
-        .accordion-wrapper.open {
-            grid-template-rows: 1fr;
-        }
-        .accordion-inner {
-            min-height: 0;
-        }
+        /* ACORDEÓN (Grid Fix) */
+        .accordion-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; overflow: hidden; }
+        .accordion-wrapper.open { grid-template-rows: 1fr; }
+        .accordion-inner { min-height: 0; }
 
-        /* Tarjetas */
+        /* TARJETAS */
         .card-objective { border-left: 5px solid var(--obj); background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 1rem; border-radius: 6px; overflow: hidden; }
         .card-project { border-left: 4px solid var(--proj); background: #fbfbfe; margin: 8px 0 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; border-left-width: 4px; border-left-color: var(--proj); }
         .card-kpi { border-left: 3px solid var(--kpi); background: white; margin: 4px 0 4px 0; border: 1px solid #f1f5f9; border-left-width: 3px; border-left-color: var(--kpi); }
@@ -39,7 +30,7 @@
         .rotate-icon { transition: transform 0.2s; }
         .rotate-90 { transform: rotate(-90deg); }
         
-        /* Spinner */
+        /* SPINNER */
         .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -49,7 +40,7 @@
     <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
         <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
             <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v9.6</span></h1>
+            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v9.8</span></h1>
         </div>
         <div class="p-4 border-b border-slate-100 bg-slate-50">
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
@@ -143,7 +134,6 @@
                      <div><label class="block text-[10px] text-orange-400 mb-1">Base</label><input id="inp-val-start" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-mono"></div>
                      <div><label class="block text-[10px] text-orange-400 mb-1">Meta</label><input id="inp-val-target" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-bold text-orange-700 font-mono"></div>
                 </div>
-                <div id="owner-suggestions" class="flex flex-wrap gap-1 empty:hidden"></div>
             </div>
             <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center rounded-b-lg">
                 <button id="btn-delete" onclick="deleteItem()" class="text-rose-500 hover:text-rose-700 text-xs font-bold hidden flex items-center gap-1"><i data-lucide="trash-2" size="12"></i> Borrar</button>
@@ -179,15 +169,14 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN: Aquí se restaura tu URL original
+        // CONFIGURACIÓN DE CONEXIÓN RESTAURADA
         let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
-        
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
         
         // INIT
         document.getElementById('area-selector').value = CURRENT_AREA;
-        loadFromGoogle(); // Intentar cargar inmediatamente
+        loadFromGoogle(); 
 
         // --- CORE FUNCTIONS ---
         async function loadFromGoogle() {
@@ -215,7 +204,7 @@
             } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
         }
 
-        // --- CALCULO RECURSIVO CON PESOS REALES ---
+        // --- CÁLCULO PONDERADO ---
         function calculateProgress(item, type) {
             if (type === 'kpi') {
                 const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||100, c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
@@ -234,13 +223,8 @@
             }
 
             if (!children.length) return 0;
-
             const totalWeight = children.reduce((acc, x) => acc + x.w, 0);
-            
-            // Si no hay pesos definidos o es 0, usar promedio simple
             if (totalWeight === 0) return Math.round(children.reduce((acc,x)=>acc+x.p,0) / children.length);
-
-            // Promedio Ponderado
             const weightedSum = children.reduce((acc, x) => acc + (x.p * (x.w / totalWeight)), 0);
             return Math.round(weightedSum);
         }
@@ -315,7 +299,6 @@
                 </div>
             `);
             innerHTML += `<input type="text" placeholder="+ Tarea..." class="w-full text-xs bg-transparent border-b border-transparent focus:border-slate-300 outline-none mt-1 px-2 py-1 placeholder:text-slate-300" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}">`;
-            
             db.kpis.filter(k=>k.projectId===p.id).forEach(k=> innerHTML+=renderKpiRow(k));
 
             return `
@@ -359,7 +342,7 @@
             </div>`;
         }
 
-        // --- GESTIÓN DE PESOS (WEIGHTS) ---
+        // --- GESTIÓN DE PESOS (FIX DECIMALES IMPLEMENTADO) ---
         function openWeightModal(objId) {
             const modal = document.getElementById('modal-weights');
             const list = document.getElementById('weight-list');
@@ -380,8 +363,8 @@
                 row.innerHTML = `
                     <span class="text-[9px] font-bold px-1 rounded ${c.type==='PROY'?'bg-purple-100 text-purple-700':'bg-orange-100 text-orange-700'} w-10 text-center">${c.type}</span>
                     <span class="text-xs text-slate-700 flex-1 truncate">${c.title}</span>
-                    <input type="range" min="0" max="100" value="${c.weight||0}" step="5" class="w-24 accent-blue-600" oninput="this.nextElementSibling.value=this.value+'%'; updateTotalWeight()">
-                    <input type="text" value="${c.weight||0}%" class="w-10 text-right text-xs font-bold bg-transparent outline-none" readonly>
+                    <input type="range" min="0" max="100" value="${c.weight||0}" step="0.5" class="w-24 accent-blue-600" oninput="this.nextElementSibling.value=parseFloat(this.value)+'%'; updateTotalWeight()">
+                    <input type="text" value="${parseFloat(c.weight||0)}%" class="w-12 text-right text-xs font-bold bg-transparent outline-none" readonly>
                     <input type="hidden" class="item-id" value="${c.id}"><input type="hidden" class="item-type" value="${c.type}">
                 `;
                 list.appendChild(row);
@@ -392,13 +375,16 @@
         function updateTotalWeight() {
             const inputs = document.querySelectorAll('#weight-list input[type="range"]');
             let sum = 0;
-            inputs.forEach(i => sum += parseInt(i.value));
+            inputs.forEach(i => sum += parseFloat(i.value));
+            // Redondeo de seguridad para decimales (99.9999 -> 100)
+            sum = Math.round(sum * 10) / 10;
+            
             const display = document.getElementById('weight-total-display');
             const btn = document.getElementById('btn-save-weights');
             
             display.innerText = sum + "%";
-            if(sum === 100) { display.className="text-emerald-600 font-bold text-sm"; btn.disabled=false; }
-            else { display.className="text-rose-500 font-bold text-sm"; btn.disabled=true; }
+            if(sum === 100) { display.className="text-emerald-600 font-bold text-sm"; btn.disabled=false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
+            else { display.className="text-rose-500 font-bold text-sm"; btn.disabled=true; btn.classList.add('opacity-50','cursor-not-allowed'); }
         }
 
         function saveWeights() {
@@ -406,7 +392,8 @@
             rows.forEach(r => {
                 const id = parseInt(r.querySelector('.item-id').value);
                 const type = r.querySelector('.item-type').value;
-                const val = parseInt(r.querySelector('input[type="range"]').value);
+                // ParseFloat para guardar el decimal exacto
+                const val = parseFloat(r.querySelector('input[type="range"]').value);
                 
                 if(type==='PROY') { const p = db.projects.find(x=>x.id===id); if(p) p.weight = val; }
                 else { const k = db.kpis.find(x=>x.id===id); if(k) k.weight = val; }
