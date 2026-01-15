@@ -1,160 +1,123 @@
 <!DOCTYPE html>
-<html lang="es" class="bg-slate-50">
+<html lang="es" class="bg-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v9.0 | Cascade & UI Fix</title>
+    <title>OKR Manager v9.5 | Weights & Visual Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        :root { 
-            --obj-color: #2563eb; /* Azul */
-            --proj-color: #7c3aed; /* Violeta */
-            --kpi-color: #f97316; /* Naranja */
-        }
+        :root { --obj: #2563eb; --proj: #7c3aed; --kpi: #f97316; }
         body { font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; }
         
-        /* Sistema de Tarjetas Jerárquicas */
-        .card-objective { border-left: 4px solid var(--obj-color); background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 1rem; border-radius: 0 8px 8px 0; }
-        .card-project { border-left: 4px solid var(--proj-color); background: #f5f3ff; margin-top: 0.5rem; margin-bottom: 0.5rem; margin-left: 1rem; border-radius: 0 6px 6px 0; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-        .card-kpi { border-left: 4px solid var(--kpi-color); background: white; margin-left: 0.5rem; border: 1px solid #e2e8f0; border-left-width: 4px; border-left-color: var(--kpi-color); }
+        /* --- SOLUCIÓN ERROR VISUAL (Accordion) --- */
+        /* Usamos Grid para animar altura de 0 a auto limpiamente */
+        .accordion-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease-out;
+            /* CRÍTICO: Esto evita que el contenido se vea cuando está cerrado */
+            overflow: hidden; 
+        }
+        .accordion-wrapper.open {
+            grid-template-rows: 1fr;
+        }
+        .accordion-inner {
+            min-height: 0; /* Necesario para que grid funcione */
+            /* Padding se mueve aquí adentro para no afectar la altura externa */
+        }
 
-        /* Componentes UI */
-        .progress-track { background-color: #e2e8f0; overflow: hidden; height: 6px; border-radius: 3px; width: 80px; position: relative; }
-        .progress-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-        
-        /* Acordeón (Sin overflow hidden en el padre para evitar cortar popups, usamos grid) */
-        .accordion-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; }
-        .accordion-content.open { grid-template-rows: 1fr; }
-        .accordion-inner { overflow: hidden; }
+        /* Tarjetas */
+        .card-objective { border-left: 5px solid var(--obj); background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 1rem; border-radius: 6px; overflow: hidden; }
+        /* Quitamos márgenes negativos que causaban solapamiento */
+        .card-project { border-left: 4px solid var(--proj); background: #fbfbfe; margin: 8px 0 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; border-left-width: 4px; border-left-color: var(--proj); }
+        .card-kpi { border-left: 3px solid var(--kpi); background: white; margin: 4px 0 4px 0; border: 1px solid #f1f5f9; border-left-width: 3px; border-left-color: var(--kpi); }
 
-        /* Botones y Acciones */
-        .btn-icon { padding: 4px; border-radius: 4px; color: #94a3b8; transition: all 0.2s; cursor: pointer; }
-        .btn-icon:hover { background: #e2e8f0; color: #334155; }
+        /* UI Components */
+        .progress-track { background-color: #e2e8f0; height: 6px; border-radius: 99px; width: 100%; overflow: hidden; }
+        .progress-bar { height: 100%; transition: width 0.5s ease; }
+        .btn-icon { padding: 5px; border-radius: 4px; color: #94a3b8; transition: 0.2s; cursor: pointer; }
+        .btn-icon:hover { background: #f1f5f9; color: #334155; }
         .rotate-icon { transition: transform 0.2s; }
         .rotate-90 { transform: rotate(-90deg); }
-
-        /* Inputs Integrados */
-        .inline-input { background: transparent; border-bottom: 1px solid #cbd5e1; font-family: monospace; text-align: center; width: 50px; outline: none; }
-        .inline-input:focus { border-color: #3b82f6; }
-
-        /* Chips */
-        .badge-type { font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-obj { color: var(--obj-color); background: #eff6ff; }
-        .badge-proj { color: var(--proj-color); background: #f5f3ff; }
-        .badge-kpi { color: var(--kpi-color); background: #fff7ed; }
         
-        /* Loader */
-        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #2563eb; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
+        /* Spinner */
+        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-100 h-screen flex flex-col lg:flex-row overflow-hidden">
+<body class="bg-slate-50 h-screen flex flex-col lg:flex-row overflow-hidden">
 
     <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
         <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
             <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <div>
-                <h1 class="font-bold text-slate-800 text-sm">Famiq OKR</h1>
-                <span class="text-[10px] text-slate-400 font-medium">Oficina Técnica</span>
-            </div>
+            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v9.5</span></h1>
         </div>
-        
         <div class="p-4 border-b border-slate-100 bg-slate-50">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área de Gestión</label>
-            <select id="area-selector" onchange="switchArea(this.value)" class="w-full text-xs p-2 rounded border border-slate-300 font-semibold text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
+            <select id="area-selector" onchange="switchArea(this.value)" class="w-full text-xs p-2 rounded border border-slate-300 font-semibold text-slate-700 outline-none focus:border-blue-500">
                 <option value="Oficina Técnica">Oficina Técnica</option>
                 <option value="PXD">PXD</option>
                 <option value="Planificación">Planificación</option>
-                <option value="Pricing y Negocio">Pricing y Negocio</option>
+                <option value="Pricing">Pricing y Negocio</option>
             </select>
         </div>
-
         <nav class="flex-1 p-2 space-y-1 overflow-y-auto">
-            <button onclick="switchView('explorer')" class="w-full text-left px-3 py-2 rounded-md bg-blue-50 text-blue-700 text-xs font-bold flex items-center gap-2">
-                <i data-lucide="layers" size="14"></i> Gestión de OKRs
-            </button>
-            <button onclick="switchView('dashboard')" class="w-full text-left px-3 py-2 rounded-md hover:bg-slate-50 text-slate-500 text-xs font-medium flex items-center gap-2 transition">
-                <i data-lucide="pie-chart" size="14"></i> Reporte & Status
-            </button>
+            <button onclick="switchView('explorer')" class="w-full text-left px-3 py-2 rounded bg-blue-50 text-blue-700 text-xs font-bold flex items-center gap-2"><i data-lucide="layers" size="14"></i> Gestión OKRs</button>
+            <button onclick="switchView('dashboard')" class="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-500 text-xs font-medium flex items-center gap-2 transition"><i data-lucide="pie-chart" size="14"></i> Reporte</button>
         </nav>
-        
-        <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50">
-             <div id="sync-status" class="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
-                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
-             </div>
-             <button onclick="saveToGoogle()" class="text-[10px] text-blue-600 hover:underline">Forzar Sync</button>
+        <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 text-[10px]">
+             <div id="sync-status" class="flex items-center gap-1.5 text-emerald-600 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online</div>
+             <button onclick="saveToGoogle()" class="text-blue-600 hover:underline">Sincronizar</button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-100/50">
-        
-        <div id="global-loader" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center backdrop-blur-sm hidden">
-            <div class="flex flex-col items-center gap-2">
-                <div class="spinner"></div>
-                <span class="text-xs font-bold text-slate-500">Sincronizando...</span>
-            </div>
-        </div>
+    <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-100">
+        <div id="global-loader" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center hidden backdrop-blur-sm"><div class="spinner"></div></div>
 
         <header class="h-14 bg-white border-b border-slate-200 flex justify-between items-center px-6 flex-shrink-0">
             <div class="flex items-center gap-4">
-                <h2 id="view-title" class="text-sm font-bold text-slate-800">Mis OKRs 2026</h2>
-                <div class="h-4 w-[1px] bg-slate-300"></div>
+                <h2 id="view-title" class="text-sm font-bold text-slate-800">Mis OKRs</h2>
+                <span class="text-slate-300">|</span>
                 <select id="filter-quarter" onchange="renderExplorer()" class="text-xs font-medium text-slate-500 bg-transparent outline-none cursor-pointer hover:text-blue-600">
-                    <option value="ALL">Todo el Año</option>
+                    <option value="ALL">2026 Completo</option>
                     <option value="Q1">Q1 (Ene-Mar)</option>
                     <option value="Q2">Q2 (Abr-Jun)</option>
                     <option value="Q3">Q3 (Jul-Sep)</option>
                     <option value="Q4">Q4 (Oct-Dic)</option>
                 </select>
             </div>
-            <div id="header-actions" class="flex gap-2">
-                <button onclick="toggleAll(false)" class="btn-icon" title="Contraer todo"><i data-lucide="minimize-2" size="14"></i></button>
-                <button onclick="toggleAll(true)" class="btn-icon" title="Expandir todo"><i data-lucide="maximize-2" size="14"></i></button>
-                <button onclick="openModal('objective')" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow-sm text-xs font-bold flex items-center gap-1.5 transition active:scale-95">
-                    <i data-lucide="plus" size="14"></i> Nuevo Objetivo
-                </button>
+            <div class="flex gap-2" id="header-actions">
+                <button onclick="toggleAll(false)" class="btn-icon" title="Contraer"><i data-lucide="minimize-2" size="14"></i></button>
+                <button onclick="toggleAll(true)" class="btn-icon" title="Expandir"><i data-lucide="maximize-2" size="14"></i></button>
+                <button onclick="openModal('objective')" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow-sm text-xs font-bold flex items-center gap-1.5 transition active:scale-95"><i data-lucide="plus" size="14"></i> Nuevo</button>
             </div>
         </header>
 
-        <div id="view-explorer" class="flex-1 overflow-y-auto p-4 lg:p-6 scroll-smooth">
-            <div id="tree-container" class="max-w-5xl mx-auto pb-20"></div>
+        <div id="view-explorer" class="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
+            <div id="tree-container" class="max-w-5xl mx-auto pb-24 space-y-4"></div>
         </div>
 
         <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-6">
-            <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-700">Resumen Ejecutivo</h3>
-                    <button onclick="exportCSV()" class="text-blue-600 text-xs font-bold hover:underline flex items-center gap-1"><i data-lucide="download" size="12"></i> Exportar CSV</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
-                            <tr>
-                                <th class="p-3 pl-4">Objetivo / Proyecto</th>
-                                <th class="p-3">Responsable</th>
-                                <th class="p-3">Fecha Fin</th>
-                                <th class="p-3 w-32">Progreso</th>
-                                <th class="p-3 text-center">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="report-body" class="divide-y divide-slate-100 text-xs text-slate-600"></tbody>
-                    </table>
-                </div>
+            <div class="max-w-6xl mx-auto bg-white rounded shadow-sm border border-slate-200">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200">
+                        <tr><th class="p-3">Item</th><th class="p-3">Fin</th><th class="p-3">Resp.</th><th class="p-3 w-32">Progreso</th><th class="p-3 text-center">Estado</th></tr>
+                    </thead>
+                    <tbody id="report-body" class="divide-y divide-slate-100 text-xs text-slate-600"></tbody>
+                </table>
             </div>
         </div>
-
     </main>
 
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-lg shadow-2xl flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-xl flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
             <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-lg">
-                <h3 id="modal-title" class="text-xs font-bold text-slate-700 uppercase tracking-wide">Editar</h3>
+                <h3 id="modal-title" class="text-xs font-bold text-slate-700 uppercase">Editar</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" size="18"></i></button>
             </div>
-            
             <div class="p-5 space-y-4 overflow-y-auto">
                 <input type="hidden" id="edit-id"><input type="hidden" id="parent-id"><input type="hidden" id="entity-type"><input type="hidden" id="context-type">
                 
@@ -162,490 +125,409 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Título</label>
                     <textarea id="inp-title" rows="2" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none resize-none font-medium"></textarea>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label>
-                        <input id="inp-owner" type="text" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none" placeholder="Ej: Juan Perez">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Peso (Importancia)</label>
-                        <input id="inp-weight" type="number" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none" placeholder="1 a 10">
-                    </div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label><input id="inp-owner" class="w-full px-3 py-2 text-xs border border-slate-300 rounded outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Inicio</label><input id="inp-start" type="date" class="w-full px-3 py-2 text-xs border border-slate-300 rounded text-slate-500"></div>
                 </div>
-                
-                <div id="owner-suggestions" class="flex flex-wrap gap-1 empty:hidden"></div>
-
-                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded border border-slate-100">
-                    <div><label class="block text-[10px] text-slate-400 mb-1">Inicio</label><input id="inp-start" type="date" class="w-full p-1.5 text-xs border border-slate-200 rounded bg-white"></div>
-                    <div><label class="block text-[10px] text-slate-400 mb-1">Vencimiento</label><input id="inp-end" type="date" class="w-full p-1.5 text-xs border border-slate-200 rounded bg-white font-bold text-slate-700"></div>
-                </div>
-
-                 <div id="field-metrics" class="hidden bg-orange-50 p-3 rounded border border-orange-100 grid grid-cols-2 gap-3">
-                     <div class="col-span-2 text-[10px] font-bold text-orange-600 uppercase flex items-center gap-2"><i data-lucide="hash" size="10"></i> Configuración Numérica KPI</div>
-                     <div><label class="block text-[10px] text-orange-400 mb-1">Valor Inicial</label><input id="inp-val-start" type="number" class="w-full p-1.5 text-xs border border-orange-200 rounded text-center font-mono"></div>
-                     <div><label class="block text-[10px] text-orange-400 mb-1">Meta Objetivo</label><input id="inp-val-target" type="number" class="w-full p-1.5 text-xs border border-orange-200 rounded text-center font-bold text-orange-700 font-mono"></div>
-                </div>
-
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Etiquetas (Opcional)</label>
-                    <input id="inp-tags" type="text" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none" placeholder="Ej: Q1, Urgente">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha Objetivo (Fin)</label>
+                    <div class="flex gap-2">
+                        <input id="inp-end" type="date" class="flex-1 px-3 py-2 text-xs border border-slate-300 rounded font-bold text-slate-700 outline-none focus:border-blue-500">
+                        <div class="flex border border-slate-200 rounded overflow-hidden">
+                            <button onclick="setQuarterDate(1)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q1</button>
+                            <button onclick="setQuarterDate(2)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q2</button>
+                            <button onclick="setQuarterDate(3)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q3</button>
+                            <button onclick="setQuarterDate(4)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 bg-slate-50">Q4</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="field-metrics" class="hidden bg-orange-50 p-3 rounded border border-orange-100 grid grid-cols-2 gap-3">
+                     <div class="col-span-2 text-[10px] font-bold text-orange-600 uppercase flex items-center gap-2"><i data-lucide="hash" size="10"></i> Métrica KPI</div>
+                     <div><label class="block text-[10px] text-orange-400 mb-1">Base</label><input id="inp-val-start" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-mono"></div>
+                     <div><label class="block text-[10px] text-orange-400 mb-1">Meta</label><input id="inp-val-target" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-bold text-orange-700 font-mono"></div>
+                </div>
+                <div id="owner-suggestions" class="flex flex-wrap gap-1 empty:hidden"></div>
+            </div>
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center rounded-b-lg">
+                <button id="btn-delete" onclick="deleteItem()" class="text-rose-500 hover:text-rose-700 text-xs font-bold hidden flex items-center gap-1"><i data-lucide="trash-2" size="12"></i> Borrar</button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="closeModal()" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded">Cancelar</button>
+                    <button onclick="saveData()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700">Guardar</button>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <div id="modal-weights" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-2xl flex flex-col animate-[fadeIn_0.2s_ease-out]">
+            <div class="px-5 py-4 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="scale" size="16" class="text-blue-600"></i> Balancear Pesos (Incidencia)</h3>
+                <p class="text-[11px] text-slate-400 mt-1">La suma de los hijos debe ser exactamente 100%.</p>
+            </div>
+            <div class="p-5 overflow-y-auto max-h-[60vh]">
+                <input type="hidden" id="weight-obj-id">
+                <div id="weight-list" class="space-y-3"></div>
+            </div>
             <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center rounded-b-lg">
-                <button id="btn-delete" onclick="deleteItemFromModal()" class="text-rose-500 hover:text-rose-700 text-xs font-bold hidden flex items-center gap-1"><i data-lucide="trash-2" size="12"></i> Eliminar</button>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="closeModal()" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded transition">Cancelar</button>
-                    <button onclick="saveDataFromModal()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition transform active:scale-95">Guardar Cambios</button>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500">Total:</span>
+                    <span id="weight-total-display" class="text-sm font-bold text-slate-800">0%</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded">Cancelar</button>
+                    <button id="btn-save-weights" onclick="saveWeights()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Guardar Balance</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN Y ESTADO
-        let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
+        let API_URL = localStorage.getItem('okr_api_url') || '';
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
-        let recentOwners = JSON.parse(localStorage.getItem('okr_recent_owners')) || [];
-
+        
         // INIT
         document.getElementById('area-selector').value = CURRENT_AREA;
-        if(API_URL) loadFromGoogle(); else renderExplorer();
+        if(API_URL) loadFromGoogle(); else { db={objectives:[],projects:[],kpis:[],tasks:[]}; renderExplorer(); }
 
-        // ---------------------------------------------------------
-        // LOGICA DE DATOS Y SINCRONIZACIÓN
-        // ---------------------------------------------------------
+        // --- CORE FUNCTIONS ---
         async function loadFromGoogle() {
             toggleLoader(true);
             try {
                 const res = await fetch(API_URL);
                 db = await res.json();
-                renderExplorer(); // Renderizar inmediatamente después de cargar
-            } catch(e) { 
-                console.error("Error cargando datos", e); 
-                document.getElementById('sync-status').innerHTML = '<span class="text-rose-500 font-bold">Error Sync</span>';
-            } finally { toggleLoader(false); }
+                renderExplorer();
+            } catch(e) { console.error(e); } finally { toggleLoader(false); }
         }
 
         async function saveToGoogle() {
+            if(!API_URL) return;
             const btn = document.getElementById('sync-status');
-            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Guardando...';
+            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ...';
             try {
-                // Modo no-cors para Google Scripts simples
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(db) });
-                setTimeout(() => {
-                    btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online';
-                }, 1000);
-            } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(db) });
+                setTimeout(()=> btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online', 1000);
+            } catch(e) { btn.innerHTML = '<span class="text-rose-500">Err</span>'; }
         }
 
-        // ---------------------------------------------------------
-        // MOTOR DE CÁLCULO (CASCADA REAL)
-        // ---------------------------------------------------------
+        // --- CALCULO RECURSIVO CON PESOS REALES ---
         function calculateProgress(item, type) {
-            // 1. Si es KPI, cálculo directo valor vs meta
             if (type === 'kpi') {
-                const start = parseFloat(item.startValue) || 0;
-                const target = parseFloat(item.targetValue) || 100;
-                const current = (item.currentValue !== undefined && item.currentValue !== "") ? parseFloat(item.currentValue) : start;
-                
-                if (target === start) return (current >= target) ? 100 : 0;
-                
-                let percent = 0;
-                if (target > start) percent = ((current - start) / (target - start)) * 100;
-                else percent = ((start - current) / (start - target)) * 100; // Meta decreciente (ej: reducir errores)
-                
-                return Math.max(0, Math.min(100, Math.round(percent)));
+                const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||100, c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
+                if (s===t) return c>=t?100:0;
+                let p = t>s ? ((c-s)/(t-s))*100 : ((s-c)/(s-t))*100;
+                return Math.max(0, Math.min(100, Math.round(p)));
             }
-
-            // 2. Si es Contenedor (Objetivo o Proyecto), suma ponderada de hijos
+            
             let children = [];
-            
-            // Recolectar hijos directos
             if (type === 'objective') {
-                // KPIs directos del objetivo
-                db.kpis.filter(k => k.objectiveId === item.id && !k.projectId)
-                       .forEach(k => children.push({ p: calculateProgress(k, 'kpi'), w: parseFloat(k.weight) || 1 }));
-                // Proyectos del objetivo
-                db.projects.filter(p => p.objectiveId === item.id)
-                           .forEach(p => children.push({ p: calculateProgress(p, 'project'), w: parseFloat(p.weight) || 1 }));
-            }
-            
-            if (type === 'project') {
-                // KPIs del proyecto
-                db.kpis.filter(k => k.projectId === item.id)
-                       .forEach(k => children.push({ p: calculateProgress(k, 'kpi'), w: parseFloat(k.weight) || 1 }));
-                // Tareas del proyecto (Binario: 0 o 100)
-                db.tasks.filter(t => t.projectId === item.id)
-                        .forEach(t => children.push({ p: t.done ? 100 : 0, w: 1 })); // Las tareas pesan 1 por defecto
+                db.kpis.filter(k => k.objectiveId === item.id && !k.projectId).forEach(k => children.push({p: calculateProgress(k,'kpi'), w: parseFloat(k.weight)||0}));
+                db.projects.filter(p => p.objectiveId === item.id).forEach(p => children.push({p: calculateProgress(p,'project'), w: parseFloat(p.weight)||0}));
+            } else if (type === 'project') {
+                db.kpis.filter(k => k.projectId === item.id).forEach(k => children.push({p: calculateProgress(k,'kpi'), w: parseFloat(k.weight)||0}));
+                db.tasks.filter(t => t.projectId === item.id).forEach(t => children.push({p: t.done?100:0, w: 1})); // Tareas siempre promedio simple dentro de lo que quede
             }
 
-            // Si no hay hijos, progreso es 0
-            if (children.length === 0) return 0;
+            if (!children.length) return 0;
 
-            // Promedio ponderado
-            const totalWeight = children.reduce((sum, child) => sum + child.w, 0);
-            const totalProgress = children.reduce((sum, child) => sum + (child.p * child.w), 0);
+            // Si es Proyecto y tiene tareas mixtas, a veces es mejor promedio simple si no se definen pesos
+            const totalWeight = children.reduce((acc, x) => acc + x.w, 0);
             
-            return Math.round(totalProgress / totalWeight);
+            // Si no hay pesos definidos (ej. legacy o tareas), usar promedio simple
+            if (totalWeight === 0) return Math.round(children.reduce((acc,x)=>acc+x.p,0) / children.length);
+
+            // Promedio Ponderado
+            // Normalizar a 100% si el usuario configuró mal, pero la idea es forzarlo en el modal
+            const weightedSum = children.reduce((acc, x) => acc + (x.p * (x.w / totalWeight)), 0);
+            return Math.round(weightedSum);
         }
 
-        // Función para determinar el color de la barra según progreso
-        function getProgressBarColor(percent) {
-            if(percent >= 100) return 'bg-emerald-500';
-            if(percent >= 70) return 'bg-blue-500';
-            if(percent >= 40) return 'bg-yellow-400';
-            return 'bg-slate-300';
-        }
-
-        // ---------------------------------------------------------
-        // RENDERIZADO (UI CARDS)
-        // ---------------------------------------------------------
+        // --- RENDER ---
         function renderExplorer() {
-            const container = document.getElementById('tree-container');
-            container.innerHTML = '';
+            const container = document.getElementById('tree-container'); container.innerHTML = '';
             const q = document.getElementById('filter-quarter').value;
             
-            // Filtrar Objetivos por Área y Trimestre
             const objs = db.objectives.filter(o => {
-                const objArea = o.area || 'Oficina Técnica';
-                if (objArea !== CURRENT_AREA) return false;
-                if (q === 'ALL') return true;
-                const m = new Date(o.endDate).getMonth() + 1;
-                if (q === 'Q1') return m<=3; if(q==='Q2') return m>3&&m<=6; if(q==='Q3') return m>6&&m<=9; return m>9;
+                if((o.area||'Oficina Técnica') !== CURRENT_AREA) return false;
+                if(q==='ALL') return true;
+                const m = new Date(o.endDate).getMonth()+1;
+                return q==='Q1'?m<=3 : q==='Q2'?m>3&&m<=6 : q==='Q3'?m>6&&m<=9 : m>9;
             });
 
-            if(!objs.length) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-50"><i data-lucide="inbox" size="48" class="mb-2"></i><span class="text-sm">No hay objetivos para ${q} en ${CURRENT_AREA}</span></div>`;
-                lucide.createIcons();
-                return;
-            }
+            if(!objs.length) { container.innerHTML='<div class="text-center text-slate-400 py-10">Sin objetivos</div>'; return; }
 
             objs.forEach(obj => {
-                const progress = calculateProgress(obj, 'objective');
-                const progressColor = getProgressBarColor(progress);
-                const isExpanded = true; // Por defecto abierto
-
-                // 1. Renderizar Hijos (KPIs Directos y Proyectos)
+                const prog = calculateProgress(obj, 'objective');
+                const barColor = prog>=100?'bg-emerald-500':prog>=50?'bg-blue-500':'bg-amber-400';
+                
+                // Generar Hijos
                 let childrenHTML = '';
+                db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
+                db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
 
-                // A. KPIs de Objetivo
-                const kpis = db.kpis.filter(k => k.objectiveId === obj.id && !k.projectId);
-                kpis.forEach(k => { childrenHTML += renderKpiCard(k); });
-
-                // B. Proyectos
-                const projs = db.projects.filter(p => p.objectiveId === obj.id);
-                projs.forEach(p => { childrenHTML += renderProjectCard(p); });
-
-                // HTML DEL OBJETIVO (CARD PRINCIPAL)
                 container.innerHTML += `
-                    <div class="card-objective group">
-                        <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
-                            <div class="flex items-center gap-3 flex-1 min-w-0">
-                                <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="text-slate-300 rotate-icon"></i>
-                                <div>
-                                    <div class="flex items-center gap-2 mb-0.5">
-                                        <span class="badge-type badge-obj">Objetivo</span>
-                                        <span class="text-[10px] text-slate-400 font-mono">${obj.endDate}</span>
-                                    </div>
-                                    <h3 class="font-bold text-base text-slate-800 leading-tight truncate pr-4">${obj.title}</h3>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-6 flex-shrink-0">
-                                <div class="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-                                    <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="btn-icon"><i data-lucide="pencil" size="14"></i></button>
-                                    <button onclick="event.stopPropagation(); cloneObjective(${obj.id})" class="btn-icon text-blue-400"><i data-lucide="copy" size="14"></i></button>
-                                </div>
-                                <div class="flex flex-col items-end w-24">
-                                    <span class="text-xs font-bold text-slate-700">${progress}%</span>
-                                    <div class="progress-track w-full h-1.5 bg-slate-100"><div class="progress-bar ${progressColor}" style="width: ${progress}%"></div></div>
-                                </div>
+                <div class="card-objective group">
+                    <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition relative z-10 bg-white" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="text-slate-300 rotate-icon"></i>
+                            <div>
+                                <h3 class="font-bold text-slate-800 leading-tight truncate pr-2">${obj.title}</h3>
+                                <div class="text-[10px] text-slate-400 mt-0.5 font-mono">${obj.endDate} · ${obj.owner||'S/A'}</div>
                             </div>
                         </div>
-
-                        <div id="obj-${obj.id}" class="accordion-content open">
-                            <div class="accordion-inner pb-3 pr-3">
-                                <div class="flex justify-end gap-2 mb-2 pr-1">
-                                    <button onclick="openModal('project', ${obj.id})" class="text-[10px] font-bold text-slate-500 hover:text-purple-600 flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200 transition"><i data-lucide="folder-plus" size="12"></i> + Proyecto</button>
-                                    <button onclick="openModal('kpi', ${obj.id}, 'objective')" class="text-[10px] font-bold text-slate-500 hover:text-orange-600 flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200 transition"><i data-lucide="bar-chart-2" size="12"></i> + KPI</button>
-                                </div>
-                                ${childrenHTML || '<div class="text-xs text-slate-300 italic text-center py-2 ml-4 border-l border-slate-100">Sin iniciativas aún.</div>'}
+                        <div class="flex items-center gap-4 pl-4">
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="btn-icon" title="Editar"><i data-lucide="pencil" size="14"></i></button>
+                                <button onclick="event.stopPropagation(); openWeightModal(${obj.id})" class="btn-icon text-purple-500" title="Ponderación"><i data-lucide="scale" size="14"></i></button>
+                            </div>
+                            <div class="w-20 text-right">
+                                <div class="text-xs font-bold text-slate-700 mb-1">${prog}%</div>
+                                <div class="progress-track h-1.5"><div class="progress-bar ${barColor}" style="width:${prog}%"></div></div>
                             </div>
                         </div>
-                    </div>`;
+                    </div>
+                    <div id="obj-${obj.id}" class="accordion-wrapper open">
+                        <div class="accordion-inner border-t border-slate-100 bg-white">
+                            <div class="p-2 pl-4 pr-2">
+                                <div class="flex justify-end gap-2 mb-2">
+                                    <button onclick="openModal('project',${obj.id})" class="text-[10px] font-bold text-slate-400 hover:text-blue-600 flex gap-1 items-center px-2 py-1 bg-slate-50 rounded border border-slate-100 transition"><i data-lucide="folder-plus" size="12"></i> Proyecto</button>
+                                    <button onclick="openModal('kpi',${obj.id},'objective')" class="text-[10px] font-bold text-slate-400 hover:text-orange-600 flex gap-1 items-center px-2 py-1 bg-slate-50 rounded border border-slate-100 transition"><i data-lucide="bar-chart" size="12"></i> KPI</button>
+                                </div>
+                                ${childrenHTML || '<div class="text-[10px] italic text-slate-300 py-2">Sin contenido.</div>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
             });
             lucide.createIcons();
         }
 
-        function renderProjectCard(p) {
-            const progress = calculateProgress(p, 'project');
-            const progressColor = getProgressBarColor(progress);
+        function renderProjectRow(p) {
+            const prog = calculateProgress(p, 'project');
+            let innerHTML = '';
+            db.tasks.filter(t=>t.projectId===p.id).forEach(t=> innerHTML+=`
+                <div class="flex items-center gap-2 py-1 hover:bg-white rounded px-2 group/task">
+                    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="cursor-pointer rounded border-slate-300 text-blue-600">
+                    <span class="text-xs text-slate-600 flex-1 truncate ${t.done?'line-through opacity-50':''}">${t.title}</span>
+                    <button onclick="delTask(${t.id})" class="opacity-0 group-hover/task:opacity-100 text-rose-400 hover:text-rose-600"><i data-lucide="x" size="12"></i></button>
+                </div>
+            `);
+            innerHTML += `<input type="text" placeholder="+ Tarea..." class="w-full text-xs bg-transparent border-b border-transparent focus:border-slate-300 outline-none mt-1 px-2 py-1 placeholder:text-slate-300" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}">`;
             
-            // Tareas
-            const tasks = db.tasks.filter(t => t.projectId === p.id);
-            let tasksHTML = '';
-            tasks.forEach(t => {
-                tasksHTML += `
-                <div class="flex items-center gap-2 py-1 pl-2 hover:bg-slate-100/50 rounded group/task transition">
-                    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 cursor-pointer focus:ring-0">
-                    <span class="text-xs ${t.done?'line-through text-slate-400':'text-slate-600'} flex-1 truncate">${t.title}</span>
-                    <button onclick="delTask(${t.id})" class="opacity-0 group-hover/task:opacity-100 text-slate-300 hover:text-rose-500 transition px-2"><i data-lucide="x" size="12"></i></button>
-                </div>`;
-            });
-            tasksHTML += `<div class="pl-2 mt-1"><input type="text" placeholder="+ Añadir tarea rápida..." class="text-xs w-full bg-transparent border-b border-transparent focus:border-slate-300 outline-none text-slate-500 placeholder:text-slate-300 py-1" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}"></div>`;
-
-            // KPIs de Proyecto
-            const pkpis = db.kpis.filter(k => k.projectId === p.id);
-            let kpisHTML = '';
-            pkpis.forEach(k => kpisHTML += renderKpiCard(k));
+            db.kpis.filter(k=>k.projectId===p.id).forEach(k=> innerHTML+=renderKpiRow(k));
 
             return `
             <div class="card-project group/proj">
-                <div class="p-2 pl-3 flex items-center justify-between cursor-pointer hover:bg-purple-50 transition" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <i id="icon-p-${p.id}" data-lucide="chevron-right" size="16" class="text-slate-400 rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="badge-type badge-proj">Proyecto</span>
-                                <span class="font-semibold text-sm text-slate-700 hover:text-purple-700" onclick="event.stopPropagation(); openEdit('project', ${p.id})">${p.title}</span>
-                            </div>
-                        </div>
+                <div class="p-2 flex items-center justify-between cursor-pointer" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <i id="icon-p-${p.id}" data-lucide="chevron-right" size="14" class="text-slate-400 rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i>
+                        <span class="text-xs font-semibold text-slate-700 truncate">${p.title}</span>
+                        ${p.weight>0 ? `<span class="text-[9px] bg-purple-100 text-purple-700 px-1 rounded">${p.weight}%</span>`:''}
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div class="opacity-0 group-hover/proj:opacity-100 transition-opacity">
-                             <button onclick="event.stopPropagation(); openEdit('project', ${p.id})" class="btn-icon"><i data-lucide="pencil" size="12"></i></button>
-                             <button onclick="event.stopPropagation(); openModal('kpi', ${p.id}, 'project')" class="btn-icon text-orange-400" title="Agregar KPI"><i data-lucide="bar-chart" size="12"></i></button>
+                    <div class="flex items-center gap-3">
+                        <div class="opacity-0 group-hover/proj:opacity-100 flex gap-1">
+                            <button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="btn-icon"><i data-lucide="pencil" size="12"></i></button>
+                            <button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="btn-icon text-orange-400"><i data-lucide="bar-chart" size="12"></i></button>
                         </div>
-                        <div class="flex items-center gap-2 w-24 justify-end">
-                             <div class="progress-track w-16 h-1 bg-slate-200"><div class="progress-bar ${progressColor}" style="width: ${progress}%"></div></div>
-                             <span class="text-[10px] font-bold text-slate-500">${progress}%</span>
-                        </div>
+                        <span class="text-[10px] font-bold text-slate-500 w-8 text-right">${prog}%</span>
                     </div>
                 </div>
-                <div id="proj-${p.id}" class="accordion-content ${p.isCollapsed?'':'open'} bg-white">
-                    <div class="accordion-inner p-2 pl-8 border-t border-slate-100">
-                        ${kpisHTML}
-                        <div class="mt-2 space-y-0.5 border-l-2 border-slate-100 pl-2">
-                            ${tasksHTML}
-                        </div>
+                <div id="proj-${p.id}" class="accordion-wrapper ${p.isCollapsed?'':'open'}">
+                    <div class="accordion-inner pl-6 pr-2 pb-2">
+                        ${innerHTML}
                     </div>
                 </div>
             </div>`;
         }
 
-        function renderKpiCard(k) {
-            const progress = calculateProgress(k, 'kpi');
-            const progressColor = getProgressBarColor(progress);
+        function renderKpiRow(k) {
+            const prog = calculateProgress(k, 'kpi');
             return `
-            <div class="card-kpi flex items-center justify-between p-2 mb-1 shadow-sm hover:shadow-md transition group/kpi">
-                <div class="flex items-center gap-3 flex-1">
-                    <div class="flex flex-col">
-                        <span class="badge-type badge-kpi w-fit mb-0.5">KPI</span>
-                        <span class="text-xs font-semibold text-slate-700 cursor-pointer hover:text-orange-600" onclick="openEdit('kpi', ${k.id})">${k.title}</span>
-                    </div>
+            <div class="card-kpi flex items-center justify-between p-1.5 pl-2 group/kpi hover:shadow-sm transition">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="text-[9px] font-bold text-orange-500 bg-orange-50 px-1 rounded border border-orange-100">KPI</span>
+                    <span class="text-xs text-slate-700 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title}</span>
+                    ${k.weight>0 ? `<span class="text-[9px] bg-slate-100 text-slate-500 px-1 rounded">${k.weight}%</span>`:''}
                 </div>
-                
-                <div class="flex items-center gap-4">
-                     <button onclick="openEdit('kpi', ${k.id})" class="btn-icon opacity-0 group-hover/kpi:opacity-100"><i data-lucide="pencil" size="12"></i></button>
-                     
-                     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                        <input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id}, this.value)" class="inline-input text-xs font-bold text-slate-700" placeholder="0">
-                        <span class="text-[10px] text-slate-400">/ ${k.targetValue}</span>
-                     </div>
-                     
-                     <div class="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full ${progressColor}" style="width: ${progress}%"></div>
-                     </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-12 text-center text-xs border-b border-slate-200 bg-transparent focus:border-orange-400 outline-none font-mono">
+                    <span class="text-[10px] text-slate-400">/ ${k.targetValue}</span>
+                    <div class="w-10 h-1 bg-slate-100 rounded overflow-hidden ml-1"><div class="h-full bg-orange-400" style="width:${prog}%"></div></div>
                 </div>
             </div>`;
         }
 
-        // ---------------------------------------------------------
-        // FUNCIONES AUXILIARES & ACCIONES
-        // ---------------------------------------------------------
-        function toggleAccordion(id, iconId) { 
-            const el = document.getElementById(id);
-            const icon = document.getElementById(iconId);
-            el.classList.toggle('open'); 
-            icon.classList.toggle('rotate-90'); 
+        // --- GESTIÓN DE PESOS (WEIGHTS) ---
+        function openWeightModal(objId) {
+            const modal = document.getElementById('modal-weights');
+            const list = document.getElementById('weight-list');
+            document.getElementById('weight-obj-id').value = objId;
+            list.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            const children = [
+                ...db.projects.filter(p => p.objectiveId === objId).map(p => ({...p, type:'PROY'})),
+                ...db.kpis.filter(k => k.objectiveId === objId && !k.projectId).map(k => ({...k, type:'KPI'}))
+            ];
+
+            if(!children.length) { list.innerHTML = '<div class="text-slate-400 text-center text-xs">Agrega proyectos o KPIs primero.</div>'; updateTotalWeight(); return; }
+
+            children.forEach(c => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-3 bg-slate-50 p-2 rounded border border-slate-200";
+                row.innerHTML = `
+                    <span class="text-[9px] font-bold px-1 rounded ${c.type==='PROY'?'bg-purple-100 text-purple-700':'bg-orange-100 text-orange-700'} w-10 text-center">${c.type}</span>
+                    <span class="text-xs text-slate-700 flex-1 truncate">${c.title}</span>
+                    <input type="range" min="0" max="100" value="${c.weight||0}" step="5" class="w-24 accent-blue-600" oninput="this.nextElementSibling.value=this.value+'%'; updateTotalWeight()">
+                    <input type="text" value="${c.weight||0}%" class="w-10 text-right text-xs font-bold bg-transparent outline-none" readonly>
+                    <input type="hidden" class="item-id" value="${c.id}"><input type="hidden" class="item-type" value="${c.type}">
+                `;
+                list.appendChild(row);
+            });
+            updateTotalWeight();
+        }
+
+        function updateTotalWeight() {
+            const inputs = document.querySelectorAll('#weight-list input[type="range"]');
+            let sum = 0;
+            inputs.forEach(i => sum += parseInt(i.value));
+            const display = document.getElementById('weight-total-display');
+            const btn = document.getElementById('btn-save-weights');
             
-            // Guardar estado colapsado si es proyecto
-            if(id.startsWith('proj-')) {
+            display.innerText = sum + "%";
+            if(sum === 100) { display.className="text-emerald-600 font-bold text-sm"; btn.disabled=false; }
+            else { display.className="text-rose-500 font-bold text-sm"; btn.disabled=true; }
+        }
+
+        function saveWeights() {
+            const rows = document.querySelectorAll('#weight-list > div');
+            rows.forEach(r => {
+                const id = parseInt(r.querySelector('.item-id').value);
+                const type = r.querySelector('.item-type').value;
+                const val = parseInt(r.querySelector('input[type="range"]').value);
+                
+                if(type==='PROY') { const p = db.projects.find(x=>x.id===id); if(p) p.weight = val; }
+                else { const k = db.kpis.find(x=>x.id===id); if(k) k.weight = val; }
+            });
+            saveToGoogle();
+            document.getElementById('modal-weights').classList.add('hidden');
+            renderExplorer();
+        }
+
+        // --- DATE HELPERS ---
+        function setQuarterDate(q) {
+            const year = "2026"; // Hardcoded o dinámico según necesites
+            const dates = { 1: "-03-31", 2: "-06-30", 3: "-09-30", 4: "-12-31" };
+            document.getElementById('inp-end').value = year + dates[q];
+        }
+
+        // --- ACTIONS ---
+        function toggleAccordion(id, iconId) {
+            document.getElementById(id).classList.toggle('open');
+            document.getElementById(iconId).classList.toggle('rotate-90');
+            if(id.includes('proj-')) {
                 const pid = parseInt(id.split('-')[1]);
-                const p = db.projects.find(x => x.id === pid);
-                if(p) p.isCollapsed = !el.classList.contains('open');
+                const p = db.projects.find(x=>x.id===pid);
+                if(p) p.isCollapsed = !document.getElementById(id).classList.contains('open');
             }
         }
 
-        function updateKpiVal(id, v) { const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); } } 
-        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); } }
-        function addTask(pid, t) { if(t.trim()){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); } }
-        function delTask(id) { if(confirm('¿Borrar tarea?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
-        
-        function switchArea(newArea) { CURRENT_AREA = newArea; localStorage.setItem('okr_current_area', newArea); renderExplorer(); }
-        function switchView(v) { 
-            document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer'); 
-            document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard'); 
-            document.getElementById('header-actions').classList.toggle('hidden', v==='dashboard');
-            document.getElementById('view-title').innerText = v==='explorer' ? 'Mis OKRs' : 'Reporte General';
-            if(v==='dashboard') renderDashboard(); 
-        }
-        function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
-        function toggleAll(expand) {
-             document.querySelectorAll('.accordion-content').forEach(el => expand ? el.classList.add('open') : el.classList.remove('open'));
-             document.querySelectorAll('.rotate-icon').forEach(el => expand ? el.classList.remove('rotate-90') : el.classList.add('rotate-90')); // Lógica inversa por diseño de icono
-        }
-
-        // Clone
-        function cloneObjective(oid) {
-            const o = db.objectives.find(x => x.id === oid); if(!o || !confirm('¿Duplicar Objetivo?')) return;
-            const newOid = Date.now();
-            db.objectives.push({...o, id: newOid, title: "Copia - " + o.title, startDate: new Date().toISOString().split('T')[0], endDate: ""});
-            // Clonar hijos (simplificado)
-            db.kpis.filter(k => k.objectiveId === oid && !k.projectId).forEach(k => db.kpis.push({...k, id: Date.now()+Math.random(), objectiveId: newOid, currentValue: k.startValue}));
-            db.projects.filter(p => p.objectiveId === oid).forEach(p => {
-                const newPid = Date.now() + Math.random();
-                db.projects.push({...p, id: newPid, objectiveId: newOid});
-                db.tasks.filter(t => t.projectId === p.id).forEach(t => db.tasks.push({...t, id: Date.now()+Math.random(), projectId: newPid, done: false}));
-            });
-            saveToGoogle(); renderExplorer();
-        }
-
-        // ---------------------------------------------------------
-        // MODALES Y EDICIÓN
-        // ---------------------------------------------------------
-        function openModal(type, pid, ctx) { 
-            document.getElementById('modal-backdrop').classList.remove('hidden'); 
-            document.getElementById('edit-id').value=''; 
+        function openModal(type, pid, ctx) {
+            document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('entity-type').value=type; 
             document.getElementById('parent-id').value=pid||''; 
             document.getElementById('context-type').value=ctx||'';
+            document.getElementById('edit-id').value='';
+            document.getElementById('modal-title').innerText = "Nuevo " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
+            document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi');
             
-            document.getElementById('modal-title').innerText = type === 'objective' ? 'Nuevo Objetivo Estratégico' : type === 'project' ? 'Nuevo Proyecto' : 'Configurar KPI';
-            document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi'); 
-            document.getElementById('btn-delete').classList.add('hidden');
-            
-            // Reset fields
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('inp-start').value = today;
-            ['inp-title','inp-owner','inp-tags','inp-val-start','inp-val-target','inp-weight','inp-end'].forEach(i => document.getElementById(i).value='');
-            renderOwnerSuggestions();
+            // Clear
+            ['inp-title','inp-owner','inp-start','inp-end','inp-val-start','inp-val-target'].forEach(i=>document.getElementById(i).value='');
         }
 
-        function openEdit(type, id) { 
-            const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis;
-            const i = list.find(x=>x.id===id); if(!i)return; 
-            
-            openModal(type, null, null); 
-            document.getElementById('edit-id').value=id; 
-            document.getElementById('modal-title').innerText='Editar '+type; 
-            document.getElementById('btn-delete').classList.remove('hidden'); 
-            
-            // Fill
-            document.getElementById('inp-title').value=i.title; 
-            document.getElementById('inp-owner').value=i.owner||''; 
-            document.getElementById('inp-weight').value=i.weight||''; 
-            document.getElementById('inp-start').value=i.startDate; 
-            document.getElementById('inp-end').value=i.endDate; 
-            if(type==='kpi'){ 
-                document.getElementById('inp-val-start').value=i.startValue; 
-                document.getElementById('inp-val-target').value=i.targetValue; 
+        function openEdit(type, id) {
+            const i = (type==='objective'?db.objectives:type==='project'?db.projects:db.kpis).find(x=>x.id===id);
+            if(!i)return;
+            openModal(type, null, null);
+            document.getElementById('edit-id').value = id;
+            document.getElementById('inp-title').value = i.title;
+            document.getElementById('inp-owner').value = i.owner||'';
+            document.getElementById('inp-start').value = i.startDate;
+            document.getElementById('inp-end').value = i.endDate;
+            if(type==='kpi'){
+                document.getElementById('inp-val-start').value = i.startValue;
+                document.getElementById('inp-val-target').value = i.targetValue;
             }
         }
-        
-        function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
-        
-        function deleteItemFromModal() {
-            const id=parseInt(document.getElementById('edit-id').value);
-            const type=document.getElementById('entity-type').value;
-            if(!id||!confirm('¿Eliminar definitivamente?'))return;
-            
-            if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); }
-            else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); }
-            else if(type==='kpi'){ db.kpis=db.kpis.filter(x=>x.id!==id); }
-            
-            saveToGoogle(); closeModal(); renderExplorer();
-        }
 
-        function saveDataFromModal() {
+        function saveData() {
             const id = document.getElementById('edit-id').value;
             const type = document.getElementById('entity-type').value;
             const pid = parseInt(document.getElementById('parent-id').value);
-            const w = parseFloat(document.getElementById('inp-weight').value)||1;
             
-            const common = { 
-                title: document.getElementById('inp-title').value, 
-                owner: document.getElementById('inp-owner').value, 
-                weight: w, 
-                startDate: document.getElementById('inp-start').value, 
-                endDate: document.getElementById('inp-end').value,
-                tags: document.getElementById('inp-tags').value.split(',').filter(Boolean)
+            const data = {
+                title: document.getElementById('inp-title').value,
+                owner: document.getElementById('inp-owner').value,
+                startDate: document.getElementById('inp-start').value,
+                endDate: document.getElementById('inp-end').value
             };
-            
-            // Save Owner history
-            if(common.owner && !recentOwners.includes(common.owner)){ 
-                recentOwners.unshift(common.owner); recentOwners=recentOwners.slice(0,5); 
-                localStorage.setItem('okr_recent_owners',JSON.stringify(recentOwners)); 
-            }
 
             if(id) { // UPDATE
-                const numId = parseInt(id);
                 const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis;
-                const idx = list.findIndex(x=>x.id===numId);
-                if(idx !== -1) {
-                    list[idx] = {...list[idx], ...common};
-                    if(type==='kpi'){ list[idx].startValue=document.getElementById('inp-val-start').value; list[idx].targetValue=document.getElementById('inp-val-target').value; }
+                const idx = list.findIndex(x=>x.id==id);
+                if(idx!==-1) {
+                    list[idx] = {...list[idx], ...data};
+                    if(type==='kpi'){
+                        list[idx].startValue = document.getElementById('inp-val-start').value;
+                        list[idx].targetValue = document.getElementById('inp-val-target').value;
+                    }
                 }
             } else { // CREATE
-                const newItem = { id: Date.now(), ...common };
-                if(type === 'objective') { newItem.area = CURRENT_AREA; db.objectives.push(newItem); }
-                else if(type === 'project') { newItem.objectiveId = pid; newItem.isCollapsed = false; db.projects.push(newItem); }
-                else { // KPI
-                    newItem.startValue = document.getElementById('inp-val-start').value; 
-                    newItem.targetValue = document.getElementById('inp-val-target').value; 
-                    newItem.currentValue = newItem.startValue; 
-                    if(document.getElementById('context-type').value==='objective') newItem.objectiveId = pid; else newItem.projectId = pid; 
-                    db.kpis.push(newItem); 
+                const newItem = { id: Date.now(), ...data, weight: 0 }; // Default weight 0, user must balance later
+                if(type==='objective'){ newItem.area=CURRENT_AREA; db.objectives.push(newItem); }
+                else if(type==='project'){ newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); }
+                else { 
+                    newItem.startValue=document.getElementById('inp-val-start').value; 
+                    newItem.targetValue=document.getElementById('inp-val-target').value; 
+                    newItem.currentValue=newItem.startValue;
+                    if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid;
+                    db.kpis.push(newItem);
                 }
             }
             saveToGoogle(); closeModal(); renderExplorer();
         }
 
-        function renderOwnerSuggestions() { 
-            const s=document.getElementById('owner-suggestions'); s.innerHTML=''; 
-            recentOwners.forEach(o=>{ 
-                const c=document.createElement('div'); c.className='owner-chip bg-slate-100 text-[10px] px-2 py-0.5 rounded cursor-pointer hover:bg-slate-200'; c.innerText=o; c.onclick=()=>document.getElementById('inp-owner').value=o; s.appendChild(c); 
-            }); 
-        }
-
-        function renderDashboard() {
-            const tbody = document.getElementById('report-body'); tbody.innerHTML = '';
-            const objs = db.objectives.filter(o => (o.area || 'Oficina Técnica') === CURRENT_AREA);
-            
-            objs.forEach(obj => {
-                const p = calculateProgress(obj, 'objective');
-                const c = getProgressBarColor(p);
-                tbody.innerHTML += `
-                <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                    <td class="p-3 pl-4 font-semibold text-slate-700">${obj.title}</td>
-                    <td class="p-3 text-slate-500">${obj.owner||'-'}</td>
-                    <td class="p-3 font-mono text-slate-400">${obj.endDate}</td>
-                    <td class="p-3"><div class="flex items-center gap-2"><div class="progress-track flex-1 h-1.5"><div class="progress-bar ${c}" style="width: ${p}%"></div></div><span class="text-[10px] font-bold">${p}%</span></div></td>
-                    <td class="p-3 text-center"><span class="px-2 py-1 rounded-full text-[9px] font-bold ${p===100?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600'}">${p===100?'COMPLETO':p>0?'EN CURSO':'INICIO'}</span></td>
-                </tr>`;
-            });
+        function deleteItem(){
+             const id=parseInt(document.getElementById('edit-id').value);
+             const type=document.getElementById('entity-type').value;
+             if(!confirm('¿Eliminar?'))return;
+             if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); }
+             else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); }
+             else { db.kpis=db.kpis.filter(x=>x.id!==id); }
+             saveToGoogle(); closeModal(); renderExplorer();
         }
         
-        function exportCSV() {
-            let csv = "Tipo,Titulo,Responsable,Progreso\n";
-            db.objectives.filter(o => (o.area || 'Oficina Técnica') === CURRENT_AREA).forEach(o => {
-                csv += `Objetivo,"${o.title}","${o.owner||''}",${calculateProgress(o,'objective')}%\n`;
+        function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
+        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); }}
+        function updateKpiVal(id,v){ const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); }}
+        function addTask(pid,t){ if(t.trim()){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); }}
+        function delTask(id){ if(confirm('¿Borrar tarea?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); }}
+        function switchArea(a){ CURRENT_AREA=a; localStorage.setItem('okr_current_area',a); renderExplorer(); }
+        function switchView(v){ 
+            document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer');
+            document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard');
+            document.getElementById('header-actions').classList.toggle('hidden', v==='dashboard');
+            if(v==='dashboard') renderDashboard();
+        }
+        function toggleLoader(s){ document.getElementById('global-loader').classList.toggle('hidden', !s); }
+        function toggleAll(exp){ document.querySelectorAll('.accordion-wrapper').forEach(e=> exp?e.classList.add('open'):e.classList.remove('open')); }
+        function renderDashboard() {
+            const b=document.getElementById('report-body'); b.innerHTML='';
+            db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA).forEach(o=>{
+                const p=calculateProgress(o,'objective');
+                b.innerHTML+=`<tr><td class="p-3 font-semibold">${o.title}</td><td class="p-3 text-slate-400">${o.endDate}</td><td class="p-3">${o.owner||'-'}</td><td class="p-3 text-blue-600 font-bold">${p}%</td><td class="p-3 text-center">${p>=100?'✅':'🔄'}</td></tr>`;
             });
-            const b = new Blob([csv], {type:'text/csv'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'okr_export.csv'; a.click();
         }
     </script>
 </body>
