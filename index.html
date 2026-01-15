@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v10.1 | Logic Fix</title>
+    <title>OKR Manager v10.2 | UI UX Fixes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -12,7 +12,7 @@
         :root { --obj: #2563eb; --proj: #7c3aed; --kpi: #f97316; }
         body { font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; }
         
-        /* ACORDEÓN (Grid Fix) */
+        /* ACORDEÓN */
         .accordion-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; overflow: hidden; }
         .accordion-wrapper.open { grid-template-rows: 1fr; }
         .accordion-inner { min-height: 0; }
@@ -22,7 +22,7 @@
         .card-project { border-left: 4px solid var(--proj); background: #fbfbfe; margin: 8px 0 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; border-left-width: 4px; border-left-color: var(--proj); }
         .card-kpi { border-left: 3px solid var(--kpi); background: white; margin: 4px 0 4px 0; border: 1px solid #f1f5f9; border-left-width: 3px; border-left-color: var(--kpi); }
 
-        /* UI */
+        /* UI ELEMENTS */
         .progress-track { background-color: #e2e8f0; height: 6px; border-radius: 99px; width: 100%; overflow: hidden; }
         .progress-bar { height: 100%; transition: width 0.5s ease; }
         .btn-icon { padding: 5px; border-radius: 4px; color: #94a3b8; transition: 0.2s; cursor: pointer; }
@@ -30,6 +30,11 @@
         .rotate-icon { transition: transform 0.2s; }
         .rotate-90 { transform: rotate(-90deg); }
         
+        /* BOTONES FILTRO */
+        .filter-btn { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+        .filter-btn.active { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .filter-btn.inactive { color: #64748b; hover:bg-slate-50; }
+
         /* SPINNER */
         .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -40,7 +45,7 @@
     <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
         <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
             <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v10.1</span></h1>
+            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v10.2</span></h1>
         </div>
         <div class="p-4 border-b border-slate-100 bg-slate-50">
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
@@ -68,13 +73,13 @@
             <div class="flex items-center gap-4">
                 <h2 id="view-title" class="text-sm font-bold text-slate-800">Mis OKRs</h2>
                 <span class="text-slate-300">|</span>
-                <select id="filter-quarter" onchange="renderExplorer()" class="text-xs font-medium text-slate-500 bg-transparent outline-none cursor-pointer hover:text-blue-600">
-                    <option value="ALL">2026 Completo</option>
-                    <option value="Q1">Q1 (Ene-Mar)</option>
-                    <option value="Q2">Q2 (Abr-Jun)</option>
-                    <option value="Q3">Q3 (Jul-Sep)</option>
-                    <option value="Q4">Q4 (Oct-Dic)</option>
-                </select>
+                <div id="filter-container" class="flex items-center gap-1">
+                    <button onclick="toggleFilter('ALL')" id="btn-f-ALL" class="filter-btn inactive">2026</button>
+                    <button onclick="toggleFilter('Q1')" id="btn-f-Q1" class="filter-btn active">Q1</button>
+                    <button onclick="toggleFilter('Q2')" id="btn-f-Q2" class="filter-btn inactive">Q2</button>
+                    <button onclick="toggleFilter('Q3')" id="btn-f-Q3" class="filter-btn inactive">Q3</button>
+                    <button onclick="toggleFilter('Q4')" id="btn-f-Q4" class="filter-btn inactive">Q4</button>
+                </div>
             </div>
             <div class="flex gap-2" id="header-actions">
                 <button onclick="toggleAll(false)" class="btn-icon" title="Contraer"><i data-lucide="minimize-2" size="14"></i></button>
@@ -99,6 +104,8 @@
         </div>
     </main>
 
+    <datalist id="list-owners"></datalist>
+
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-lg shadow-xl flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
             <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-lg">
@@ -118,7 +125,7 @@
                     <textarea id="inp-title" rows="2" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none resize-none font-medium"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label><input id="inp-owner" class="w-full px-3 py-2 text-xs border border-slate-300 rounded outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label><input id="inp-owner" list="list-owners" class="w-full px-3 py-2 text-xs border border-slate-300 rounded outline-none" autocomplete="off"></div>
                     <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Inicio</label><input id="inp-start" type="date" class="w-full px-3 py-2 text-xs border border-slate-300 rounded text-slate-500"></div>
                 </div>
                 <div>
@@ -181,9 +188,10 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE CONEXIÓN RESTAURADA
+        // CONFIGURACIÓN
         let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
+        let SELECTED_QUARTERS = ['Q1']; // Default Q1
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
         
         // INIT
@@ -198,6 +206,7 @@
             try {
                 const res = await fetch(API_URL);
                 db = await res.json();
+                updateSuggestions();
                 renderExplorer();
                 btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online';
             } catch(e) { 
@@ -212,8 +221,39 @@
             btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Guardando...';
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(db) });
+                updateSuggestions();
                 setTimeout(()=> btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online', 1000);
             } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
+        }
+
+        function updateSuggestions() {
+            const users = new Set();
+            [...db.objectives, ...db.projects].forEach(i => { if(i.owner) users.add(i.owner) });
+            const datalist = document.getElementById('list-owners');
+            datalist.innerHTML = Array.from(users).map(u => `<option value="${u}">`).join('');
+        }
+
+        // --- FILTROS DE PERIODO ---
+        function toggleFilter(q) {
+            const btn = document.getElementById('btn-f-' + q);
+            if (q === 'ALL') {
+                SELECTED_QUARTERS = ['ALL'];
+            } else {
+                if (SELECTED_QUARTERS.includes('ALL')) SELECTED_QUARTERS = [];
+                if (SELECTED_QUARTERS.includes(q)) {
+                    SELECTED_QUARTERS = SELECTED_QUARTERS.filter(x => x !== q);
+                } else {
+                    SELECTED_QUARTERS.push(q);
+                }
+                if(SELECTED_QUARTERS.length === 0) SELECTED_QUARTERS = ['ALL']; // Fallback
+            }
+            // Update UI
+            ['ALL','Q1','Q2','Q3','Q4'].forEach(k => {
+                const b = document.getElementById('btn-f-' + k);
+                if (SELECTED_QUARTERS.includes(k)) { b.classList.add('active'); b.classList.remove('inactive'); }
+                else { b.classList.add('inactive'); b.classList.remove('active'); }
+            });
+            renderExplorer();
         }
 
         // --- CÁLCULO PONDERADO & LÓGICA KPI ---
@@ -221,28 +261,19 @@
             if (type === 'kpi') {
                 const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||0;
                 const c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
-                const trend = item.trend || 'asc'; // Por defecto Subir
+                const trend = item.trend || 'asc'; 
 
-                // 1. Lógica Mantener por debajo (Umbral)
                 if (trend === 'below') {
-                    if (c <= t) return 100; // Éxito total si estoy debajo
-                    // Si me paso, calculo la desviación si hay un rango lógico, si no, 0.
-                    // Si Start=0, Target=4.5, Current=5. Fallé.
-                    if (s < t) return 0; // Se rompió el límite superior absoluto
-                    
-                    // Si Start=10, Target=5 (Reducción con límite).
-                    // Si voy por 7, todavía estoy progresando hacia el límite.
-                    // Usamos la lógica de reducción estándar para el progreso parcial.
+                    if (c <= t) return 100; 
+                    if (s < t) return 0; 
                 }
 
-                // 2. Lógica Reducción (Bajar) O Fallback de 'below' con rango inverso
                 if (trend === 'desc' || (trend === 'below' && s > t)) {
                     if (s === t) return c <= t ? 100 : 0;
                     let p = ((s - c) / (s - t)) * 100;
                     return Math.max(0, Math.min(100, Math.round(p)));
                 }
 
-                // 3. Lógica Incremental (Subir) - Default
                 if (s === t) return c >= t ? 100 : 0;
                 let p = ((c - s) / (t - s)) * 100;
                 return Math.max(0, Math.min(100, Math.round(p)));
@@ -267,21 +298,25 @@
         // --- RENDER ---
         function renderExplorer() {
             const container = document.getElementById('tree-container'); container.innerHTML = '';
-            const q = document.getElementById('filter-quarter').value;
             
             const objs = db.objectives.filter(o => {
                 if((o.area||'Oficina Técnica') !== CURRENT_AREA) return false;
-                if(q==='ALL') return true;
+                if(SELECTED_QUARTERS.includes('ALL')) return true;
+                
                 const m = new Date(o.endDate).getMonth()+1;
-                return q==='Q1'?m<=3 : q==='Q2'?m>3&&m<=6 : q==='Q3'?m>6&&m<=9 : m>9;
+                let q = m<=3?'Q1':m<=6?'Q2':m<=9?'Q3':'Q4';
+                return SELECTED_QUARTERS.includes(q);
             });
 
-            if(!objs.length) { container.innerHTML='<div class="text-center text-slate-400 py-10 opacity-60 flex flex-col items-center"><i data-lucide="ghost" size="32" class="mb-2"></i>Sin objetivos para este periodo</div>'; lucide.createIcons(); return; }
+            if(!objs.length) { container.innerHTML='<div class="text-center text-slate-400 py-10 opacity-60 flex flex-col items-center"><i data-lucide="ghost" size="32" class="mb-2"></i>Sin objetivos en selección</div>'; lucide.createIcons(); return; }
 
             objs.forEach(obj => {
                 const prog = calculateProgress(obj, 'objective');
                 const barColor = prog>=100?'bg-emerald-500':prog>=50?'bg-blue-500':'bg-amber-400';
                 
+                // CORRECCIÓN EXPANSION: Usar propiedad isCollapsed en lugar de 'open' hardcodeado
+                const isOpen = !obj.isCollapsed; 
+
                 let childrenHTML = '';
                 db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
                 db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
@@ -290,7 +325,7 @@
                 <div class="card-objective group">
                     <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition relative z-10 bg-white" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
                         <div class="flex items-center gap-3 flex-1 min-w-0">
-                            <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="text-slate-300 rotate-icon"></i>
+                            <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="text-slate-300 rotate-icon ${isOpen?'':'rotate-90'}"></i>
                             <div>
                                 <h3 class="font-bold text-slate-800 leading-tight truncate pr-2">${obj.title}</h3>
                                 <div class="text-[10px] text-slate-400 mt-0.5 font-mono">${obj.endDate} · ${obj.owner||'S/A'}</div>
@@ -307,7 +342,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="obj-${obj.id}" class="accordion-wrapper open">
+                    <div id="obj-${obj.id}" class="accordion-wrapper ${isOpen?'open':''}">
                         <div class="accordion-inner border-t border-slate-100 bg-white">
                             <div class="p-2 pl-4 pr-2">
                                 <div class="flex justify-end gap-2 mb-2">
@@ -362,7 +397,6 @@
 
         function renderKpiRow(k) {
             const prog = calculateProgress(k, 'kpi');
-            // Icono visual de tendencia
             let trendIcon = '';
             if(k.trend === 'desc') trendIcon = '<span class="text-[8px] text-blue-400 bg-blue-50 px-1 rounded">▼</span>';
             else if(k.trend === 'below') trendIcon = '<span class="text-[8px] text-rose-500 bg-rose-50 px-1 rounded">≤</span>';
@@ -418,10 +452,8 @@
             let sum = 0;
             inputs.forEach(i => sum += parseFloat(i.value));
             sum = Math.round(sum * 10) / 10;
-            
             const display = document.getElementById('weight-total-display');
             const btn = document.getElementById('btn-save-weights');
-            
             display.innerText = sum + "%";
             if(sum === 100) { display.className="text-emerald-600 font-bold text-sm"; btn.disabled=false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
             else { display.className="text-rose-500 font-bold text-sm"; btn.disabled=true; btn.classList.add('opacity-50','cursor-not-allowed'); }
@@ -441,7 +473,7 @@
             renderExplorer();
         }
 
-        // --- ACTIONS ---
+        // --- ACTIONS & UTILS ---
         function setQuarterDate(q) {
             const year = "2026";
             const dates = { 1: "-03-31", 2: "-06-30", 3: "-09-30", 4: "-12-31" };
@@ -451,10 +483,17 @@
         function toggleAccordion(id, iconId) {
             document.getElementById(id).classList.toggle('open');
             document.getElementById(iconId).classList.toggle('rotate-90');
+            const isOpen = document.getElementById(id).classList.contains('open');
+            
+            // GUARDAR ESTADO EN MEMORIA PARA QUE NO SE REINICIE AL RENDERIZAR
             if(id.includes('proj-')) {
                 const pid = parseInt(id.split('-')[1]);
                 const p = db.projects.find(x=>x.id===pid);
-                if(p) p.isCollapsed = !document.getElementById(id).classList.contains('open');
+                if(p) p.isCollapsed = !isOpen;
+            } else if(id.includes('obj-')) {
+                const oid = parseInt(id.split('-')[1]);
+                const o = db.objectives.find(x=>x.id===oid);
+                if(o) o.isCollapsed = !isOpen;
             }
         }
 
@@ -481,13 +520,11 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('btn-delete').classList.remove('hidden');
             
-            // POBLAR DATOS
             document.getElementById('inp-title').value = i.title;
             document.getElementById('inp-owner').value = i.owner||'';
             document.getElementById('inp-start').value = i.startDate;
             document.getElementById('inp-end').value = i.endDate;
 
-            // LOGICA MOVER (Transferencia)
             const moveWrapper = document.getElementById('move-wrapper');
             const moveSelect = document.getElementById('inp-move-parent');
             moveWrapper.classList.add('hidden');
@@ -500,7 +537,6 @@
                 }
             } 
 
-            // LOGICA KPI
             if(type==='kpi'){
                 document.getElementById('inp-val-start').value = i.startValue;
                 document.getElementById('inp-val-target').value = i.targetValue;
@@ -525,14 +561,11 @@
                 const idx = list.findIndex(x=>x.id==id);
                 if(idx!==-1) {
                     list[idx] = {...list[idx], ...data};
-                    
                     if(type==='kpi'){
                         list[idx].startValue = document.getElementById('inp-val-start').value;
                         list[idx].targetValue = document.getElementById('inp-val-target').value;
                         list[idx].trend = document.getElementById('inp-kpi-trend').value;
                     }
-
-                    // PROCESAR MOVER
                     const moveWrapper = document.getElementById('move-wrapper');
                     if(!moveWrapper.classList.contains('hidden')) {
                         const newParentId = parseInt(document.getElementById('inp-move-parent').value);
@@ -583,7 +616,12 @@
             if(v==='dashboard') renderDashboard();
         }
         function toggleLoader(s){ document.getElementById('global-loader').classList.toggle('hidden', !s); }
-        function toggleAll(exp){ document.querySelectorAll('.accordion-wrapper').forEach(e=> exp?e.classList.add('open'):e.classList.remove('open')); }
+        function toggleAll(exp){ 
+            // Reset local state
+            db.objectives.forEach(o => o.isCollapsed = !exp);
+            db.projects.forEach(p => p.isCollapsed = !exp);
+            renderExplorer();
+        }
         function renderDashboard() {
             const b=document.getElementById('report-body'); b.innerHTML='';
             db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA).forEach(o=>{
