@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v9.5 | Weights & Visual Fix</title>
+    <title>OKR Manager v9.6 | Fixed Connection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -12,30 +12,26 @@
         :root { --obj: #2563eb; --proj: #7c3aed; --kpi: #f97316; }
         body { font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; }
         
-        /* --- SOLUCIÓN ERROR VISUAL (Accordion) --- */
-        /* Usamos Grid para animar altura de 0 a auto limpiamente */
+        /* FIX VISUAL ACORDEÓN (Evita espacios blancos y saltos raros) */
         .accordion-wrapper {
             display: grid;
             grid-template-rows: 0fr;
             transition: grid-template-rows 0.3s ease-out;
-            /* CRÍTICO: Esto evita que el contenido se vea cuando está cerrado */
             overflow: hidden; 
         }
         .accordion-wrapper.open {
             grid-template-rows: 1fr;
         }
         .accordion-inner {
-            min-height: 0; /* Necesario para que grid funcione */
-            /* Padding se mueve aquí adentro para no afectar la altura externa */
+            min-height: 0;
         }
 
         /* Tarjetas */
         .card-objective { border-left: 5px solid var(--obj); background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 1rem; border-radius: 6px; overflow: hidden; }
-        /* Quitamos márgenes negativos que causaban solapamiento */
         .card-project { border-left: 4px solid var(--proj); background: #fbfbfe; margin: 8px 0 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; border-left-width: 4px; border-left-color: var(--proj); }
         .card-kpi { border-left: 3px solid var(--kpi); background: white; margin: 4px 0 4px 0; border: 1px solid #f1f5f9; border-left-width: 3px; border-left-color: var(--kpi); }
 
-        /* UI Components */
+        /* UI */
         .progress-track { background-color: #e2e8f0; height: 6px; border-radius: 99px; width: 100%; overflow: hidden; }
         .progress-bar { height: 100%; transition: width 0.5s ease; }
         .btn-icon { padding: 5px; border-radius: 4px; color: #94a3b8; transition: 0.2s; cursor: pointer; }
@@ -53,7 +49,7 @@
     <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
         <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
             <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v9.5</span></h1>
+            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v9.6</span></h1>
         </div>
         <div class="p-4 border-b border-slate-100 bg-slate-50">
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
@@ -61,7 +57,7 @@
                 <option value="Oficina Técnica">Oficina Técnica</option>
                 <option value="PXD">PXD</option>
                 <option value="Planificación">Planificación</option>
-                <option value="Pricing">Pricing y Negocio</option>
+                <option value="Pricing y Negocio">Pricing y Negocio</option>
             </select>
         </div>
         <nav class="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -69,8 +65,8 @@
             <button onclick="switchView('dashboard')" class="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-500 text-xs font-medium flex items-center gap-2 transition"><i data-lucide="pie-chart" size="14"></i> Reporte</button>
         </nav>
         <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 text-[10px]">
-             <div id="sync-status" class="flex items-center gap-1.5 text-emerald-600 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online</div>
-             <button onclick="saveToGoogle()" class="text-blue-600 hover:underline">Sincronizar</button>
+             <div id="sync-status" class="flex items-center gap-1.5 text-slate-400 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Conectando...</div>
+             <button onclick="loadFromGoogle()" class="text-blue-600 hover:underline">Reconectar</button>
         </div>
     </aside>
 
@@ -133,7 +129,7 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha Objetivo (Fin)</label>
                     <div class="flex gap-2">
                         <input id="inp-end" type="date" class="flex-1 px-3 py-2 text-xs border border-slate-300 rounded font-bold text-slate-700 outline-none focus:border-blue-500">
-                        <div class="flex border border-slate-200 rounded overflow-hidden">
+                        <div class="flex border border-slate-200 rounded overflow-hidden flex-shrink-0">
                             <button onclick="setQuarterDate(1)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q1</button>
                             <button onclick="setQuarterDate(2)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q2</button>
                             <button onclick="setQuarterDate(3)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q3</button>
@@ -163,7 +159,7 @@
         <div class="bg-white w-full max-w-md rounded-lg shadow-2xl flex flex-col animate-[fadeIn_0.2s_ease-out]">
             <div class="px-5 py-4 border-b border-slate-100">
                 <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="scale" size="16" class="text-blue-600"></i> Balancear Pesos (Incidencia)</h3>
-                <p class="text-[11px] text-slate-400 mt-1">La suma de los hijos debe ser exactamente 100%.</p>
+                <p class="text-[11px] text-slate-400 mt-1">La suma debe ser exactamente 100%.</p>
             </div>
             <div class="p-5 overflow-y-auto max-h-[60vh]">
                 <input type="hidden" id="weight-obj-id">
@@ -183,32 +179,40 @@
     </div>
 
     <script>
-        let API_URL = localStorage.getItem('okr_api_url') || '';
+        // CONFIGURACIÓN: Aquí se restaura tu URL original
+        let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
+        
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
         
         // INIT
         document.getElementById('area-selector').value = CURRENT_AREA;
-        if(API_URL) loadFromGoogle(); else { db={objectives:[],projects:[],kpis:[],tasks:[]}; renderExplorer(); }
+        loadFromGoogle(); // Intentar cargar inmediatamente
 
         // --- CORE FUNCTIONS ---
         async function loadFromGoogle() {
             toggleLoader(true);
+            const btn = document.getElementById('sync-status');
+            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Cargando...';
             try {
                 const res = await fetch(API_URL);
                 db = await res.json();
                 renderExplorer();
-            } catch(e) { console.error(e); } finally { toggleLoader(false); }
+                btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online';
+            } catch(e) { 
+                console.error(e); 
+                btn.innerHTML = '<span class="text-rose-500 font-bold">Error Conexión</span>';
+            } finally { toggleLoader(false); }
         }
 
         async function saveToGoogle() {
             if(!API_URL) return;
             const btn = document.getElementById('sync-status');
-            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ...';
+            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Guardando...';
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(db) });
                 setTimeout(()=> btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online', 1000);
-            } catch(e) { btn.innerHTML = '<span class="text-rose-500">Err</span>'; }
+            } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
         }
 
         // --- CALCULO RECURSIVO CON PESOS REALES ---
@@ -226,19 +230,17 @@
                 db.projects.filter(p => p.objectiveId === item.id).forEach(p => children.push({p: calculateProgress(p,'project'), w: parseFloat(p.weight)||0}));
             } else if (type === 'project') {
                 db.kpis.filter(k => k.projectId === item.id).forEach(k => children.push({p: calculateProgress(k,'kpi'), w: parseFloat(k.weight)||0}));
-                db.tasks.filter(t => t.projectId === item.id).forEach(t => children.push({p: t.done?100:0, w: 1})); // Tareas siempre promedio simple dentro de lo que quede
+                db.tasks.filter(t => t.projectId === item.id).forEach(t => children.push({p: t.done?100:0, w: 1}));
             }
 
             if (!children.length) return 0;
 
-            // Si es Proyecto y tiene tareas mixtas, a veces es mejor promedio simple si no se definen pesos
             const totalWeight = children.reduce((acc, x) => acc + x.w, 0);
             
-            // Si no hay pesos definidos (ej. legacy o tareas), usar promedio simple
+            // Si no hay pesos definidos o es 0, usar promedio simple
             if (totalWeight === 0) return Math.round(children.reduce((acc,x)=>acc+x.p,0) / children.length);
 
             // Promedio Ponderado
-            // Normalizar a 100% si el usuario configuró mal, pero la idea es forzarlo en el modal
             const weightedSum = children.reduce((acc, x) => acc + (x.p * (x.w / totalWeight)), 0);
             return Math.round(weightedSum);
         }
@@ -255,13 +257,12 @@
                 return q==='Q1'?m<=3 : q==='Q2'?m>3&&m<=6 : q==='Q3'?m>6&&m<=9 : m>9;
             });
 
-            if(!objs.length) { container.innerHTML='<div class="text-center text-slate-400 py-10">Sin objetivos</div>'; return; }
+            if(!objs.length) { container.innerHTML='<div class="text-center text-slate-400 py-10 opacity-60 flex flex-col items-center"><i data-lucide="ghost" size="32" class="mb-2"></i>Sin objetivos para este periodo</div>'; lucide.createIcons(); return; }
 
             objs.forEach(obj => {
                 const prog = calculateProgress(obj, 'objective');
                 const barColor = prog>=100?'bg-emerald-500':prog>=50?'bg-blue-500':'bg-amber-400';
                 
-                // Generar Hijos
                 let childrenHTML = '';
                 db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
                 db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
@@ -415,14 +416,13 @@
             renderExplorer();
         }
 
-        // --- DATE HELPERS ---
+        // --- ACTIONS ---
         function setQuarterDate(q) {
-            const year = "2026"; // Hardcoded o dinámico según necesites
+            const year = "2026";
             const dates = { 1: "-03-31", 2: "-06-30", 3: "-09-30", 4: "-12-31" };
             document.getElementById('inp-end').value = year + dates[q];
         }
 
-        // --- ACTIONS ---
         function toggleAccordion(id, iconId) {
             document.getElementById(id).classList.toggle('open');
             document.getElementById(iconId).classList.toggle('rotate-90');
@@ -441,8 +441,6 @@
             document.getElementById('edit-id').value='';
             document.getElementById('modal-title').innerText = "Nuevo " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
             document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi');
-            
-            // Clear
             ['inp-title','inp-owner','inp-start','inp-end','inp-val-start','inp-val-target'].forEach(i=>document.getElementById(i).value='');
         }
 
@@ -484,7 +482,7 @@
                     }
                 }
             } else { // CREATE
-                const newItem = { id: Date.now(), ...data, weight: 0 }; // Default weight 0, user must balance later
+                const newItem = { id: Date.now(), ...data, weight: 0 }; 
                 if(type==='objective'){ newItem.area=CURRENT_AREA; db.objectives.push(newItem); }
                 else if(type==='project'){ newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); }
                 else { 
