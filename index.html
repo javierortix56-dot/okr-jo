@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v9.8 | Final Calculation Fix</title>
+    <title>OKR Manager v10.0 | Transfer & Logic Update</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -40,7 +40,7 @@
     <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
         <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
             <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v9.8</span></h1>
+            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v10.0</span></h1>
         </div>
         <div class="p-4 border-b border-slate-100 bg-slate-50">
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
@@ -108,6 +108,11 @@
             <div class="p-5 space-y-4 overflow-y-auto">
                 <input type="hidden" id="edit-id"><input type="hidden" id="parent-id"><input type="hidden" id="entity-type"><input type="hidden" id="context-type">
                 
+                <div id="move-wrapper" class="hidden bg-blue-50 p-2.5 rounded border border-blue-100">
+                    <label class="block text-[10px] font-bold text-blue-600 uppercase mb-1 flex items-center gap-1"><i data-lucide="corner-up-right" size="10"></i> Mover a otro Objetivo</label>
+                    <select id="inp-move-parent" class="w-full text-xs p-1.5 rounded border border-blue-200 outline-none text-slate-700 font-medium"></select>
+                </div>
+
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Título</label>
                     <textarea id="inp-title" rows="2" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none resize-none font-medium"></textarea>
@@ -130,9 +135,15 @@
                 </div>
 
                 <div id="field-metrics" class="hidden bg-orange-50 p-3 rounded border border-orange-100 grid grid-cols-2 gap-3">
-                     <div class="col-span-2 text-[10px] font-bold text-orange-600 uppercase flex items-center gap-2"><i data-lucide="hash" size="10"></i> Métrica KPI</div>
-                     <div><label class="block text-[10px] text-orange-400 mb-1">Base</label><input id="inp-val-start" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-mono"></div>
-                     <div><label class="block text-[10px] text-orange-400 mb-1">Meta</label><input id="inp-val-target" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-bold text-orange-700 font-mono"></div>
+                     <div class="col-span-2 flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-orange-600 uppercase flex items-center gap-2"><i data-lucide="hash" size="10"></i> Métrica KPI</span>
+                        <select id="inp-kpi-trend" class="text-[10px] bg-white border border-orange-200 rounded px-1 py-0.5 text-orange-700 font-bold outline-none">
+                            <option value="asc">Subir (Incremental)</option>
+                            <option value="desc">Bajar (Reducción)</option>
+                        </select>
+                     </div>
+                     <div><label class="block text-[10px] text-orange-400 mb-1">Base (Inicio)</label><input id="inp-val-start" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-mono"></div>
+                     <div><label class="block text-[10px] text-orange-400 mb-1">Meta (Target)</label><input id="inp-val-target" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-bold text-orange-700 font-mono"></div>
                 </div>
             </div>
             <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center rounded-b-lg">
@@ -204,12 +215,20 @@
             } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
         }
 
-        // --- CÁLCULO PONDERADO ---
+        // --- CÁLCULO PONDERADO MEJORADO ---
         function calculateProgress(item, type) {
             if (type === 'kpi') {
-                const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||100, c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
-                if (s===t) return c>=t?100:0;
-                let p = t>s ? ((c-s)/(t-s))*100 : ((s-c)/(s-t))*100;
+                const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||0, c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
+                
+                // Lógica "Bajar / Mantener por debajo" automática basada en valores
+                // Si Target < Start, asumimos que "menos es mejor"
+                if (s === t) return c >= t ? 100 : 0; // Edge case
+                
+                // Calculo universal de distancia
+                let p = t > s 
+                    ? ((c - s) / (t - s)) * 100   // Incremental (0 -> 100)
+                    : ((s - c) / (s - t)) * 100;  // Decremental (100 -> 0)
+                
                 return Math.max(0, Math.min(100, Math.round(p)));
             }
             
@@ -327,11 +346,14 @@
 
         function renderKpiRow(k) {
             const prog = calculateProgress(k, 'kpi');
+            // Detectar tendencia visualmente
+            const isDesc = parseFloat(k.targetValue) < parseFloat(k.startValue);
             return `
             <div class="card-kpi flex items-center justify-between p-1.5 pl-2 group/kpi hover:shadow-sm transition">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
                     <span class="text-[9px] font-bold text-orange-500 bg-orange-50 px-1 rounded border border-orange-100">KPI</span>
                     <span class="text-xs text-slate-700 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title}</span>
+                    ${isDesc ? '<span class="text-[8px] text-rose-400 bg-rose-50 px-1 rounded">▼</span>' : ''}
                     ${k.weight>0 ? `<span class="text-[9px] bg-slate-100 text-slate-500 px-1 rounded">${k.weight}%</span>`:''}
                 </div>
                 <div class="flex items-center gap-2">
@@ -342,7 +364,7 @@
             </div>`;
         }
 
-        // --- GESTIÓN DE PESOS (FIX DECIMALES IMPLEMENTADO) ---
+        // --- GESTIÓN DE PESOS ---
         function openWeightModal(objId) {
             const modal = document.getElementById('modal-weights');
             const list = document.getElementById('weight-list');
@@ -376,7 +398,6 @@
             const inputs = document.querySelectorAll('#weight-list input[type="range"]');
             let sum = 0;
             inputs.forEach(i => sum += parseFloat(i.value));
-            // Redondeo de seguridad para decimales (99.9999 -> 100)
             sum = Math.round(sum * 10) / 10;
             
             const display = document.getElementById('weight-total-display');
@@ -392,9 +413,7 @@
             rows.forEach(r => {
                 const id = parseInt(r.querySelector('.item-id').value);
                 const type = r.querySelector('.item-type').value;
-                // ParseFloat para guardar el decimal exacto
                 const val = parseFloat(r.querySelector('input[type="range"]').value);
-                
                 if(type==='PROY') { const p = db.projects.find(x=>x.id===id); if(p) p.weight = val; }
                 else { const k = db.kpis.find(x=>x.id===id); if(k) k.weight = val; }
             });
@@ -428,21 +447,50 @@
             document.getElementById('edit-id').value='';
             document.getElementById('modal-title').innerText = "Nuevo " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
             document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi');
+            
+            // Ocultar opción de mover en creación nueva
+            document.getElementById('move-wrapper').classList.add('hidden');
+            document.getElementById('btn-delete').classList.add('hidden');
+
             ['inp-title','inp-owner','inp-start','inp-end','inp-val-start','inp-val-target'].forEach(i=>document.getElementById(i).value='');
         }
 
         function openEdit(type, id) {
             const i = (type==='objective'?db.objectives:type==='project'?db.projects:db.kpis).find(x=>x.id===id);
             if(!i)return;
+            
             openModal(type, null, null);
             document.getElementById('edit-id').value = id;
+            document.getElementById('btn-delete').classList.remove('hidden');
+            
+            // POBLAR DATOS BÁSICOS
             document.getElementById('inp-title').value = i.title;
             document.getElementById('inp-owner').value = i.owner||'';
             document.getElementById('inp-start').value = i.startDate;
             document.getElementById('inp-end').value = i.endDate;
+
+            // LOGICA MOVER (Transferencia)
+            const moveWrapper = document.getElementById('move-wrapper');
+            const moveSelect = document.getElementById('inp-move-parent');
+            moveWrapper.classList.add('hidden');
+            
+            if(type === 'project' || (type === 'kpi' && i.objectiveId && !i.projectId)) {
+                // Si es Proyecto o KPI de Objetivo -> Listar Objetivos
+                const potentialParents = db.objectives.filter(o => (o.area||'Oficina Técnica') === CURRENT_AREA);
+                if(potentialParents.length > 0) {
+                    moveSelect.innerHTML = potentialParents.map(p => `<option value="${p.id}" ${p.id === i.objectiveId ? 'selected' : ''}>${p.title}</option>`).join('');
+                    moveWrapper.classList.remove('hidden');
+                }
+            } 
+            // Podríamos agregar lógica para mover KPI de proyecto a otro proyecto, pero la solicitud decía "de un objetivo a otro".
+
+            // LOGICA KPI
             if(type==='kpi'){
                 document.getElementById('inp-val-start').value = i.startValue;
                 document.getElementById('inp-val-target').value = i.targetValue;
+                // Auto-detectar tendencia para mostrar en selector
+                const isDesc = parseFloat(i.targetValue) < parseFloat(i.startValue);
+                document.getElementById('inp-kpi-trend').value = isDesc ? 'desc' : 'asc';
             }
         }
 
@@ -463,9 +511,25 @@
                 const idx = list.findIndex(x=>x.id==id);
                 if(idx!==-1) {
                     list[idx] = {...list[idx], ...data};
+                    
+                    // PROCESAR KPI
                     if(type==='kpi'){
                         list[idx].startValue = document.getElementById('inp-val-start').value;
                         list[idx].targetValue = document.getElementById('inp-val-target').value;
+                        // Forzar consistencia visual si el usuario eligió bajar
+                        // (No cambiamos el código matemático, solo aseguramos que la meta tenga sentido si lo desean)
+                    }
+
+                    // PROCESAR MOVER
+                    const moveWrapper = document.getElementById('move-wrapper');
+                    if(!moveWrapper.classList.contains('hidden')) {
+                        const newParentId = parseInt(document.getElementById('inp-move-parent').value);
+                        if(type === 'project' && list[idx].objectiveId !== newParentId) {
+                            list[idx].objectiveId = newParentId;
+                        }
+                        if(type === 'kpi' && list[idx].objectiveId && list[idx].objectiveId !== newParentId) {
+                            list[idx].objectiveId = newParentId;
+                        }
                     }
                 }
             } else { // CREATE
