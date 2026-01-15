@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v10.0 | Transfer & Logic Update</title>
+    <title>OKR Manager v10.1 | Logic Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -40,7 +40,7 @@
     <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
         <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
             <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v10.0</span></h1>
+            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v10.1</span></h1>
         </div>
         <div class="p-4 border-b border-slate-100 bg-slate-50">
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
@@ -140,6 +140,7 @@
                         <select id="inp-kpi-trend" class="text-[10px] bg-white border border-orange-200 rounded px-1 py-0.5 text-orange-700 font-bold outline-none">
                             <option value="asc">Subir (Incremental)</option>
                             <option value="desc">Bajar (Reducción)</option>
+                            <option value="below">Mantener por debajo de</option>
                         </select>
                      </div>
                      <div><label class="block text-[10px] text-orange-400 mb-1">Base (Inicio)</label><input id="inp-val-start" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-mono"></div>
@@ -215,20 +216,35 @@
             } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
         }
 
-        // --- CÁLCULO PONDERADO MEJORADO ---
+        // --- CÁLCULO PONDERADO & LÓGICA KPI ---
         function calculateProgress(item, type) {
             if (type === 'kpi') {
-                const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||0, c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
-                
-                // Lógica "Bajar / Mantener por debajo" automática basada en valores
-                // Si Target < Start, asumimos que "menos es mejor"
-                if (s === t) return c >= t ? 100 : 0; // Edge case
-                
-                // Calculo universal de distancia
-                let p = t > s 
-                    ? ((c - s) / (t - s)) * 100   // Incremental (0 -> 100)
-                    : ((s - c) / (s - t)) * 100;  // Decremental (100 -> 0)
-                
+                const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||0;
+                const c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
+                const trend = item.trend || 'asc'; // Por defecto Subir
+
+                // 1. Lógica Mantener por debajo (Umbral)
+                if (trend === 'below') {
+                    if (c <= t) return 100; // Éxito total si estoy debajo
+                    // Si me paso, calculo la desviación si hay un rango lógico, si no, 0.
+                    // Si Start=0, Target=4.5, Current=5. Fallé.
+                    if (s < t) return 0; // Se rompió el límite superior absoluto
+                    
+                    // Si Start=10, Target=5 (Reducción con límite).
+                    // Si voy por 7, todavía estoy progresando hacia el límite.
+                    // Usamos la lógica de reducción estándar para el progreso parcial.
+                }
+
+                // 2. Lógica Reducción (Bajar) O Fallback de 'below' con rango inverso
+                if (trend === 'desc' || (trend === 'below' && s > t)) {
+                    if (s === t) return c <= t ? 100 : 0;
+                    let p = ((s - c) / (s - t)) * 100;
+                    return Math.max(0, Math.min(100, Math.round(p)));
+                }
+
+                // 3. Lógica Incremental (Subir) - Default
+                if (s === t) return c >= t ? 100 : 0;
+                let p = ((c - s) / (t - s)) * 100;
                 return Math.max(0, Math.min(100, Math.round(p)));
             }
             
@@ -346,14 +362,17 @@
 
         function renderKpiRow(k) {
             const prog = calculateProgress(k, 'kpi');
-            // Detectar tendencia visualmente
-            const isDesc = parseFloat(k.targetValue) < parseFloat(k.startValue);
+            // Icono visual de tendencia
+            let trendIcon = '';
+            if(k.trend === 'desc') trendIcon = '<span class="text-[8px] text-blue-400 bg-blue-50 px-1 rounded">▼</span>';
+            else if(k.trend === 'below') trendIcon = '<span class="text-[8px] text-rose-500 bg-rose-50 px-1 rounded">≤</span>';
+
             return `
             <div class="card-kpi flex items-center justify-between p-1.5 pl-2 group/kpi hover:shadow-sm transition">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
                     <span class="text-[9px] font-bold text-orange-500 bg-orange-50 px-1 rounded border border-orange-100">KPI</span>
                     <span class="text-xs text-slate-700 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title}</span>
-                    ${isDesc ? '<span class="text-[8px] text-rose-400 bg-rose-50 px-1 rounded">▼</span>' : ''}
+                    ${trendIcon}
                     ${k.weight>0 ? `<span class="text-[9px] bg-slate-100 text-slate-500 px-1 rounded">${k.weight}%</span>`:''}
                 </div>
                 <div class="flex items-center gap-2">
@@ -448,7 +467,6 @@
             document.getElementById('modal-title').innerText = "Nuevo " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
             document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi');
             
-            // Ocultar opción de mover en creación nueva
             document.getElementById('move-wrapper').classList.add('hidden');
             document.getElementById('btn-delete').classList.add('hidden');
 
@@ -463,7 +481,7 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('btn-delete').classList.remove('hidden');
             
-            // POBLAR DATOS BÁSICOS
+            // POBLAR DATOS
             document.getElementById('inp-title').value = i.title;
             document.getElementById('inp-owner').value = i.owner||'';
             document.getElementById('inp-start').value = i.startDate;
@@ -475,22 +493,18 @@
             moveWrapper.classList.add('hidden');
             
             if(type === 'project' || (type === 'kpi' && i.objectiveId && !i.projectId)) {
-                // Si es Proyecto o KPI de Objetivo -> Listar Objetivos
                 const potentialParents = db.objectives.filter(o => (o.area||'Oficina Técnica') === CURRENT_AREA);
                 if(potentialParents.length > 0) {
                     moveSelect.innerHTML = potentialParents.map(p => `<option value="${p.id}" ${p.id === i.objectiveId ? 'selected' : ''}>${p.title}</option>`).join('');
                     moveWrapper.classList.remove('hidden');
                 }
             } 
-            // Podríamos agregar lógica para mover KPI de proyecto a otro proyecto, pero la solicitud decía "de un objetivo a otro".
 
             // LOGICA KPI
             if(type==='kpi'){
                 document.getElementById('inp-val-start').value = i.startValue;
                 document.getElementById('inp-val-target').value = i.targetValue;
-                // Auto-detectar tendencia para mostrar en selector
-                const isDesc = parseFloat(i.targetValue) < parseFloat(i.startValue);
-                document.getElementById('inp-kpi-trend').value = isDesc ? 'desc' : 'asc';
+                document.getElementById('inp-kpi-trend').value = i.trend || 'asc';
             }
         }
 
@@ -512,12 +526,10 @@
                 if(idx!==-1) {
                     list[idx] = {...list[idx], ...data};
                     
-                    // PROCESAR KPI
                     if(type==='kpi'){
                         list[idx].startValue = document.getElementById('inp-val-start').value;
                         list[idx].targetValue = document.getElementById('inp-val-target').value;
-                        // Forzar consistencia visual si el usuario eligió bajar
-                        // (No cambiamos el código matemático, solo aseguramos que la meta tenga sentido si lo desean)
+                        list[idx].trend = document.getElementById('inp-kpi-trend').value;
                     }
 
                     // PROCESAR MOVER
@@ -540,6 +552,7 @@
                     newItem.startValue=document.getElementById('inp-val-start').value; 
                     newItem.targetValue=document.getElementById('inp-val-target').value; 
                     newItem.currentValue=newItem.startValue;
+                    newItem.trend = document.getElementById('inp-kpi-trend').value;
                     if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid;
                     db.kpis.push(newItem);
                 }
