@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v12.2 | Clean Hover</title>
+    <title>OKR Manager v12.3 | Final Stable</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
     
@@ -141,9 +141,18 @@
     
     <div id="modal-weights" class="fixed inset-0 bg-primary/20 backdrop-blur-[1px] hidden z-[60] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-lg shadow-xl flex flex-col animate-[fadeIn_0.15s_ease-out]">
-            <div class="p-3 border-b border-gray-100"><h3 class="text-xs font-bold text-primary">Ponderación de Pesos</h3></div>
+            <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-primary">Ponderación de Pesos</h3>
+                <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="text-gray-400 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
             <div class="p-3 overflow-y-auto max-h-[50vh] space-y-2" id="weight-list"><input type="hidden" id="weight-obj-id"></div>
-            <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-lg"><span id="weight-total-display" class="font-bold text-sm">0%</span><button id="btn-save-weights" onclick="saveWeights()" class="px-3 py-1 text-[10px] font-bold bg-primary text-white rounded">Confirmar</button></div>
+            <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-lg">
+                <span id="weight-total-display" class="font-bold text-sm">0%</span>
+                <div class="flex gap-2">
+                    <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="px-3 py-1 text-[10px] font-bold text-gray-500 hover:bg-gray-200 rounded">Cancelar</button>
+                    <button id="btn-save-weights" onclick="saveWeights()" class="px-3 py-1 text-[10px] font-bold bg-primary text-white rounded">Confirmar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -278,7 +287,7 @@
                 db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
                 db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
                 
-                // HOVER ACTIONS GROUP: Opacity 0 default, hover 100
+                // HOVER ACTIONS GROUP
                 container.innerHTML += `
                 <div class="bg-white rounded-lg shadow-soft border border-gray-100 group">
                     <div class="p-3 flex items-start justify-between cursor-pointer" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
