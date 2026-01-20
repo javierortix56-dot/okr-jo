@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v12.4 | Clean & Stable</title>
+    <title>OKR Manager v12.5 | Fixed Weights</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -142,8 +142,9 @@
                 <h3 class="text-xs font-bold text-primary">Ponderación de Pesos</h3>
                 <button onclick="closeWeightModal()" class="text-gray-400 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="p-3 overflow-y-auto max-h-[50vh] space-y-2" id="weight-list">
-                <input type="hidden" id="weight-obj-id">
+            <div class="p-3 overflow-y-auto max-h-[50vh]">
+                <input type="hidden" id="weight-obj-id"> 
+                <div id="weight-list" class="space-y-2"></div>
             </div>
             <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-lg">
                 <span id="weight-total-display" class="font-bold text-sm">0%</span>
@@ -301,7 +302,7 @@
             </div>`;
         }
 
-        // --- UTILS & ACTIONS ---
+        // --- UTILS ---
         function getRisk(start, end, prog) {
             const now = new Date(), s = new Date(start), e = new Date(end);
             if (now < s) return { color: 'bg-gray-200', text: 'text-gray-400', label: 'Futuro' };
@@ -339,7 +340,7 @@
             else if (type === 'project') { const kpiIds = db.kpis.filter(k => k.projectId === id).map(k => k.id); logs = db.history.filter(h => h.eid === id || kpiIds.includes(h.eid)); } 
             else { logs = db.history.filter(h => h.eid === id); }
             if (logs.length === 0) { list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-300 gap-2"><i data-lucide="clock" class="w-10 h-10 stroke-[1.5]"></i><p class="text-xs font-medium">Sin movimientos</p></div>'; } 
-            else { logs.forEach(log => { const date = new Date(log.ts); list.innerHTML += `<div class="flex gap-4 p-4 border-b border-gray-50 hover:bg-gray-50/50"><div class="flex flex-col items-center min-w-[40px] pt-0.5"><span class="text-[10px] font-bold text-gray-900 uppercase tracking-wider">${date.toLocaleDateString('es-ES', {day:'2-digit', month:'short'})}</span><span class="text-[9px] text-gray-400 font-medium">${date.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex-1 relative pl-4 border-l-2 border-gray-100"><div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-gray-200 border-2 border-white"></div><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${log.type==='KPI'?'bg-orange-50 text-orange-600':log.type==='TASK'?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-600'} mb-1 inline-block">${log.type}</span><p class="text-xs text-gray-700 leading-snug font-medium">${log.msg}</p></div></div>`; }); }
+            else { logs.forEach(log => { const date = new Date(log.ts); list.innerHTML += `<div class="flex gap-4 p-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors"><div class="flex flex-col items-center min-w-[40px] pt-0.5"><span class="text-[10px] font-bold text-gray-900 uppercase tracking-wider">${date.toLocaleDateString('es-ES', {day:'2-digit', month:'short'})}</span><span class="text-[9px] text-gray-400 font-medium">${date.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex-1 relative pl-4 border-l-2 border-gray-100"><div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-gray-200 border-2 border-white"></div><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${log.type==='KPI'?'bg-orange-50 text-orange-600':log.type==='TASK'?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-600'} mb-1 inline-block">${log.type}</span><p class="text-xs text-gray-700 leading-snug font-medium">${log.msg}</p></div></div>`; }); }
             modal.classList.remove('hidden'); lucide.createIcons();
         }
 
@@ -352,47 +353,48 @@
             const id = document.getElementById('edit-id').value; const type = document.getElementById('entity-type').value; const pid = parseInt(document.getElementById('parent-id').value); const data = { title: document.getElementById('inp-title').value, owner: document.getElementById('inp-owner').value, startDate: document.getElementById('inp-start').value, endDate: document.getElementById('inp-end').value };
             if(id) {
                 const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis; const idx = list.findIndex(x=>x.id==id);
-                if(idx!==-1) { list[idx] = {...list[idx], ...data}; addLog(type.toUpperCase(), parseInt(id), 'Actualizado: ' + data.title); if(type==='kpi'){ list[idx].startValue=document.getElementById('inp-val-start').value; list[idx].targetValue=document.getElementById('inp-val-target').value; list[idx].trend=document.getElementById('inp-kpi-trend').value; } const moveWrapper = document.getElementById('move-wrapper'); if(!moveWrapper.classList.contains('hidden')) { const newPid = parseInt(document.getElementById('inp-move-parent').value); if(type === 'project' && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a ' + newPid); } if(type === 'kpi' && list[idx].objectiveId && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a ' + newPid); } } }
+                if(idx!==-1) { list[idx] = {...list[idx], ...data}; addLog(type.toUpperCase(), parseInt(id), 'Actualizado: ' + data.title); if(type==='kpi'){ list[idx].startValue=document.getElementById('inp-val-start').value; list[idx].targetValue=document.getElementById('inp-val-target').value; list[idx].trend=document.getElementById('inp-kpi-trend').value; } const moveWrapper = document.getElementById('move-wrapper'); if(!moveWrapper.classList.contains('hidden')) { const newPid = parseInt(document.getElementById('inp-move-parent').value); if(type === 'project' && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a nuevo Objetivo ID: ' + newPid); } } }
             } else { const newItem = { id: Date.now(), ...data, weight: 0 }; addLog('CREATE', newItem.id, 'Creado: ' + type + ' ' + data.title); if(type==='objective'){ newItem.area=CURRENT_AREA; db.objectives.push(newItem); } else if(type==='project'){ newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); } else { newItem.startValue=document.getElementById('inp-val-start').value; newItem.targetValue=document.getElementById('inp-val-target').value; newItem.currentValue=newItem.startValue; newItem.trend=document.getElementById('inp-kpi-trend').value; if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid; db.kpis.push(newItem); } }
             saveToGoogle(); closeModal(); renderExplorer();
         }
-        function deleteItem() { if(confirm('¿Eliminar?')) { const id=parseInt(document.getElementById('edit-id').value), type=document.getElementById('entity-type').value; addLog('DELETE', id, 'Eliminado'); if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); } else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); } else { db.kpis=db.kpis.filter(x=>x.id!==id); } saveToGoogle(); closeModal(); renderExplorer(); } }
-        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; addLog('TASK', id, 'Tarea ' + (t.done ? 'ok' : 'pendiente') + ': ' + t.title); saveToGoogle(); renderExplorer(); } }
+        function deleteItem() { if(confirm('¿Eliminar definitivamente?')) { const id=parseInt(document.getElementById('edit-id').value), type=document.getElementById('entity-type').value; addLog('DELETE', id, 'Eliminado'); if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); } else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); } else { db.kpis=db.kpis.filter(x=>x.id!==id); } saveToGoogle(); closeModal(); renderExplorer(); } }
+        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; addLog('TASK', id, 'Tarea ' + (t.done ? 'Completada' : 'Reabierta') + ': ' + t.title); saveToGoogle(); renderExplorer(); } }
         function updateKpiVal(id,v) { const k=db.kpis.find(x=>x.id===id); if(k){ addLog('KPI', id, `Valor: ${k.currentValue} -> ${v}`); k.currentValue=v; saveToGoogle(); renderExplorer(); } }
         function addTask(pid,t) { if(t.trim()){ const nid = Date.now(); db.tasks.push({id:nid, projectId:pid, title:t, done:false}); addLog('TASK', nid, 'Nueva tarea: ' + t); saveToGoogle(); renderExplorer(); } }
-        function delTask(id) { if(confirm('¿Borrar?')){ addLog('TASK', id, 'Tarea borrada'); db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
+        function delTask(id) { if(confirm('¿Borrar tarea?')){ addLog('TASK', id, 'Tarea borrada'); db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
         function switchArea(a) { CURRENT_AREA=a; localStorage.setItem('okr_current_area',a); renderExplorer(); }
         function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
         function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
         function setQuarterDate(q) { const y="2026", d={1:"-03-31",2:"-06-30",3:"-09-30",4:"-12-31"}; document.getElementById('inp-end').value=y+d[q]; }
         function switchView(v) { document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer'); document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard'); document.getElementById('nav-explorer').className = v==='explorer' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50"; document.getElementById('nav-dashboard').className = v==='dashboard' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50"; if(v==='dashboard') renderDashboard(); }
         
-        // --- WEIGHTS LOGIC ---
+        // --- WEIGHTS LOGIC (FULL REPAIR) ---
         function openWeightModal(oid) {
             try {
                 document.getElementById('weight-obj-id').value = oid;
                 const list = document.getElementById('weight-list');
                 list.innerHTML = '';
                 
+                // Incluimos tanto proyectos como kpis directos del objetivo (u objetivo padre si es un proyecto)
                 const children = [
                     ...db.projects.filter(p => p.objectiveId === oid).map(p => ({...p, t: 'PROY'})),
                     ...db.kpis.filter(k => (k.objectiveId === oid && !k.projectId) || k.projectId === oid).map(k => ({...k, t: 'KPI'}))
                 ];
 
                 if(!children.length) {
-                    list.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">No hay elementos para ponderar</div>';
+                    list.innerHTML = '<div class="text-xs text-gray-400 text-center py-4 italic">Agrega proyectos o KPIs para ponderarlos aquí.</div>';
                 } else {
                     children.forEach(c => {
-                        list.innerHTML += `<div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100"><span class="text-[9px] font-bold w-8 ${c.t==='PROY'?'text-accent-sage':'text-orange-500'}">${c.t}</span><span class="text-xs truncate flex-1">${c.title}</span><div class="flex flex-col items-end"><input type="range" max="100" value="${c.weight||0}" class="h-1 w-16" oninput="this.nextElementSibling.value=this.value+'%';updateTotalWeight()"><input type="text" value="${Math.round(c.weight||0)}%" class="text-[9px] font-bold text-primary bg-transparent text-right w-8 border-none p-0" readonly></div><input type="hidden" class="wid" value="${c.id}"><input type="hidden" class="wtype" value="${c.t}"></div>`;
+                        list.innerHTML += `<div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100"><span class="text-[9px] font-bold w-8 ${c.t==='PROY'?'text-accent-sage':'text-orange-500'}">${c.t}</span><span class="text-xs truncate flex-1 font-semibold">${c.title}</span><div class="flex flex-col items-end"><input type="range" max="100" value="${c.weight||0}" class="h-1 w-16" oninput="this.nextElementSibling.value=this.value+'%';updateTotalWeight()"><input type="text" value="${Math.round(c.weight||0)}%" class="text-[9px] font-bold text-primary bg-transparent text-right w-8 border-none p-0" readonly></div><input type="hidden" class="wid" value="${c.id}"><input type="hidden" class="wtype" value="${c.t}"></div>`;
                     });
                 }
                 updateTotalWeight();
                 document.getElementById('modal-weights').classList.remove('hidden');
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Error al abrir balanza:", e); }
         }
         function closeWeightModal() { document.getElementById('modal-weights').classList.add('hidden'); }
-        function updateTotalWeight() { let sum=0; document.querySelectorAll('#weight-list input[type="range"]').forEach(i=>sum+=parseFloat(i.value)); const d = document.getElementById('weight-total-display'); const b=document.getElementById('btn-save-weights'); d.innerText=Math.round(sum)+"%"; d.className=sum===100?"font-bold text-sm text-emerald-600":"font-bold text-sm text-rose-500"; b.disabled=sum!==100; b.className=sum===100?"px-3 py-1 text-[10px] font-bold bg-primary text-white rounded":"px-3 py-1 text-[10px] font-bold bg-gray-300 text-white rounded cursor-not-allowed"; }
-        function saveWeights() { document.querySelectorAll('#weight-list > div').forEach(r=>{ const id=parseInt(r.querySelector('.wid').value), type=r.querySelector('.wtype').value, val=parseFloat(r.querySelector('input[type="range"]').value); if(type==='PROY'){const p=db.projects.find(x=>x.id===id); if(p) p.weight=val;} else {const k=db.kpis.find(x=>x.id===id); if(k) k.weight=val;} }); addLog('WEIGHT', document.getElementById('weight-obj-id').value, 'Pesos ajustados'); saveToGoogle(); closeWeightModal(); renderExplorer(); }
+        function updateTotalWeight() { let sum=0; document.querySelectorAll('#weight-list input[type="range"]').forEach(i=>sum+=parseFloat(i.value)); const d = document.getElementById('weight-total-display'); const b=document.getElementById('btn-save-weights'); d.innerText=Math.round(sum)+"%"; d.className=sum===100?"font-bold text-sm text-emerald-600":"font-bold text-sm text-rose-500"; b.disabled=sum!==100; b.className=sum===100?"px-3 py-1 text-[10px] font-bold bg-primary text-white rounded cursor-pointer shadow-sm":"px-3 py-1 text-[10px] font-bold bg-gray-300 text-white rounded cursor-not-allowed"; }
+        function saveWeights() { document.querySelectorAll('#weight-list > div').forEach(r=>{ const id=parseInt(r.querySelector('.wid').value), type=r.querySelector('.wtype').value, val=parseFloat(r.querySelector('input[type="range"]').value); if(type==='PROY'){const p=db.projects.find(x=>x.id===id); if(p) p.weight=val;} else {const k=db.kpis.find(x=>x.id===id); if(k) k.weight=val;} }); addLog('WEIGHT', document.getElementById('weight-obj-id').value, 'Re-balanceo de importancia estratégica aplicado'); saveToGoogle(); closeWeightModal(); renderExplorer(); }
     </script>
 </body>
 </html>
