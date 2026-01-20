@@ -1,229 +1,339 @@
 <!DOCTYPE html>
-<html lang="es" class="bg-slate-100">
+<html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v10.2 | UI UX Fixes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Executive OKR Manager v11.0</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#325e67",
+                        "primary-light": "#ecf2f3",
+                        "secondary-text": "#637d83",
+                        "background-light": "#f6f8f9",
+                        "surface-light": "#ffffff",
+                        "accent-sage": "#8A9B8D",
+                        "accent-terra": "#C8ABA6",
+                        "soft-gray": "#e2e8f0"
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"]
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(50, 94, 103, 0.08)',
+                        'soft-hover': '0 10px 25px -3px rgba(50, 94, 103, 0.12)',
+                        'inner-light': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Manrope', sans-serif; background-color: #f6f8f9; }
         
-        :root { --obj: #2563eb; --proj: #7c3aed; --kpi: #f97316; }
-        body { font-family: 'Inter', sans-serif; font-size: 13px; color: #1e293b; }
-        
-        /* ACORDEÓN */
+        /* Animaciones y Utilidades del Core v10.2 */
         .accordion-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; overflow: hidden; }
         .accordion-wrapper.open { grid-template-rows: 1fr; }
         .accordion-inner { min-height: 0; }
-
-        /* TARJETAS */
-        .card-objective { border-left: 5px solid var(--obj); background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 1rem; border-radius: 6px; overflow: hidden; }
-        .card-project { border-left: 4px solid var(--proj); background: #fbfbfe; margin: 8px 0 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; border-left-width: 4px; border-left-color: var(--proj); }
-        .card-kpi { border-left: 3px solid var(--kpi); background: white; margin: 4px 0 4px 0; border: 1px solid #f1f5f9; border-left-width: 3px; border-left-color: var(--kpi); }
-
-        /* UI ELEMENTS */
-        .progress-track { background-color: #e2e8f0; height: 6px; border-radius: 99px; width: 100%; overflow: hidden; }
-        .progress-bar { height: 100%; transition: width 0.5s ease; }
-        .btn-icon { padding: 5px; border-radius: 4px; color: #94a3b8; transition: 0.2s; cursor: pointer; }
-        .btn-icon:hover { background: #f1f5f9; color: #334155; }
-        .rotate-icon { transition: transform 0.2s; }
-        .rotate-90 { transform: rotate(-90deg); }
         
-        /* BOTONES FILTRO */
-        .filter-btn { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
-        .filter-btn.active { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-        .filter-btn.inactive { color: #64748b; hover:bg-slate-50; }
+        .soft-card-transition { transition: all 0.2s ease; }
+        .soft-card-transition:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -3px rgba(50, 94, 103, 0.12); }
+        
+        .progress-bar { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .rotate-icon { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .rotate-180 { transform: rotate(180deg); } /* Ajustado para Chevron Down */
 
-        /* SPINNER */
-        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+        /* Scrollbar Personalizado */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Loader */
+        .spinner { border: 3px solid rgba(50, 94, 103, 0.1); border-top: 3px solid #325e67; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Inputs Personalizados Soft */
+        .input-soft { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; transition: all 0.2s; }
+        .input-soft:focus { background: white; border-color: #325e67; box-shadow: 0 0 0 3px rgba(50, 94, 103, 0.1); outline: none; }
     </style>
 </head>
-<body class="bg-slate-50 h-screen flex flex-col lg:flex-row overflow-hidden">
+<body class="text-[#121617] h-screen flex overflow-hidden">
 
-    <aside class="w-full lg:w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm flex-shrink-0">
-        <div class="h-14 flex items-center px-4 border-b border-slate-100 gap-3">
-            <div class="bg-blue-600 p-1.5 rounded text-white"><i data-lucide="target" size="18"></i></div>
-            <h1 class="font-bold text-slate-800 text-sm">Famiq OKR <span class="text-xs font-normal text-slate-400">v10.2</span></h1>
+    <aside class="w-20 lg:w-72 bg-surface-light border-r border-[#ebeff0] flex flex-col z-20 shadow-soft flex-shrink-0 transition-all duration-300">
+        <div class="h-24 flex items-center justify-center lg:justify-start lg:px-8 border-b border-[#ebeff0] gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
+                <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            </div>
+            <div class="hidden lg:block">
+                <h1 class="text-lg font-bold tracking-tight text-primary">Famiq OKR</h1>
+                <p class="text-xs text-secondary-text font-medium">Executive Suite v11</p>
+            </div>
         </div>
-        <div class="p-4 border-b border-slate-100 bg-slate-50">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Área</label>
-            <select id="area-selector" onchange="switchArea(this.value)" class="w-full text-xs p-2 rounded border border-slate-300 font-semibold text-slate-700 outline-none focus:border-blue-500">
-                <option value="Oficina Técnica">Oficina Técnica</option>
-                <option value="PXD">PXD</option>
-                <option value="Planificación">Planificación</option>
-                <option value="Pricing y Negocio">Pricing y Negocio</option>
-            </select>
+
+        <div class="p-4 hidden lg:block">
+            <div class="relative group">
+                <select id="area-selector" onchange="switchArea(this.value)" class="w-full appearance-none bg-primary-light/50 pl-4 pr-10 py-3 rounded-2xl text-sm font-bold text-primary border border-transparent hover:border-primary/20 focus:border-primary cursor-pointer outline-none transition-all">
+                    <option value="Oficina Técnica">Oficina Técnica</option>
+                    <option value="PXD">PXD</option>
+                    <option value="Planificación">Planificación</option>
+                    <option value="Pricing y Negocio">Pricing y Negocio</option>
+                </select>
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </div>
+            </div>
         </div>
-        <nav class="flex-1 p-2 space-y-1 overflow-y-auto">
-            <button onclick="switchView('explorer')" class="w-full text-left px-3 py-2 rounded bg-blue-50 text-blue-700 text-xs font-bold flex items-center gap-2"><i data-lucide="layers" size="14"></i> Gestión OKRs</button>
-            <button onclick="switchView('dashboard')" class="w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-slate-500 text-xs font-medium flex items-center gap-2 transition"><i data-lucide="pie-chart" size="14"></i> Reporte</button>
+
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onclick="switchView('explorer')" id="nav-explorer" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold bg-primary text-white shadow-soft transition-all">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+                <span class="hidden lg:block">Explorador OKRs</span>
+            </button>
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-secondary-text hover:bg-primary-light/50 transition-all">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                <span class="hidden lg:block">Reporte Ejecutivo</span>
+            </button>
         </nav>
-        <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 text-[10px]">
-             <div id="sync-status" class="flex items-center gap-1.5 text-slate-400 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Conectando...</div>
-             <button onclick="loadFromGoogle()" class="text-blue-600 hover:underline">Reconectar</button>
+
+        <div class="p-6 border-t border-[#ebeff0]">
+             <div class="flex items-center gap-3 justify-center lg:justify-start">
+                 <div id="sync-icon" class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                 </div>
+                 <div class="hidden lg:block">
+                     <p id="sync-text" class="text-xs font-bold text-[#121617]">Sincronizado</p>
+                     <button onclick="loadFromGoogle()" class="text-[10px] text-secondary-text hover:text-primary transition-colors">Actualizar ahora</button>
+                 </div>
+             </div>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-hidden flex flex-col relative bg-slate-100">
-        <div id="global-loader" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center hidden backdrop-blur-sm"><div class="spinner"></div></div>
+    <main class="flex-1 flex flex-col relative bg-background-light overflow-hidden">
+        
+        <div id="global-loader" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity duration-300">
+            <div class="flex flex-col items-center gap-4">
+                <div class="spinner"></div>
+                <p class="text-xs font-bold text-primary tracking-widest uppercase">Cargando Datos</p>
+            </div>
+        </div>
 
-        <header class="h-14 bg-white border-b border-slate-200 flex justify-between items-center px-6 flex-shrink-0">
-            <div class="flex items-center gap-4">
-                <h2 id="view-title" class="text-sm font-bold text-slate-800">Mis OKRs</h2>
-                <span class="text-slate-300">|</span>
-                <div id="filter-container" class="flex items-center gap-1">
-                    <button onclick="toggleFilter('ALL')" id="btn-f-ALL" class="filter-btn inactive">2026</button>
-                    <button onclick="toggleFilter('Q1')" id="btn-f-Q1" class="filter-btn active">Q1</button>
-                    <button onclick="toggleFilter('Q2')" id="btn-f-Q2" class="filter-btn inactive">Q2</button>
-                    <button onclick="toggleFilter('Q3')" id="btn-f-Q3" class="filter-btn inactive">Q3</button>
-                    <button onclick="toggleFilter('Q4')" id="btn-f-Q4" class="filter-btn inactive">Q4</button>
+        <header class="h-24 px-8 flex items-center justify-between shrink-0 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+            <div class="flex flex-col gap-1">
+                <p id="header-date" class="text-xs font-bold text-secondary-text uppercase tracking-wider">Gestión 2026</p>
+                <div class="flex items-center gap-4">
+                    <h2 class="text-2xl font-extrabold text-[#121617] tracking-tight">Mis Objetivos</h2>
+                    <div class="hidden md:flex bg-white rounded-full p-1 shadow-sm border border-gray-100 gap-1">
+                        <button onclick="toggleFilter('ALL')" id="btn-f-ALL" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all text-secondary-text hover:bg-gray-50">Año</button>
+                        <button onclick="toggleFilter('Q1')" id="btn-f-Q1" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-primary text-white shadow-sm">Q1</button>
+                        <button onclick="toggleFilter('Q2')" id="btn-f-Q2" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all text-secondary-text hover:bg-gray-50">Q2</button>
+                        <button onclick="toggleFilter('Q3')" id="btn-f-Q3" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all text-secondary-text hover:bg-gray-50">Q3</button>
+                        <button onclick="toggleFilter('Q4')" id="btn-f-Q4" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all text-secondary-text hover:bg-gray-50">Q4</button>
+                    </div>
                 </div>
             </div>
-            <div class="flex gap-2" id="header-actions">
-                <button onclick="toggleAll(false)" class="btn-icon" title="Contraer"><i data-lucide="minimize-2" size="14"></i></button>
-                <button onclick="toggleAll(true)" class="btn-icon" title="Expandir"><i data-lucide="maximize-2" size="14"></i></button>
-                <button onclick="openModal('objective')" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow-sm text-xs font-bold flex items-center gap-1.5 transition active:scale-95"><i data-lucide="plus" size="14"></i> Nuevo</button>
+
+            <div class="flex items-center gap-3">
+                <button onclick="toggleAll(false)" class="size-10 rounded-full bg-white text-secondary-text shadow-soft flex items-center justify-center hover:bg-gray-50 transition-colors" title="Contraer todo">
+                    <i data-lucide="minimize-2" class="w-4 h-4"></i>
+                </button>
+                <button onclick="toggleAll(true)" class="size-10 rounded-full bg-white text-secondary-text shadow-soft flex items-center justify-center hover:bg-gray-50 transition-colors" title="Expandir todo">
+                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                </button>
+                <button onclick="openModal('objective')" class="ml-2 h-10 px-5 rounded-full bg-primary text-white shadow-lg hover:bg-[#2a5058] flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 font-bold text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nuevo
+                </button>
             </div>
         </header>
 
-        <div id="view-explorer" class="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
-            <div id="tree-container" class="max-w-5xl mx-auto pb-24 space-y-4"></div>
+        <div id="view-explorer" class="flex-1 overflow-y-auto px-4 lg:px-8 pb-12 scroll-smooth">
+            <div id="tree-container" class="max-w-5xl mx-auto space-y-6 pt-4">
+                </div>
         </div>
 
-        <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-6">
-            <div class="max-w-6xl mx-auto bg-white rounded shadow-sm border border-slate-200">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200">
-                        <tr><th class="p-3">Item</th><th class="p-3">Fin</th><th class="p-3">Resp.</th><th class="p-3 w-32">Progreso</th><th class="p-3 text-center">Estado</th></tr>
-                    </thead>
-                    <tbody id="report-body" class="divide-y divide-slate-100 text-xs text-slate-600"></tbody>
-                </table>
+        <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-8">
+            <div class="max-w-6xl mx-auto bg-surface-light rounded-[2rem] shadow-soft p-8 border border-white">
+                <h3 class="text-xl font-bold mb-6 text-primary">Reporte de Estado</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="text-xs font-bold text-secondary-text uppercase border-b border-gray-100">
+                            <tr><th class="p-4">Objetivo</th><th class="p-4">Deadline</th><th class="p-4">Responsable</th><th class="p-4 w-32">Progreso</th><th class="p-4 text-center">Status</th></tr>
+                        </thead>
+                        <tbody id="report-body" class="text-sm font-medium text-[#121617] divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
     </main>
 
     <datalist id="list-owners"></datalist>
 
-    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-lg shadow-xl flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
-            <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-lg">
-                <h3 id="modal-title" class="text-xs font-bold text-slate-700 uppercase">Editar</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" size="18"></i></button>
+    <div id="modal-backdrop" class="fixed inset-0 bg-[#325e67]/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-surface-light w-full max-w-lg rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] animate-[fadeIn_0.3s_ease-out]">
+            <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white/50 rounded-t-[2rem]">
+                <div>
+                    <h3 id="modal-title" class="text-lg font-extrabold text-primary">Nuevo Item</h3>
+                    <p class="text-xs text-secondary-text mt-0.5">Complete los detalles a continuación</p>
+                </div>
+                <button onclick="closeModal()" class="size-8 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 flex items-center justify-center transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="p-5 space-y-4 overflow-y-auto">
+            
+            <div class="p-8 space-y-5 overflow-y-auto">
                 <input type="hidden" id="edit-id"><input type="hidden" id="parent-id"><input type="hidden" id="entity-type"><input type="hidden" id="context-type">
                 
-                <div id="move-wrapper" class="hidden bg-blue-50 p-2.5 rounded border border-blue-100">
-                    <label class="block text-[10px] font-bold text-blue-600 uppercase mb-1 flex items-center gap-1"><i data-lucide="corner-up-right" size="10"></i> Mover a otro Objetivo</label>
-                    <select id="inp-move-parent" class="w-full text-xs p-1.5 rounded border border-blue-200 outline-none text-slate-700 font-medium"></select>
+                <div id="move-wrapper" class="hidden bg-primary-light/50 p-4 rounded-2xl border border-primary/10">
+                    <label class="block text-[10px] font-bold text-primary uppercase mb-2 flex items-center gap-1"><i data-lucide="corner-up-right" class="w-3 h-3"></i> Mover a otro Objetivo</label>
+                    <div class="relative">
+                        <select id="inp-move-parent" class="w-full appearance-none bg-white p-3 rounded-xl border-0 text-sm font-bold text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-primary/20"></select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Título</label>
-                    <textarea id="inp-title" rows="2" class="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:border-blue-500 outline-none resize-none font-medium"></textarea>
+                    <label class="block text-xs font-bold text-secondary-text uppercase mb-2 ml-1">Título</label>
+                    <textarea id="inp-title" rows="2" class="input-soft w-full p-4 text-sm font-semibold text-[#121617] resize-none" placeholder="Escriba el nombre del objetivo..."></textarea>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Responsable</label><input id="inp-owner" list="list-owners" class="w-full px-3 py-2 text-xs border border-slate-300 rounded outline-none" autocomplete="off"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Inicio</label><input id="inp-start" type="date" class="w-full px-3 py-2 text-xs border border-slate-300 rounded text-slate-500"></div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-secondary-text uppercase mb-2 ml-1">Responsable</label>
+                        <input id="inp-owner" list="list-owners" class="input-soft w-full p-3 text-sm font-medium" placeholder="Nombre...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-secondary-text uppercase mb-2 ml-1">Fecha Inicio</label>
+                        <input id="inp-start" type="date" class="input-soft w-full p-3 text-sm text-gray-600">
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha Objetivo (Fin)</label>
+                    <label class="block text-xs font-bold text-secondary-text uppercase mb-2 ml-1">Fecha Objetivo (Deadline)</label>
                     <div class="flex gap-2">
-                        <input id="inp-end" type="date" class="flex-1 px-3 py-2 text-xs border border-slate-300 rounded font-bold text-slate-700 outline-none focus:border-blue-500">
-                        <div class="flex border border-slate-200 rounded overflow-hidden flex-shrink-0">
-                            <button onclick="setQuarterDate(1)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q1</button>
-                            <button onclick="setQuarterDate(2)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q2</button>
-                            <button onclick="setQuarterDate(3)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 border-r border-slate-100 bg-slate-50">Q3</button>
-                            <button onclick="setQuarterDate(4)" class="px-2 text-[10px] font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 bg-slate-50">Q4</button>
+                        <input id="inp-end" type="date" class="input-soft flex-1 p-3 text-sm font-bold text-gray-700">
+                        <div class="flex bg-gray-100 p-1 rounded-xl">
+                            <button onclick="setQuarterDate(1)" class="px-3 rounded-lg text-[10px] font-bold text-gray-500 hover:bg-white hover:text-primary hover:shadow-sm transition-all">Q1</button>
+                            <button onclick="setQuarterDate(2)" class="px-3 rounded-lg text-[10px] font-bold text-gray-500 hover:bg-white hover:text-primary hover:shadow-sm transition-all">Q2</button>
+                            <button onclick="setQuarterDate(3)" class="px-3 rounded-lg text-[10px] font-bold text-gray-500 hover:bg-white hover:text-primary hover:shadow-sm transition-all">Q3</button>
+                            <button onclick="setQuarterDate(4)" class="px-3 rounded-lg text-[10px] font-bold text-gray-500 hover:bg-white hover:text-primary hover:shadow-sm transition-all">Q4</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="field-metrics" class="hidden bg-orange-50 p-3 rounded border border-orange-100 grid grid-cols-2 gap-3">
-                     <div class="col-span-2 flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-orange-600 uppercase flex items-center gap-2"><i data-lucide="hash" size="10"></i> Métrica KPI</span>
-                        <select id="inp-kpi-trend" class="text-[10px] bg-white border border-orange-200 rounded px-1 py-0.5 text-orange-700 font-bold outline-none">
-                            <option value="asc">Subir (Incremental)</option>
-                            <option value="desc">Bajar (Reducción)</option>
-                            <option value="below">Mantener por debajo de</option>
+                <div id="field-metrics" class="hidden bg-[#fff7ed] p-5 rounded-2xl border border-orange-100 grid grid-cols-2 gap-4 relative overflow-hidden">
+                     <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="bar-chart-2" class="w-24 h-24 text-orange-500"></i></div>
+                     <div class="col-span-2 flex justify-between items-center z-10">
+                        <span class="text-xs font-bold text-orange-700 uppercase flex items-center gap-2"><i data-lucide="hash" class="w-3 h-3"></i> Configuración Métrica</span>
+                        <select id="inp-kpi-trend" class="text-[10px] bg-white border border-orange-200 rounded-lg px-2 py-1 text-orange-700 font-bold outline-none cursor-pointer hover:border-orange-400">
+                            <option value="asc">Ascendente (Incremental)</option>
+                            <option value="desc">Descendente (Reducción)</option>
+                            <option value="below">Mantener por debajo</option>
                         </select>
                      </div>
-                     <div><label class="block text-[10px] text-orange-400 mb-1">Base (Inicio)</label><input id="inp-val-start" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-mono"></div>
-                     <div><label class="block text-[10px] text-orange-400 mb-1">Meta (Target)</label><input id="inp-val-target" type="number" class="w-full p-1 text-xs border border-orange-200 rounded text-center font-bold text-orange-700 font-mono"></div>
+                     <div class="z-10"><label class="block text-[10px] text-orange-600/70 font-bold uppercase mb-1">Base (Inicio)</label><input id="inp-val-start" type="number" class="w-full p-2 bg-white border border-orange-200 rounded-lg text-center font-bold text-orange-800 outline-none"></div>
+                     <div class="z-10"><label class="block text-[10px] text-orange-600/70 font-bold uppercase mb-1">Meta (Target)</label><input id="inp-val-target" type="number" class="w-full p-2 bg-white border border-orange-200 rounded-lg text-center font-bold text-orange-800 outline-none"></div>
                 </div>
             </div>
-            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center rounded-b-lg">
-                <button id="btn-delete" onclick="deleteItem()" class="text-rose-500 hover:text-rose-700 text-xs font-bold hidden flex items-center gap-1"><i data-lucide="trash-2" size="12"></i> Borrar</button>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="closeModal()" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded">Cancelar</button>
-                    <button onclick="saveData()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700">Guardar</button>
+
+            <div class="px-8 py-5 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-[2rem]">
+                <button id="btn-delete" onclick="deleteItem()" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-3 py-2 rounded-lg text-xs font-bold hidden flex items-center gap-2 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar</button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="closeModal()" class="px-5 py-2.5 text-xs font-bold text-secondary-text hover:bg-gray-200 rounded-xl transition-colors">Cancelar</button>
+                    <button onclick="saveData()" class="px-6 py-2.5 text-xs font-bold bg-primary text-white rounded-xl shadow-soft hover:shadow-soft-hover hover:-translate-y-0.5 transition-all">Guardar Cambios</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-weights" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-lg shadow-2xl flex flex-col animate-[fadeIn_0.2s_ease-out]">
-            <div class="px-5 py-4 border-b border-slate-100">
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="scale" size="16" class="text-blue-600"></i> Balancear Pesos (Incidencia)</h3>
-                <p class="text-[11px] text-slate-400 mt-1">La suma debe ser exactamente 100%.</p>
+    <div id="modal-weights" class="fixed inset-0 bg-[#325e67]/40 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-surface-light w-full max-w-md rounded-[2rem] shadow-2xl flex flex-col animate-[fadeIn_0.3s_ease-out]">
+            <div class="px-6 py-5 border-b border-gray-100">
+                <h3 class="text-base font-bold text-primary flex items-center gap-2"><i data-lucide="scale" class="w-5 h-5"></i> Balancear Pesos</h3>
+                <p class="text-[11px] text-secondary-text mt-1">Ajuste la incidencia de cada hijo en el progreso total.</p>
             </div>
-            <div class="p-5 overflow-y-auto max-h-[60vh]">
+            <div class="p-6 overflow-y-auto max-h-[50vh]">
                 <input type="hidden" id="weight-obj-id">
-                <div id="weight-list" class="space-y-3"></div>
+                <div id="weight-list" class="space-y-4"></div>
             </div>
-            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center rounded-b-lg">
+            <div class="px-6 py-4 bg-gray-50 rounded-b-[2rem] flex justify-between items-center border-t border-gray-100">
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-500">Total:</span>
-                    <span id="weight-total-display" class="text-sm font-bold text-slate-800">0%</span>
+                    <span class="text-xs font-bold text-secondary-text">Total:</span>
+                    <span id="weight-total-display" class="text-lg font-black text-[#121617]">0%</span>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded">Cancelar</button>
-                    <button id="btn-save-weights" onclick="saveWeights()" class="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Guardar Balance</button>
+                    <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="px-4 py-2 text-xs font-bold text-secondary-text hover:bg-gray-200 rounded-xl">Cancelar</button>
+                    <button id="btn-save-weights" onclick="saveWeights()" class="px-5 py-2 text-xs font-bold bg-primary text-white rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Confirmar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN
+        // CONFIGURACIÓN (Mantenida de v10.2)
         let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
-        let SELECTED_QUARTERS = ['Q1']; // Default Q1
+        let SELECTED_QUARTERS = ['Q1'];
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
-        
+
         // INIT
         document.getElementById('area-selector').value = CURRENT_AREA;
+        // Poner fecha en header
+        document.getElementById('header-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
         loadFromGoogle(); 
 
         // --- CORE FUNCTIONS ---
         async function loadFromGoogle() {
             toggleLoader(true);
-            const btn = document.getElementById('sync-status');
-            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Cargando...';
+            updateSyncStatus('loading');
             try {
                 const res = await fetch(API_URL);
                 db = await res.json();
                 updateSuggestions();
                 renderExplorer();
-                btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online';
+                updateSyncStatus('success');
             } catch(e) { 
                 console.error(e); 
-                btn.innerHTML = '<span class="text-rose-500 font-bold">Error Conexión</span>';
+                updateSyncStatus('error');
             } finally { toggleLoader(false); }
         }
 
         async function saveToGoogle() {
             if(!API_URL) return;
-            const btn = document.getElementById('sync-status');
-            btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Guardando...';
+            updateSyncStatus('saving');
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(db) });
                 updateSuggestions();
-                setTimeout(()=> btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online', 1000);
-            } catch(e) { btn.innerHTML = '<span class="text-rose-500">Error Guardado</span>'; }
+                setTimeout(()=> updateSyncStatus('success'), 1000);
+            } catch(e) { updateSyncStatus('error'); }
+        }
+
+        function updateSyncStatus(status) {
+            const icon = document.getElementById('sync-icon');
+            const text = document.getElementById('sync-text');
+            if(status === 'loading') {
+                icon.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>';
+                text.innerText = 'Cargando...';
+            } else if (status === 'saving') {
+                icon.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>';
+                text.innerText = 'Guardando...';
+            } else if (status === 'success') {
+                icon.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>';
+                text.innerText = 'Online & Sincronizado';
+            } else {
+                icon.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>';
+                text.innerText = 'Error de conexión';
+                text.classList.add('text-rose-500');
+            }
         }
 
         function updateSuggestions() {
@@ -233,7 +343,7 @@
             datalist.innerHTML = Array.from(users).map(u => `<option value="${u}">`).join('');
         }
 
-        // --- FILTROS DE PERIODO ---
+        // --- FILTER LOGIC ---
         function toggleFilter(q) {
             const btn = document.getElementById('btn-f-' + q);
             if (q === 'ALL') {
@@ -245,35 +355,36 @@
                 } else {
                     SELECTED_QUARTERS.push(q);
                 }
-                if(SELECTED_QUARTERS.length === 0) SELECTED_QUARTERS = ['ALL']; // Fallback
+                if(SELECTED_QUARTERS.length === 0) SELECTED_QUARTERS = ['ALL'];
             }
             // Update UI
             ['ALL','Q1','Q2','Q3','Q4'].forEach(k => {
                 const b = document.getElementById('btn-f-' + k);
-                if (SELECTED_QUARTERS.includes(k)) { b.classList.add('active'); b.classList.remove('inactive'); }
-                else { b.classList.add('inactive'); b.classList.remove('active'); }
+                if (SELECTED_QUARTERS.includes(k)) { 
+                    b.classList.remove('bg-white', 'text-secondary-text', 'hover:bg-gray-50');
+                    b.classList.add('bg-primary', 'text-white', 'shadow-sm');
+                } else { 
+                    b.classList.remove('bg-primary', 'text-white', 'shadow-sm');
+                    b.classList.add('bg-white', 'text-secondary-text', 'hover:bg-gray-50');
+                }
             });
             renderExplorer();
         }
 
-        // --- CÁLCULO PONDERADO & LÓGICA KPI ---
+        // --- MATH LOGIC ---
         function calculateProgress(item, type) {
             if (type === 'kpi') {
                 const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||0;
                 const c = parseFloat(item.currentValue!==undefined ? item.currentValue : s);
                 const trend = item.trend || 'asc'; 
-
                 if (trend === 'below') {
-                    if (c <= t) return 100; 
-                    if (s < t) return 0; 
+                    if (c <= t) return 100; if (s < t) return 0; 
                 }
-
                 if (trend === 'desc' || (trend === 'below' && s > t)) {
                     if (s === t) return c <= t ? 100 : 0;
                     let p = ((s - c) / (s - t)) * 100;
                     return Math.max(0, Math.min(100, Math.round(p)));
                 }
-
                 if (s === t) return c >= t ? 100 : 0;
                 let p = ((c - s) / (t - s)) * 100;
                 return Math.max(0, Math.min(100, Math.round(p)));
@@ -295,65 +406,88 @@
             return Math.round(weightedSum);
         }
 
-        // --- RENDER ---
+        // --- RENDER (New Soft-UI Bento Style) ---
         function renderExplorer() {
-            const container = document.getElementById('tree-container'); container.innerHTML = '';
+            const container = document.getElementById('tree-container'); 
+            container.innerHTML = '';
             
             const objs = db.objectives.filter(o => {
                 if((o.area||'Oficina Técnica') !== CURRENT_AREA) return false;
                 if(SELECTED_QUARTERS.includes('ALL')) return true;
-                
                 const m = new Date(o.endDate).getMonth()+1;
                 let q = m<=3?'Q1':m<=6?'Q2':m<=9?'Q3':'Q4';
                 return SELECTED_QUARTERS.includes(q);
             });
 
-            if(!objs.length) { container.innerHTML='<div class="text-center text-slate-400 py-10 opacity-60 flex flex-col items-center"><i data-lucide="ghost" size="32" class="mb-2"></i>Sin objetivos en selección</div>'; lucide.createIcons(); return; }
+            if(!objs.length) { 
+                container.innerHTML=`<div class="flex flex-col items-center justify-center py-20 opacity-50">
+                    <div class="p-4 bg-gray-100 rounded-full mb-4"><i data-lucide="ghost" class="w-8 h-8 text-gray-400"></i></div>
+                    <p class="text-secondary-text font-bold">No se encontraron objetivos</p>
+                </div>`; 
+                lucide.createIcons(); 
+                return; 
+            }
 
             objs.forEach(obj => {
                 const prog = calculateProgress(obj, 'objective');
-                const barColor = prog>=100?'bg-emerald-500':prog>=50?'bg-blue-500':'bg-amber-400';
-                
-                // CORRECCIÓN EXPANSION: Usar propiedad isCollapsed en lugar de 'open' hardcodeado
+                const barColor = prog>=100?'bg-emerald-500':prog>=50?'bg-primary':'bg-amber-400';
+                const statusTag = prog>=100 ? {text:'Completado', bg:'bg-emerald-100', tx:'text-emerald-700'} : {text:'En curso', bg:'bg-primary-light', tx:'text-primary'};
                 const isOpen = !obj.isCollapsed; 
 
+                // Generate Children HTML
                 let childrenHTML = '';
                 db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
                 db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
 
-                container.innerHTML += `
-                <div class="card-objective group">
-                    <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition relative z-10 bg-white" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
-                        <div class="flex items-center gap-3 flex-1 min-w-0">
-                            <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="text-slate-300 rotate-icon ${isOpen?'':'rotate-90'}"></i>
-                            <div>
-                                <h3 class="font-bold text-slate-800 leading-tight truncate pr-2">${obj.title}</h3>
-                                <div class="text-[10px] text-slate-400 mt-0.5 font-mono">${obj.endDate} · ${obj.owner||'S/A'}</div>
+                const cardHTML = `
+                <article class="bg-surface-light rounded-[1.5rem] p-6 shadow-soft soft-card-transition border border-transparent hover:border-primary/10 group">
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 cursor-pointer" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
+                        <div class="flex gap-4 flex-1 min-w-0">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shrink-0 border border-white shadow-sm text-primary">
+                                <span class="font-extrabold text-xl">${prog}%</span>
                             </div>
-                        </div>
-                        <div class="flex items-center gap-4 pl-4">
-                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="btn-icon" title="Editar"><i data-lucide="pencil" size="14"></i></button>
-                                <button onclick="event.stopPropagation(); openWeightModal(${obj.id})" class="btn-icon text-purple-500" title="Ponderación"><i data-lucide="scale" size="14"></i></button>
-                            </div>
-                            <div class="w-20 text-right">
-                                <div class="text-xs font-bold text-slate-700 mb-1">${prog}%</div>
-                                <div class="progress-track h-1.5"><div class="progress-bar ${barColor}" style="width:${prog}%"></div></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="obj-${obj.id}" class="accordion-wrapper ${isOpen?'open':''}">
-                        <div class="accordion-inner border-t border-slate-100 bg-white">
-                            <div class="p-2 pl-4 pr-2">
-                                <div class="flex justify-end gap-2 mb-2">
-                                    <button onclick="openModal('project',${obj.id})" class="text-[10px] font-bold text-slate-400 hover:text-blue-600 flex gap-1 items-center px-2 py-1 bg-slate-50 rounded border border-slate-100 transition"><i data-lucide="folder-plus" size="12"></i> Proyecto</button>
-                                    <button onclick="openModal('kpi',${obj.id},'objective')" class="text-[10px] font-bold text-slate-400 hover:text-orange-600 flex gap-1 items-center px-2 py-1 bg-slate-50 rounded border border-slate-100 transition"><i data-lucide="bar-chart" size="12"></i> KPI</button>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-0.5 rounded-md ${statusTag.bg} ${statusTag.tx} font-bold text-[10px] uppercase tracking-wide">${statusTag.text}</span>
+                                    <span class="text-[10px] text-secondary-text font-semibold">• ${obj.endDate}</span>
                                 </div>
-                                ${childrenHTML || '<div class="text-[10px] italic text-slate-300 py-2">Sin contenido.</div>'}
+                                <h3 class="text-lg font-bold text-[#121617] leading-tight truncate pr-2 group-hover:text-primary transition-colors">${obj.title}</h3>
+                                <p class="text-xs text-secondary-text mt-1 font-medium flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${obj.owner||'Sin asignar'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-end gap-3 min-w-[120px]">
+                            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-primary transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                <button onclick="event.stopPropagation(); openWeightModal(${obj.id})" class="p-1.5 rounded-lg text-gray-400 hover:bg-purple-50 hover:text-purple-600 transition-colors"><i data-lucide="scale" class="w-4 h-4"></i></button>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-50">
+                                <div class="${barColor} h-2 rounded-full progress-bar" style="width: ${prog}%"></div>
+                            </div>
+                            <div class="text-center w-full">
+                                <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="mx-auto w-5 h-5 text-gray-300 rotate-icon ${isOpen?'rotate-180':''}"></i>
                             </div>
                         </div>
                     </div>
-                </div>`;
+
+                    <div id="obj-${obj.id}" class="accordion-wrapper ${isOpen?'open':''}">
+                        <div class="accordion-inner pt-6">
+                            <div class="pl-4 md:pl-16 space-y-3 relative border-l-2 border-dashed border-gray-100 ml-6 md:ml-0">
+                                ${childrenHTML || '<div class="text-xs italic text-gray-300 py-2">No hay proyectos ni KPIs vinculados.</div>'}
+                                
+                                <div class="flex gap-2 pt-2">
+                                    <button onclick="openModal('project',${obj.id})" class="px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-accent-sage/20 text-xs font-bold text-gray-500 hover:text-accent-sage flex items-center gap-1 transition-colors border border-transparent hover:border-accent-sage/30">
+                                        <i data-lucide="folder-plus" class="w-3 h-3"></i> Proyecto
+                                    </button>
+                                    <button onclick="openModal('kpi',${obj.id},'objective')" class="px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-orange-50 text-xs font-bold text-gray-500 hover:text-orange-500 flex items-center gap-1 transition-colors border border-transparent hover:border-orange-200">
+                                        <i data-lucide="bar-chart" class="w-3 h-3"></i> KPI Directo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>`;
+                container.innerHTML += cardHTML;
             });
             lucide.createIcons();
         }
@@ -361,34 +495,47 @@
         function renderProjectRow(p) {
             const prog = calculateProgress(p, 'project');
             let innerHTML = '';
+            // Tasks
             db.tasks.filter(t=>t.projectId===p.id).forEach(t=> innerHTML+=`
-                <div class="flex items-center gap-2 py-1 hover:bg-white rounded px-2 group/task">
-                    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="cursor-pointer rounded border-slate-300 text-blue-600">
-                    <span class="text-xs text-slate-600 flex-1 truncate ${t.done?'line-through opacity-50':''}">${t.title}</span>
-                    <button onclick="delTask(${t.id})" class="opacity-0 group-hover/task:opacity-100 text-rose-400 hover:text-rose-600"><i data-lucide="x" size="12"></i></button>
+                <div class="flex items-center gap-3 py-2 pl-2 hover:bg-gray-50 rounded-lg group/task transition-colors">
+                    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="size-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer">
+                    <span class="text-xs text-[#121617] font-medium flex-1 truncate ${t.done?'line-through opacity-50':''}">${t.title}</span>
+                    <button onclick="delTask(${t.id})" class="opacity-0 group-hover/task:opacity-100 text-rose-300 hover:text-rose-500 pr-2 transition-opacity"><i data-lucide="x" class="w-3 h-3"></i></button>
                 </div>
             `);
-            innerHTML += `<input type="text" placeholder="+ Tarea..." class="w-full text-xs bg-transparent border-b border-transparent focus:border-slate-300 outline-none mt-1 px-2 py-1 placeholder:text-slate-300" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}">`;
+            // Add Task Input
+            innerHTML += `
+                <div class="flex items-center gap-3 py-1 pl-2 mt-1">
+                    <i data-lucide="plus" class="w-4 h-4 text-gray-300"></i>
+                    <input type="text" placeholder="Añadir tarea..." class="w-full text-xs bg-transparent border-none focus:ring-0 p-0 placeholder:text-gray-300 font-medium" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}">
+                </div>
+            `;
+            // Nested KPIs
             db.kpis.filter(k=>k.projectId===p.id).forEach(k=> innerHTML+=renderKpiRow(k));
 
             return `
-            <div class="card-project group/proj">
-                <div class="p-2 flex items-center justify-between cursor-pointer" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
-                    <div class="flex items-center gap-2 min-w-0 flex-1">
-                        <i id="icon-p-${p.id}" data-lucide="chevron-right" size="14" class="text-slate-400 rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i>
-                        <span class="text-xs font-semibold text-slate-700 truncate">${p.title}</span>
-                        ${p.weight>0 ? `<span class="text-[9px] bg-purple-100 text-purple-700 px-1 rounded">${p.weight}%</span>`:''}
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden group/proj">
+                <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="size-8 rounded-lg bg-accent-sage/10 flex items-center justify-center text-accent-sage shrink-0">
+                            <i data-lucide="folder" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-sm font-bold text-[#121617] truncate">${p.title}</span>
+                        ${p.weight>0 ? `<span class="text-[9px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-bold">${p.weight}%</span>`:''}
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="opacity-0 group-hover/proj:opacity-100 flex gap-1">
-                            <button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="btn-icon"><i data-lucide="pencil" size="12"></i></button>
-                            <button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="btn-icon text-orange-400"><i data-lucide="bar-chart" size="12"></i></button>
+                        <div class="flex gap-1 opacity-0 group-hover/proj:opacity-100 transition-opacity">
+                            <button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="p-1 text-gray-400 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button>
+                            <button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="p-1 text-gray-400 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button>
                         </div>
-                        <span class="text-[10px] font-bold text-slate-500 w-8 text-right">${prog}%</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-accent-sage">${prog}%</span>
+                            <i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-4 h-4 text-gray-300 rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i>
+                        </div>
                     </div>
                 </div>
                 <div id="proj-${p.id}" class="accordion-wrapper ${p.isCollapsed?'':'open'}">
-                    <div class="accordion-inner pl-6 pr-2 pb-2">
+                    <div class="accordion-inner px-3 pb-3 pt-1 border-t border-gray-50 bg-gray-50/30">
                         ${innerHTML}
                     </div>
                 </div>
@@ -398,26 +545,36 @@
         function renderKpiRow(k) {
             const prog = calculateProgress(k, 'kpi');
             let trendIcon = '';
-            if(k.trend === 'desc') trendIcon = '<span class="text-[8px] text-blue-400 bg-blue-50 px-1 rounded">▼</span>';
-            else if(k.trend === 'below') trendIcon = '<span class="text-[8px] text-rose-500 bg-rose-50 px-1 rounded">≤</span>';
+            if(k.trend === 'desc') trendIcon = '<span class="ml-2 text-[9px] text-blue-500 bg-blue-50 px-1.5 rounded-full font-bold flex items-center gap-0.5"><i data-lucide="arrow-down" class="w-2 h-2"></i> Reducir</span>';
+            else if(k.trend === 'below') trendIcon = '<span class="ml-2 text-[9px] text-rose-500 bg-rose-50 px-1.5 rounded-full font-bold flex items-center gap-0.5">≤ Tope</span>';
 
             return `
-            <div class="card-kpi flex items-center justify-between p-1.5 pl-2 group/kpi hover:shadow-sm transition">
-                <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <span class="text-[9px] font-bold text-orange-500 bg-orange-50 px-1 rounded border border-orange-100">KPI</span>
-                    <span class="text-xs text-slate-700 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title}</span>
-                    ${trendIcon}
-                    ${k.weight>0 ? `<span class="text-[9px] bg-slate-100 text-slate-500 px-1 rounded">${k.weight}%</span>`:''}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-orange-50/40 border border-orange-100/50 hover:border-orange-200 transition-colors group/kpi mt-2">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="size-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="hash" class="w-3 h-3"></i>
+                    </div>
+                    <div class="min-w-0">
+                         <div class="flex items-center">
+                            <span class="text-xs font-bold text-gray-700 truncate cursor-pointer hover:text-orange-600 hover:underline" onclick="openEdit('kpi',${k.id})">${k.title}</span>
+                            ${trendIcon}
+                         </div>
+                         ${k.weight>0 ? `<span class="text-[9px] text-gray-400 font-medium">Peso: ${k.weight}%</span>`:''}
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-12 text-center text-xs border-b border-slate-200 bg-transparent focus:border-orange-400 outline-none font-mono">
-                    <span class="text-[10px] text-slate-400">/ ${k.targetValue}</span>
-                    <div class="w-10 h-1 bg-slate-100 rounded overflow-hidden ml-1"><div class="h-full bg-orange-400" style="width:${prog}%"></div></div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-orange-100">
+                        <input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-10 text-center text-xs font-bold text-orange-600 bg-transparent border-none p-0 focus:ring-0">
+                        <span class="text-[10px] text-gray-400 font-medium">/ ${k.targetValue}</span>
+                    </div>
+                    <div class="w-8 h-8 rounded-full border-2 border-orange-100 flex items-center justify-center text-[9px] font-bold text-orange-500 bg-white">
+                        ${prog}%
+                    </div>
                 </div>
             </div>`;
         }
 
-        // --- GESTIÓN DE PESOS ---
+        // --- GESTIÓN DE PESOS (Re-Styled) ---
         function openWeightModal(objId) {
             const modal = document.getElementById('modal-weights');
             const list = document.getElementById('weight-list');
@@ -430,16 +587,18 @@
                 ...db.kpis.filter(k => k.objectiveId === objId && !k.projectId).map(k => ({...k, type:'KPI'}))
             ];
 
-            if(!children.length) { list.innerHTML = '<div class="text-slate-400 text-center text-xs">Agrega proyectos o KPIs primero.</div>'; updateTotalWeight(); return; }
+            if(!children.length) { list.innerHTML = '<div class="text-gray-400 text-center text-xs py-4">Agrega proyectos o KPIs primero.</div>'; updateTotalWeight(); return; }
 
             children.forEach(c => {
                 const row = document.createElement('div');
-                row.className = "flex items-center gap-3 bg-slate-50 p-2 rounded border border-slate-200";
+                row.className = "flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm";
                 row.innerHTML = `
-                    <span class="text-[9px] font-bold px-1 rounded ${c.type==='PROY'?'bg-purple-100 text-purple-700':'bg-orange-100 text-orange-700'} w-10 text-center">${c.type}</span>
-                    <span class="text-xs text-slate-700 flex-1 truncate">${c.title}</span>
-                    <input type="range" min="0" max="100" value="${c.weight||0}" step="0.5" class="w-24 accent-blue-600" oninput="this.nextElementSibling.value=parseFloat(this.value)+'%'; updateTotalWeight()">
-                    <input type="text" value="${parseFloat(c.weight||0)}%" class="w-12 text-right text-xs font-bold bg-transparent outline-none" readonly>
+                    <span class="text-[9px] font-extrabold px-2 py-1 rounded-md ${c.type==='PROY'?'bg-accent-sage/20 text-accent-sage':'bg-orange-100 text-orange-600'} w-12 text-center tracking-wider">${c.type}</span>
+                    <span class="text-xs font-bold text-gray-700 flex-1 truncate">${c.title}</span>
+                    <div class="flex flex-col items-end gap-1">
+                        <input type="range" min="0" max="100" value="${c.weight||0}" step="1" class="w-24 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" oninput="this.nextElementSibling.value=this.value+'%'; updateTotalWeight()">
+                        <input type="text" value="${Math.round(c.weight||0)}%" class="w-10 text-right text-[10px] font-bold text-primary bg-transparent outline-none" readonly>
+                    </div>
                     <input type="hidden" class="item-id" value="${c.id}"><input type="hidden" class="item-type" value="${c.type}">
                 `;
                 list.appendChild(row);
@@ -451,12 +610,12 @@
             const inputs = document.querySelectorAll('#weight-list input[type="range"]');
             let sum = 0;
             inputs.forEach(i => sum += parseFloat(i.value));
-            sum = Math.round(sum * 10) / 10;
+            sum = Math.round(sum);
             const display = document.getElementById('weight-total-display');
             const btn = document.getElementById('btn-save-weights');
             display.innerText = sum + "%";
-            if(sum === 100) { display.className="text-emerald-600 font-bold text-sm"; btn.disabled=false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
-            else { display.className="text-rose-500 font-bold text-sm"; btn.disabled=true; btn.classList.add('opacity-50','cursor-not-allowed'); }
+            if(sum === 100) { display.className="text-lg font-black text-emerald-500"; btn.disabled=false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
+            else { display.className="text-lg font-black text-rose-500"; btn.disabled=true; btn.classList.add('opacity-50','cursor-not-allowed'); }
         }
 
         function saveWeights() {
@@ -473,7 +632,7 @@
             renderExplorer();
         }
 
-        // --- ACTIONS & UTILS ---
+        // --- UTILS & HELPERS ---
         function setQuarterDate(q) {
             const year = "2026";
             const dates = { 1: "-03-31", 2: "-06-30", 3: "-09-30", 4: "-12-31" };
@@ -482,10 +641,10 @@
 
         function toggleAccordion(id, iconId) {
             document.getElementById(id).classList.toggle('open');
-            document.getElementById(iconId).classList.toggle('rotate-90');
-            const isOpen = document.getElementById(id).classList.contains('open');
+            const icon = document.getElementById(iconId);
+            if(icon) icon.classList.toggle(id.includes('proj') ? 'rotate-90' : 'rotate-180');
             
-            // GUARDAR ESTADO EN MEMORIA PARA QUE NO SE REINICIE AL RENDERIZAR
+            const isOpen = document.getElementById(id).classList.contains('open');
             if(id.includes('proj-')) {
                 const pid = parseInt(id.split('-')[1]);
                 const p = db.projects.find(x=>x.id===pid);
@@ -503,7 +662,9 @@
             document.getElementById('parent-id').value=pid||''; 
             document.getElementById('context-type').value=ctx||'';
             document.getElementById('edit-id').value='';
-            document.getElementById('modal-title').innerText = "Nuevo " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
+            
+            const titles = { 'objective': 'Nuevo Objetivo Estratégico', 'project': 'Nuevo Proyecto', 'kpi': 'Nuevo KPI' };
+            document.getElementById('modal-title').innerText = titles[type];
             document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi');
             
             document.getElementById('move-wrapper').classList.add('hidden');
@@ -518,6 +679,7 @@
             
             openModal(type, null, null);
             document.getElementById('edit-id').value = id;
+            document.getElementById('modal-title').innerText = "Editar " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
             document.getElementById('btn-delete').classList.remove('hidden');
             
             document.getElementById('inp-title').value = i.title;
@@ -596,7 +758,7 @@
         function deleteItem(){
              const id=parseInt(document.getElementById('edit-id').value);
              const type=document.getElementById('entity-type').value;
-             if(!confirm('¿Eliminar?'))return;
+             if(!confirm('¿Está seguro de eliminar este elemento y todo su contenido?'))return;
              if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); }
              else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); }
              else { db.kpis=db.kpis.filter(x=>x.id!==id); }
@@ -609,24 +771,51 @@
         function addTask(pid,t){ if(t.trim()){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); }}
         function delTask(id){ if(confirm('¿Borrar tarea?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); }}
         function switchArea(a){ CURRENT_AREA=a; localStorage.setItem('okr_current_area',a); renderExplorer(); }
+        function toggleLoader(s){ document.getElementById('global-loader').classList.toggle('hidden', !s); }
+        
         function switchView(v){ 
             document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer');
             document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard');
-            document.getElementById('header-actions').classList.toggle('hidden', v==='dashboard');
-            if(v==='dashboard') renderDashboard();
+            
+            // Nav Active State
+            const btnExp = document.getElementById('nav-explorer');
+            const btnDash = document.getElementById('nav-dashboard');
+            if(v === 'explorer') {
+                 btnExp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold bg-primary text-white shadow-soft transition-all";
+                 btnDash.className = "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-secondary-text hover:bg-primary-light/50 transition-all";
+            } else {
+                 btnDash.className = "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold bg-primary text-white shadow-soft transition-all";
+                 btnExp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-secondary-text hover:bg-primary-light/50 transition-all";
+                 renderDashboard();
+            }
         }
-        function toggleLoader(s){ document.getElementById('global-loader').classList.toggle('hidden', !s); }
+        
         function toggleAll(exp){ 
-            // Reset local state
             db.objectives.forEach(o => o.isCollapsed = !exp);
             db.projects.forEach(p => p.isCollapsed = !exp);
             renderExplorer();
         }
+        
         function renderDashboard() {
             const b=document.getElementById('report-body'); b.innerHTML='';
             db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA).forEach(o=>{
                 const p=calculateProgress(o,'objective');
-                b.innerHTML+=`<tr><td class="p-3 font-semibold">${o.title}</td><td class="p-3 text-slate-400">${o.endDate}</td><td class="p-3">${o.owner||'-'}</td><td class="p-3 text-blue-600 font-bold">${p}%</td><td class="p-3 text-center">${p>=100?'✅':'🔄'}</td></tr>`;
+                const status = p>=100?'<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">Completado</span>':
+                               p>0 ? '<span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold">En Progreso</span>':
+                               '<span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold">Pendiente</span>';
+                               
+                b.innerHTML+=`<tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 font-bold text-primary">${o.title}</td>
+                    <td class="p-4 text-secondary-text text-xs">${o.endDate}</td>
+                    <td class="p-4">${o.owner||'-'}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                             <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-primary h-1.5 rounded-full" style="width:${p}%"></div></div>
+                             <span class="text-xs font-bold text-primary">${p}%</span>
+                        </div>
+                    </td>
+                    <td class="p-4 text-center">${status}</td>
+                </tr>`;
             });
         }
     </script>
