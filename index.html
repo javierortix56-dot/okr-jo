@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v12.0 | Change Log</title>
+    <title>OKR Manager v12.1 | UI Fixes</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
     
@@ -147,13 +147,16 @@
         </div>
     </div>
 
-    <div id="modal-history" class="fixed inset-0 bg-primary/20 backdrop-blur-[1px] hidden z-[70] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-lg shadow-xl flex flex-col h-[60vh] animate-[fadeIn_0.15s_ease-out]">
-            <div class="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-lg">
-                <h3 class="text-xs font-bold text-primary flex items-center gap-2"><i data-lucide="history" class="w-3.5 h-3.5"></i> Bitácora de Cambios</h3>
-                <button onclick="document.getElementById('modal-history').classList.add('hidden')" class="text-gray-400 hover:text-primary"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <div id="modal-history" class="fixed inset-0 bg-primary/30 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl shadow-2xl flex flex-col h-[60vh] animate-[fadeIn_0.2s_ease-out]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <div>
+                    <h3 class="text-sm font-bold text-primary flex items-center gap-2"><i data-lucide="history" class="w-4 h-4"></i> Bitácora</h3>
+                    <p class="text-[10px] text-gray-500">Historial de cambios y avances</p>
+                </div>
+                <button onclick="document.getElementById('modal-history').classList.add('hidden')" class="p-1 rounded-full hover:bg-gray-200 text-gray-400 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="p-0 overflow-y-auto flex-1 bg-gray-50" id="history-list">
+            <div class="p-0 overflow-y-auto flex-1 bg-white" id="history-list">
                 </div>
         </div>
     </div>
@@ -165,7 +168,7 @@
         let API_URL = localStorage.getItem('okr_api_url') || DEFAULT_API_URL;
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
         let SELECTED_QUARTERS = ['Q1'];
-        let db = { objectives: [], projects: [], kpis: [], tasks: [], history: [] }; // Agregado history
+        let db = { objectives: [], projects: [], kpis: [], tasks: [], history: [] }; 
 
         document.getElementById('area-selector').value = CURRENT_AREA;
         loadFromGoogle(); 
@@ -173,15 +176,8 @@
         // --- LOGGING SYSTEM ---
         function addLog(type, entityId, message) {
             if(!db.history) db.history = [];
-            const newLog = {
-                ts: new Date().toISOString(),
-                type: type,
-                eid: entityId,
-                msg: message,
-                user: 'User' // Podrías parametrizar esto si tuvieras login
-            };
+            const newLog = { ts: new Date().toISOString(), type: type, eid: entityId, msg: message };
             db.history.unshift(newLog);
-            // Opcional: Limitar historial a últimos 500 registros para no saturar JSON
             if(db.history.length > 500) db.history = db.history.slice(0, 500);
         }
 
@@ -190,12 +186,11 @@
             const list = document.getElementById('history-list');
             list.innerHTML = '';
             
-            // Filtrar historial. Si es Objetivo, mostramos su historial + el de sus hijos para contexto
             let logs = [];
             if(!db.history) db.history = [];
 
+            // Filtrado Inteligente de Historial
             if (type === 'objective') {
-                // IDs de hijos
                 const projIds = db.projects.filter(p => p.objectiveId === id).map(p => p.id);
                 const kpiIds = db.kpis.filter(k => k.objectiveId === id).map(k => k.id);
                 logs = db.history.filter(h => h.eid === id || projIds.includes(h.eid) || kpiIds.includes(h.eid));
@@ -207,7 +202,7 @@
             }
 
             if (logs.length === 0) {
-                list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-400 opacity-50"><i data-lucide="clock" class="w-8 h-8 mb-2"></i><p class="text-xs">Sin registros</p></div>';
+                list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-300 gap-2"><i data-lucide="clock" class="w-10 h-10 stroke-[1.5]"></i><p class="text-xs font-medium">Sin movimientos registrados</p></div>';
             } else {
                 logs.forEach(log => {
                     const date = new Date(log.ts);
@@ -215,14 +210,15 @@
                     const time = date.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
                     
                     list.innerHTML += `
-                    <div class="flex gap-3 p-3 border-b border-gray-100 bg-white last:border-0">
-                        <div class="flex flex-col items-center min-w-[50px] pt-1">
-                            <span class="text-[10px] font-bold text-gray-500 uppercase leading-none">${day}</span>
-                            <span class="text-[9px] text-gray-300">${time}</span>
+                    <div class="flex gap-4 p-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                        <div class="flex flex-col items-center min-w-[40px] pt-0.5">
+                            <span class="text-[10px] font-bold text-gray-900 uppercase tracking-wider">${day}</span>
+                            <span class="text-[9px] text-gray-400 font-medium">${time}</span>
                         </div>
-                        <div class="flex-1 border-l-2 border-gray-100 pl-3">
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${log.type==='KPI'?'bg-orange-100 text-orange-600':log.type==='TASK'?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-500'}">${log.type}</span>
-                            <p class="text-xs text-gray-700 mt-1 leading-snug">${log.msg}</p>
+                        <div class="flex-1 relative pl-4 border-l-2 border-gray-100">
+                            <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-gray-200 border-2 border-white"></div>
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${log.type==='KPI'?'bg-orange-50 text-orange-600':log.type==='TASK'?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-600'} mb-1 inline-block">${log.type}</span>
+                            <p class="text-xs text-gray-700 leading-snug font-medium">${log.msg}</p>
                         </div>
                     </div>`;
                 });
@@ -283,7 +279,7 @@
             if (!children.length) return 0; const totalWeight = children.reduce((acc, x) => acc + x.w, 0); if (totalWeight === 0) return Math.round(children.reduce((acc,x)=>acc+x.p,0) / children.length); return Math.round(children.reduce((acc, x) => acc + (x.p * (x.w / totalWeight)), 0));
         }
 
-        // --- RENDER ---
+        // --- RENDER EXPLORER (FIXED ICONS) ---
         function renderExplorer() {
             const container = document.getElementById('tree-container'); container.innerHTML = '';
             const objs = db.objectives.filter(o => { if((o.area||'Oficina Técnica') !== CURRENT_AREA) return false; if(SELECTED_QUARTERS.includes('ALL')) return true; const m = new Date(o.endDate).getMonth()+1; let q = m<=3?'Q1':m<=6?'Q2':m<=9?'Q3':'Q4'; return SELECTED_QUARTERS.includes(q); });
@@ -306,8 +302,8 @@
                         </div>
                         <div class="flex flex-col items-end gap-1.5 w-24">
                             <div class="w-full bg-gray-100 rounded-full h-1 overflow-hidden"><div class="${barColor} h-1 rounded-full progress-bar" style="width: ${prog}%"></div></div>
-                            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="event.stopPropagation(); showHistory(${obj.id}, 'objective')" class="text-gray-400 hover:text-blue-500" title="Historial"><i data-lucide="history" class="w-3 h-3"></i></button>
+                            <div class="flex items-center gap-2 transition-opacity">
+                                <button onclick="event.stopPropagation(); showHistory(${obj.id}, 'objective')" class="text-blue-400 hover:text-blue-600 bg-blue-50 p-1 rounded hover:bg-blue-100 transition-colors" title="Historial"><i data-lucide="history" class="w-3 h-3"></i></button>
                                 <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="text-gray-400 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button>
                                 <button onclick="event.stopPropagation(); openWeightModal(${obj.id})" class="text-gray-400 hover:text-purple-600"><i data-lucide="scale" class="w-3 h-3"></i></button>
                                 <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-300 rotate-icon ${isOpen?'rotate-180':''}"></i>
@@ -336,7 +332,7 @@
             <div class="rounded overflow-hidden transition-colors group/proj ${isOpen ? 'bg-gray-50/50 pb-2' : 'hover:bg-gray-50'}">
                 <div class="flex items-center justify-between p-1.5 cursor-pointer" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
                     <div class="flex items-center gap-2 min-w-0 flex-1"><i data-lucide="folder" class="w-3.5 h-3.5 text-accent-sage/80 fill-current"></i><span class="text-xs font-bold text-gray-700 truncate">${p.title}</span>${p.weight>0 ? `<span class="text-[9px] bg-purple-50 text-purple-600 px-1 rounded font-bold">${p.weight}%</span>`:''}</div>
-                    <div class="flex items-center gap-2"><div class="hidden group-hover/proj:flex gap-1"><button onclick="event.stopPropagation(); showHistory(${p.id}, 'project')" class="text-gray-300 hover:text-blue-500"><i data-lucide="history" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="text-gray-300 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="text-gray-300 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button></div><span class="text-[10px] font-bold text-accent-sage">${prog}%</span><i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-3 h-3 text-gray-300 rotate-icon ${isOpen?'rotate-90':''}"></i></div>
+                    <div class="flex items-center gap-2"><div class="flex gap-1"><button onclick="event.stopPropagation(); showHistory(${p.id}, 'project')" class="text-blue-300 hover:text-blue-500"><i data-lucide="history" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="text-gray-300 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="text-gray-300 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button></div><span class="text-[10px] font-bold text-accent-sage">${prog}%</span><i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-3 h-3 text-gray-300 rotate-icon ${isOpen?'rotate-90':''}"></i></div>
                 </div>
                 <div id="proj-${p.id}" class="accordion-wrapper ${isOpen?'open':''}">
                     <div class="accordion-inner px-2 pt-1 space-y-0.5">${innerHTML}</div>
@@ -349,11 +345,11 @@
             return `
             <div class="flex items-center justify-between p-1 pl-2 rounded hover:bg-white group/kpi">
                 <div class="flex items-center gap-2 min-w-0 flex-1"><span class="text-[9px] font-bold text-orange-400 border border-orange-100 px-1 rounded bg-white">KPI</span><span class="text-[11px] font-medium text-gray-600 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title} ${trend}</span></div>
-                <div class="flex items-center gap-2"><button onclick="event.stopPropagation(); showHistory(${k.id}, 'kpi')" class="text-gray-200 hover:text-blue-500 opacity-0 group-hover/kpi:opacity-100 transition-opacity"><i data-lucide="history" class="w-3 h-3"></i></button><div class="flex items-center gap-1"><input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-8 text-right text-[10px] font-bold text-gray-700 bg-transparent border-none p-0 focus:ring-0"><span class="text-[9px] text-gray-300">/ ${k.targetValue}</span></div><div class="w-5 text-right"><span class="text-[10px] font-bold ${prog>=100?'text-emerald-500':'text-orange-500'}">${prog}%</span></div></div>
+                <div class="flex items-center gap-2"><button onclick="event.stopPropagation(); showHistory(${k.id}, 'kpi')" class="text-blue-200 hover:text-blue-500"><i data-lucide="history" class="w-3 h-3"></i></button><div class="flex items-center gap-1"><input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-8 text-right text-[10px] font-bold text-gray-700 bg-transparent border-none p-0 focus:ring-0"><span class="text-[9px] text-gray-300">/ ${k.targetValue}</span></div><div class="w-5 text-right"><span class="text-[10px] font-bold ${prog>=100?'text-emerald-500':'text-orange-500'}">${prog}%</span></div></div>
             </div>`;
         }
 
-        // --- DASHBOARD ---
+        // --- DASHBOARD (FIXED) ---
         function getRisk(start, end, prog) {
             const now = new Date(), s = new Date(start), e = new Date(end);
             if (now < s) return { color: 'bg-gray-200', text: 'text-gray-400', label: 'Futuro' };
@@ -366,8 +362,17 @@
             return { color: 'bg-emerald-500', text: 'text-emerald-600', label: 'OK' };
         }
         function renderDashboard() {
-            const b = document.getElementById('report-body'); b.innerHTML = '';
-            db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA).forEach(o=>{
+            const b = document.getElementById('report-body'); 
+            b.innerHTML = '';
+            
+            const filteredObjs = db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA);
+            
+            if (filteredObjs.length === 0) {
+                b.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-400 text-xs italic">No hay datos para mostrar en este área</td></tr>';
+                return;
+            }
+
+            filteredObjs.forEach(o=>{
                 const p = calculateProgress(o,'objective');
                 const risk = getRisk(o.startDate, o.endDate, p);
                 b.innerHTML += `<tr class="hover:bg-gray-50/50 transition-colors"><td class="py-2 pl-2"><div class="font-bold text-gray-700 truncate" title="${o.title}">${o.title}</div></td><td class="py-2 text-gray-500 text-[11px]">${o.owner||'-'}</td><td class="py-2"><div class="flex items-center gap-2 w-full max-w-[180px]"><div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="${risk.color} h-full rounded-full" style="width: ${p}%"></div></div><span class="text-[10px] font-bold ${risk.text}">${risk.label}</span></div></td><td class="py-2 pr-2 text-right font-bold text-primary">${p}%</td></tr>`;
@@ -438,6 +443,17 @@
         function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
         function setQuarterDate(q) { const y="2026", d={1:"-03-31",2:"-06-30",3:"-09-30",4:"-12-31"}; document.getElementById('inp-end').value=y+d[q]; }
         
+        // Navigation Switcher (FIXED)
+        function switchView(v) { 
+            document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer');
+            document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard');
+            document.getElementById('nav-explorer').className = v==='explorer' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50";
+            document.getElementById('nav-dashboard').className = v==='dashboard' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50";
+            
+            // Forzamos render si es dashboard
+            if(v==='dashboard') renderDashboard();
+        }
+
         // Weights (Standard)
         function openWeightModal(oid) { document.getElementById('weight-obj-id').value=oid; document.getElementById('modal-weights').classList.remove('hidden'); const children = [...db.projects.filter(p=>p.objectiveId===oid).map(p=>({...p,t:'PROY'})), ...db.kpis.filter(k=>k.objectiveId===oid && !k.projectId).map(k=>({...k,t:'KPI'}))]; const list = document.getElementById('weight-list'); list.innerHTML=''; if(!children.length) { list.innerHTML='<div class="text-xs text-gray-400 text-center">Vacío</div>'; updateTotalWeight(); return; } children.forEach(c => { list.innerHTML+=`<div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100"><span class="text-[9px] font-bold w-8 ${c.t==='PROY'?'text-accent-sage':'text-orange-500'}">${c.t}</span><span class="text-xs truncate flex-1">${c.title}</span><div class="flex flex-col items-end"><input type="range" max="100" value="${c.weight||0}" class="h-1 w-16" oninput="this.nextElementSibling.value=this.value+'%';updateTotalWeight()"><input type="text" value="${Math.round(c.weight||0)}%" class="text-[9px] font-bold text-primary bg-transparent text-right w-8 border-none p-0" readonly></div><input type="hidden" class="wid" value="${c.id}"><input type="hidden" class="wtype" value="${c.t}"></div>`; }); updateTotalWeight(); }
         function updateTotalWeight() { let sum=0; document.querySelectorAll('#weight-list input[type="range"]').forEach(i=>sum+=parseFloat(i.value)); const d = document.getElementById('weight-total-display'); const b=document.getElementById('btn-save-weights'); d.innerText=Math.round(sum)+"%"; d.className=sum===100?"font-bold text-sm text-emerald-600":"font-bold text-sm text-rose-500"; b.disabled=sum!==100; b.className=sum===100?"px-3 py-1 text-[10px] font-bold bg-primary text-white rounded":"px-3 py-1 text-[10px] font-bold bg-gray-300 text-white rounded cursor-not-allowed"; }
