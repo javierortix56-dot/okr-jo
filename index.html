@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OKR Manager v12.3 | Final Stable</title>
+    <title>OKR Manager v12.4 | Clean & Stable</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-    
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
     <script>
         tailwind.config = {
@@ -23,9 +22,7 @@
                         "accent-sage": "#8A9B8D",
                     },
                     fontFamily: { "sans": ["Manrope", "sans-serif"] },
-                    boxShadow: {
-                        'soft': '0 1px 3px rgba(0,0,0,0.05)',
-                    }
+                    boxShadow: { 'soft': '0 1px 3px rgba(0,0,0,0.05)' }
                 }
             }
         }
@@ -104,7 +101,7 @@
         <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-6 lg:p-10">
             <div class="max-w-full bg-white rounded-xl shadow-soft p-5 border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-primary">Reporte de Salud de Objetivos</h3>
+                    <h3 class="text-sm font-bold text-primary">Reporte de Salud</h3>
                     <div class="flex gap-3 text-[10px] font-medium">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> A tiempo</span>
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Desviación</span>
@@ -113,7 +110,7 @@
                 </div>
                 <table class="w-full text-left border-collapse">
                     <thead class="text-[10px] font-bold text-gray-400 uppercase border-b border-gray-100">
-                        <tr><th class="py-2 pl-2 w-5/12">Objetivo Estratégico</th><th class="py-2">Responsable</th><th class="py-2 w-4/12">Riesgo (Tiempo vs Avance)</th><th class="py-2 pr-2 text-right">Real</th></tr>
+                        <tr><th class="py-2 pl-2 w-5/12">Objetivo</th><th class="py-2">Responsable</th><th class="py-2 w-4/12">Riesgo</th><th class="py-2 pr-2 text-right">Real</th></tr>
                     </thead>
                     <tbody id="report-body" class="text-xs text-gray-700 divide-y divide-gray-50"></tbody>
                 </table>
@@ -143,14 +140,16 @@
         <div class="bg-white w-full max-w-sm rounded-lg shadow-xl flex flex-col animate-[fadeIn_0.15s_ease-out]">
             <div class="p-3 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-primary">Ponderación de Pesos</h3>
-                <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="text-gray-400 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="closeWeightModal()" class="text-gray-400 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="p-3 overflow-y-auto max-h-[50vh] space-y-2" id="weight-list"><input type="hidden" id="weight-obj-id"></div>
+            <div class="p-3 overflow-y-auto max-h-[50vh] space-y-2" id="weight-list">
+                <input type="hidden" id="weight-obj-id">
+            </div>
             <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-lg">
                 <span id="weight-total-display" class="font-bold text-sm">0%</span>
                 <div class="flex gap-2">
-                    <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="px-3 py-1 text-[10px] font-bold text-gray-500 hover:bg-gray-200 rounded">Cancelar</button>
-                    <button id="btn-save-weights" onclick="saveWeights()" class="px-3 py-1 text-[10px] font-bold bg-primary text-white rounded">Confirmar</button>
+                    <button onclick="closeWeightModal()" class="px-3 py-1 text-[10px] font-bold text-gray-500 hover:bg-gray-200 rounded">Cancelar</button>
+                    <button id="btn-save-weights" onclick="saveWeights()" class="px-3 py-1 text-[10px] font-bold bg-primary text-white rounded shadow-sm">Confirmar</button>
                 </div>
             </div>
         </div>
@@ -168,7 +167,7 @@
     <datalist id="list-owners"></datalist>
 
     <script>
-        // --- CONFIG & STATE ---
+        // CONFIG
         const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
         let API_URL = localStorage.getItem('okr_api_url') || DEFAULT_API_URL;
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
@@ -178,57 +177,12 @@
         document.getElementById('area-selector').value = CURRENT_AREA;
         loadFromGoogle(); 
 
-        // --- LOGGING SYSTEM ---
-        function addLog(type, entityId, message) {
-            if(!db.history) db.history = [];
-            const newLog = { ts: new Date().toISOString(), type: type, eid: entityId, msg: message };
-            db.history.unshift(newLog);
-            if(db.history.length > 500) db.history = db.history.slice(0, 500);
-        }
-
-        function showHistory(id, type) {
-            const modal = document.getElementById('modal-history');
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            
-            let logs = [];
-            if(!db.history) db.history = [];
-
-            if (type === 'objective') {
-                const projIds = db.projects.filter(p => p.objectiveId === id).map(p => p.id);
-                const kpiIds = db.kpis.filter(k => k.objectiveId === id).map(k => k.id);
-                logs = db.history.filter(h => h.eid === id || projIds.includes(h.eid) || kpiIds.includes(h.eid));
-            } else if (type === 'project') {
-                const kpiIds = db.kpis.filter(k => k.projectId === id).map(k => k.id);
-                logs = db.history.filter(h => h.eid === id || kpiIds.includes(h.eid));
-            } else {
-                logs = db.history.filter(h => h.eid === id);
-            }
-
-            if (logs.length === 0) {
-                list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-300 gap-2"><i data-lucide="clock" class="w-10 h-10 stroke-[1.5]"></i><p class="text-xs font-medium">Sin movimientos</p></div>';
-            } else {
-                logs.forEach(log => {
-                    const date = new Date(log.ts);
-                    const day = date.toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
-                    const time = date.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                    list.innerHTML += `
-                    <div class="flex gap-4 p-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                        <div class="flex flex-col items-center min-w-[40px] pt-0.5"><span class="text-[10px] font-bold text-gray-900 uppercase tracking-wider">${day}</span><span class="text-[9px] text-gray-400 font-medium">${time}</span></div>
-                        <div class="flex-1 relative pl-4 border-l-2 border-gray-100"><div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-gray-200 border-2 border-white"></div><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${log.type==='KPI'?'bg-orange-50 text-orange-600':log.type==='TASK'?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-600'} mb-1 inline-block">${log.type}</span><p class="text-xs text-gray-700 leading-snug font-medium">${log.msg}</p></div>
-                    </div>`;
-                });
-            }
-            modal.classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        // --- CORE ---
+        // CORE LOGIC
         async function loadFromGoogle() {
             toggleLoader(true);
             try {
                 const res = await fetch(API_URL);
-                if (!res.ok) throw new Error('Error de red');
+                if (!res.ok) throw new Error('Error');
                 db = await res.json();
                 updateSuggestions();
                 renderExplorer();
@@ -275,7 +229,7 @@
             if (!children.length) return 0; const totalWeight = children.reduce((acc, x) => acc + x.w, 0); if (totalWeight === 0) return Math.round(children.reduce((acc,x)=>acc+x.p,0) / children.length); return Math.round(children.reduce((acc, x) => acc + (x.p * (x.w / totalWeight)), 0));
         }
 
-        // --- RENDER ---
+        // --- RENDERERS ---
         function renderExplorer() {
             const container = document.getElementById('tree-container'); container.innerHTML = '';
             const objs = db.objectives.filter(o => { if((o.area||'Oficina Técnica') !== CURRENT_AREA) return false; if(SELECTED_QUARTERS.includes('ALL')) return true; const m = new Date(o.endDate).getMonth()+1; let q = m<=3?'Q1':m<=6?'Q2':m<=9?'Q3':'Q4'; return SELECTED_QUARTERS.includes(q); });
@@ -287,7 +241,6 @@
                 db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
                 db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
                 
-                // HOVER ACTIONS GROUP
                 container.innerHTML += `
                 <div class="bg-white rounded-lg shadow-soft border border-gray-100 group">
                     <div class="p-3 flex items-start justify-between cursor-pointer" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
@@ -327,12 +280,11 @@
             innerHTML += `<div class="flex items-center gap-2 py-0.5 px-1 mt-1 opacity-0 group-hover/proj:opacity-100 transition-opacity"><i data-lucide="plus" class="w-3 h-3 text-gray-300"></i><input type="text" placeholder="Nueva tarea..." class="w-full text-[10px] bg-transparent border-none p-0 focus:ring-0" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}"></div>`;
             db.kpis.filter(k=>k.projectId===p.id).forEach(k=> innerHTML+=renderKpiRow(k));
             
-            // HOVER ACTIONS GROUP
             return `
             <div class="rounded overflow-hidden transition-colors group/proj ${isOpen ? 'bg-gray-50/50 pb-2' : 'hover:bg-gray-50'}">
                 <div class="flex items-center justify-between p-1.5 cursor-pointer" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
-                    <div class="flex items-center gap-2 min-w-0 flex-1"><i data-lucide="folder" class="w-3.5 h-3.5 text-accent-sage/80 fill-current"></i><span class="text-xs font-bold text-gray-700 truncate">${p.title}</span>${p.weight>0 ? `<span class="text-[9px] bg-purple-50 text-purple-600 px-1 rounded font-bold">${p.weight}%</span>`:''}</div>
-                    <div class="flex items-center gap-2"><div class="flex gap-1 opacity-0 group-hover/proj:opacity-100 transition-opacity"><button onclick="event.stopPropagation(); showHistory(${p.id}, 'project')" class="text-gray-300 hover:text-blue-500"><i data-lucide="history" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="text-gray-300 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="text-gray-300 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button></div><span class="text-[10px] font-bold text-accent-sage">${prog}%</span><i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-3 h-3 text-gray-300 rotate-icon ${isOpen?'rotate-90':''}"></i></div>
+                    <div class="flex items-center gap-2 min-w-0 flex-1"><i data-lucide="folder" class="w-3.5 h-3.5 text-accent-sage/80 fill-current"></i><span class="text-xs font-bold text-gray-700 truncate">${p.title}</span></div>
+                    <div class="flex items-center gap-2"><div class="flex gap-1 opacity-0 group-hover/proj:opacity-100 transition-opacity"><button onclick="event.stopPropagation(); showHistory(${p.id}, 'project')" class="text-gray-300 hover:text-blue-500"><i data-lucide="history" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="text-gray-300 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openWeightModal(${p.id})" class="text-gray-300 hover:text-purple-600"><i data-lucide="scale" class="w-3 h-3"></i></button><button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="text-gray-300 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button></div><span class="text-[10px] font-bold text-accent-sage">${prog}%</span><i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-3 h-3 text-gray-300 rotate-icon ${isOpen?'rotate-90':''}"></i></div>
                 </div>
                 <div id="proj-${p.id}" class="accordion-wrapper ${isOpen?'open':''}">
                     <div class="accordion-inner px-2 pt-1 space-y-0.5">${innerHTML}</div>
@@ -349,7 +301,7 @@
             </div>`;
         }
 
-        // --- DASHBOARD (FIXED) ---
+        // --- UTILS & ACTIONS ---
         function getRisk(start, end, prog) {
             const now = new Date(), s = new Date(start), e = new Date(end);
             if (now < s) return { color: 'bg-gray-200', text: 'text-gray-400', label: 'Futuro' };
@@ -362,102 +314,85 @@
             return { color: 'bg-emerald-500', text: 'text-emerald-600', label: 'OK' };
         }
         function renderDashboard() {
-            const b = document.getElementById('report-body'); 
-            b.innerHTML = '';
-            
+            const b = document.getElementById('report-body'); b.innerHTML = '';
             const filteredObjs = db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA);
-            
-            if (filteredObjs.length === 0) {
-                b.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-400 text-xs italic">No hay datos para mostrar en este área</td></tr>';
-                return;
-            }
-
+            if (filteredObjs.length === 0) { b.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-400 text-xs italic">No hay datos</td></tr>'; return; }
             filteredObjs.forEach(o=>{
                 const p = calculateProgress(o,'objective');
                 const risk = getRisk(o.startDate, o.endDate, p);
                 b.innerHTML += `<tr class="hover:bg-gray-50/50 transition-colors"><td class="py-2 pl-2"><div class="font-bold text-gray-700 truncate" title="${o.title}">${o.title}</div></td><td class="py-2 text-gray-500 text-[11px]">${o.owner||'-'}</td><td class="py-2"><div class="flex items-center gap-2 w-full max-w-[180px]"><div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="${risk.color} h-full rounded-full" style="width: ${p}%"></div></div><span class="text-[10px] font-bold ${risk.text}">${risk.label}</span></div></td><td class="py-2 pr-2 text-right font-bold text-primary">${p}%</td></tr>`;
             });
         }
+        function addLog(type, entityId, message) {
+            if(!db.history) db.history = [];
+            const newLog = { ts: new Date().toISOString(), type: type, eid: entityId, msg: message };
+            db.history.unshift(newLog);
+            if(db.history.length > 500) db.history = db.history.slice(0, 500);
+        }
+        function showHistory(id, type) {
+            const modal = document.getElementById('modal-history');
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            let logs = [];
+            if(!db.history) db.history = [];
+            if (type === 'objective') { const projIds = db.projects.filter(p => p.objectiveId === id).map(p => p.id); const kpiIds = db.kpis.filter(k => k.objectiveId === id).map(k => k.id); logs = db.history.filter(h => h.eid === id || projIds.includes(h.eid) || kpiIds.includes(h.eid)); } 
+            else if (type === 'project') { const kpiIds = db.kpis.filter(k => k.projectId === id).map(k => k.id); logs = db.history.filter(h => h.eid === id || kpiIds.includes(h.eid)); } 
+            else { logs = db.history.filter(h => h.eid === id); }
+            if (logs.length === 0) { list.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-300 gap-2"><i data-lucide="clock" class="w-10 h-10 stroke-[1.5]"></i><p class="text-xs font-medium">Sin movimientos</p></div>'; } 
+            else { logs.forEach(log => { const date = new Date(log.ts); list.innerHTML += `<div class="flex gap-4 p-4 border-b border-gray-50 hover:bg-gray-50/50"><div class="flex flex-col items-center min-w-[40px] pt-0.5"><span class="text-[10px] font-bold text-gray-900 uppercase tracking-wider">${date.toLocaleDateString('es-ES', {day:'2-digit', month:'short'})}</span><span class="text-[9px] text-gray-400 font-medium">${date.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex-1 relative pl-4 border-l-2 border-gray-100"><div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-gray-200 border-2 border-white"></div><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${log.type==='KPI'?'bg-orange-50 text-orange-600':log.type==='TASK'?'bg-blue-50 text-blue-600':'bg-gray-100 text-gray-600'} mb-1 inline-block">${log.type}</span><p class="text-xs text-gray-700 leading-snug font-medium">${log.msg}</p></div></div>`; }); }
+            modal.classList.remove('hidden'); lucide.createIcons();
+        }
 
-        // --- CRUD ACTIONS & HOOKS FOR LOGGING ---
+        // --- ACTIONS ---
         function toggleAccordion(id, iconId) { const el = document.getElementById(id); const icon = document.getElementById(iconId); const isOpen = el.classList.contains('open'); if(isOpen) { el.classList.remove('open'); if(icon) icon.classList.remove(id.includes('proj') ? 'rotate-90' : 'rotate-180'); } else { el.classList.add('open'); if(icon) icon.classList.add(id.includes('proj') ? 'rotate-90' : 'rotate-180'); } const numId = parseInt(id.split('-')[1]); if(id.includes('obj')) { const o = db.objectives.find(x=>x.id===numId); if(o) o.isCollapsed = isOpen; } if(id.includes('proj')) { const p = db.projects.find(x=>x.id===numId); if(p) p.isCollapsed = isOpen; } }
         function toggleAll(exp) { db.objectives.forEach(o => o.isCollapsed = !exp); db.projects.forEach(p => p.isCollapsed = !exp); renderExplorer(); }
         function openModal(type, pid, ctx) { document.getElementById('modal-backdrop').classList.remove('hidden'); document.getElementById('entity-type').value=type; document.getElementById('parent-id').value=pid||''; document.getElementById('context-type').value=ctx||''; document.getElementById('edit-id').value=''; document.getElementById('modal-title').innerText = type === 'objective' ? 'Nuevo Objetivo' : type === 'project' ? 'Nuevo Proyecto' : 'Nuevo KPI'; document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi'); document.getElementById('move-wrapper').classList.add('hidden'); document.getElementById('btn-delete').classList.add('hidden'); ['inp-title','inp-owner','inp-start','inp-end','inp-val-start','inp-val-target'].forEach(i=>document.getElementById(i).value=''); }
         function openEdit(type, id) { const i = (type==='objective'?db.objectives:type==='project'?db.projects:db.kpis).find(x=>x.id===id); if(!i)return; openModal(type, null, null); document.getElementById('edit-id').value=id; document.getElementById('btn-delete').classList.remove('hidden'); document.getElementById('inp-title').value=i.title; document.getElementById('inp-owner').value=i.owner||''; document.getElementById('inp-start').value=i.startDate; document.getElementById('inp-end').value=i.endDate; const moveSelect = document.getElementById('inp-move-parent'); const moveWrapper = document.getElementById('move-wrapper'); if(type === 'project' || (type === 'kpi' && i.objectiveId && !i.projectId)) { const parents = db.objectives.filter(o => (o.area||'Oficina Técnica') === CURRENT_AREA); if(parents.length) { moveSelect.innerHTML = parents.map(p => `<option value="${p.id}" ${p.id === i.objectiveId ? 'selected' : ''}>${p.title}</option>`).join(''); moveWrapper.classList.remove('hidden'); } } if(type==='kpi'){ document.getElementById('inp-val-start').value=i.startValue; document.getElementById('inp-val-target').value=i.targetValue; document.getElementById('inp-kpi-trend').value=i.trend||'asc'; } }
-        
         function saveData() {
-            const id = document.getElementById('edit-id').value;
-            const type = document.getElementById('entity-type').value;
-            const pid = parseInt(document.getElementById('parent-id').value);
-            const data = { title: document.getElementById('inp-title').value, owner: document.getElementById('inp-owner').value, startDate: document.getElementById('inp-start').value, endDate: document.getElementById('inp-end').value };
-            
+            const id = document.getElementById('edit-id').value; const type = document.getElementById('entity-type').value; const pid = parseInt(document.getElementById('parent-id').value); const data = { title: document.getElementById('inp-title').value, owner: document.getElementById('inp-owner').value, startDate: document.getElementById('inp-start').value, endDate: document.getElementById('inp-end').value };
             if(id) {
-                const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis;
-                const idx = list.findIndex(x=>x.id==id);
-                if(idx!==-1) {
-                    list[idx] = {...list[idx], ...data};
-                    addLog(type.toUpperCase(), parseInt(id), 'Actualizado: ' + data.title); // LOG EDIT
-                    if(type==='kpi'){ list[idx].startValue=document.getElementById('inp-val-start').value; list[idx].targetValue=document.getElementById('inp-val-target').value; list[idx].trend=document.getElementById('inp-kpi-trend').value; }
-                    const moveWrapper = document.getElementById('move-wrapper');
-                    if(!moveWrapper.classList.contains('hidden')) { const newPid = parseInt(document.getElementById('inp-move-parent').value); if(type === 'project' && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a nuevo padre ' + newPid); } if(type === 'kpi' && list[idx].objectiveId && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a nuevo padre ' + newPid); } }
-                }
-            } else {
-                const newItem = { id: Date.now(), ...data, weight: 0 };
-                addLog('CREATE', newItem.id, 'Creado: ' + type + ' ' + data.title); // LOG CREATE
-                if(type==='objective'){ newItem.area=CURRENT_AREA; db.objectives.push(newItem); }
-                else if(type==='project'){ newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); }
-                else { newItem.startValue=document.getElementById('inp-val-start').value; newItem.targetValue=document.getElementById('inp-val-target').value; newItem.currentValue=newItem.startValue; newItem.trend=document.getElementById('inp-kpi-trend').value; if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid; db.kpis.push(newItem); }
-            }
+                const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis; const idx = list.findIndex(x=>x.id==id);
+                if(idx!==-1) { list[idx] = {...list[idx], ...data}; addLog(type.toUpperCase(), parseInt(id), 'Actualizado: ' + data.title); if(type==='kpi'){ list[idx].startValue=document.getElementById('inp-val-start').value; list[idx].targetValue=document.getElementById('inp-val-target').value; list[idx].trend=document.getElementById('inp-kpi-trend').value; } const moveWrapper = document.getElementById('move-wrapper'); if(!moveWrapper.classList.contains('hidden')) { const newPid = parseInt(document.getElementById('inp-move-parent').value); if(type === 'project' && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a ' + newPid); } if(type === 'kpi' && list[idx].objectiveId && list[idx].objectiveId !== newPid) { list[idx].objectiveId = newPid; addLog('MOVE', parseInt(id), 'Movido a ' + newPid); } } }
+            } else { const newItem = { id: Date.now(), ...data, weight: 0 }; addLog('CREATE', newItem.id, 'Creado: ' + type + ' ' + data.title); if(type==='objective'){ newItem.area=CURRENT_AREA; db.objectives.push(newItem); } else if(type==='project'){ newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); } else { newItem.startValue=document.getElementById('inp-val-start').value; newItem.targetValue=document.getElementById('inp-val-target').value; newItem.currentValue=newItem.startValue; newItem.trend=document.getElementById('inp-kpi-trend').value; if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid; db.kpis.push(newItem); } }
             saveToGoogle(); closeModal(); renderExplorer();
         }
-
-        function deleteItem() { if(confirm('¿Eliminar?')) { const id=parseInt(document.getElementById('edit-id').value), type=document.getElementById('entity-type').value; addLog('DELETE', id, 'Elemento eliminado'); if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); } else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); } else { db.kpis=db.kpis.filter(x=>x.id!==id); } saveToGoogle(); closeModal(); renderExplorer(); } }
-
-        function toggleTask(id) { 
-            const t=db.tasks.find(x=>x.id===id); 
-            if(t){ 
-                t.done=!t.done; 
-                addLog('TASK', id, 'Tarea ' + (t.done ? 'completada' : 'pendiente') + ': ' + t.title); // LOG TASK
-                saveToGoogle(); renderExplorer(); 
-            } 
-        }
-        function updateKpiVal(id,v) { 
-            const k=db.kpis.find(x=>x.id===id); 
-            if(k){ 
-                addLog('KPI', id, `Valor actualizado: ${k.currentValue} -> ${v}`); // LOG KPI
-                k.currentValue=v; 
-                saveToGoogle(); renderExplorer(); 
-            } 
-        }
-        function addTask(pid,t) { 
-            if(t.trim()){ 
-                const nid = Date.now();
-                db.tasks.push({id:nid, projectId:pid, title:t, done:false}); 
-                addLog('TASK', nid, 'Nueva tarea: ' + t); // LOG NEW TASK
-                saveToGoogle(); renderExplorer(); 
-            } 
-        }
-        function delTask(id) { if(confirm('¿Borrar?')){ addLog('TASK', id, 'Tarea eliminada'); db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
+        function deleteItem() { if(confirm('¿Eliminar?')) { const id=parseInt(document.getElementById('edit-id').value), type=document.getElementById('entity-type').value; addLog('DELETE', id, 'Eliminado'); if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); } else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); } else { db.kpis=db.kpis.filter(x=>x.id!==id); } saveToGoogle(); closeModal(); renderExplorer(); } }
+        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; addLog('TASK', id, 'Tarea ' + (t.done ? 'ok' : 'pendiente') + ': ' + t.title); saveToGoogle(); renderExplorer(); } }
+        function updateKpiVal(id,v) { const k=db.kpis.find(x=>x.id===id); if(k){ addLog('KPI', id, `Valor: ${k.currentValue} -> ${v}`); k.currentValue=v; saveToGoogle(); renderExplorer(); } }
+        function addTask(pid,t) { if(t.trim()){ const nid = Date.now(); db.tasks.push({id:nid, projectId:pid, title:t, done:false}); addLog('TASK', nid, 'Nueva tarea: ' + t); saveToGoogle(); renderExplorer(); } }
+        function delTask(id) { if(confirm('¿Borrar?')){ addLog('TASK', id, 'Tarea borrada'); db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
         function switchArea(a) { CURRENT_AREA=a; localStorage.setItem('okr_current_area',a); renderExplorer(); }
         function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
         function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
         function setQuarterDate(q) { const y="2026", d={1:"-03-31",2:"-06-30",3:"-09-30",4:"-12-31"}; document.getElementById('inp-end').value=y+d[q]; }
+        function switchView(v) { document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer'); document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard'); document.getElementById('nav-explorer').className = v==='explorer' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50"; document.getElementById('nav-dashboard').className = v==='dashboard' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50"; if(v==='dashboard') renderDashboard(); }
         
-        // Navigation Switcher (FIXED)
-        function switchView(v) { 
-            document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer');
-            document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard');
-            document.getElementById('nav-explorer').className = v==='explorer' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50";
-            document.getElementById('nav-dashboard').className = v==='dashboard' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50";
-            
-            // Forzamos render si es dashboard
-            if(v==='dashboard') renderDashboard();
-        }
+        // --- WEIGHTS LOGIC ---
+        function openWeightModal(oid) {
+            try {
+                document.getElementById('weight-obj-id').value = oid;
+                const list = document.getElementById('weight-list');
+                list.innerHTML = '';
+                
+                const children = [
+                    ...db.projects.filter(p => p.objectiveId === oid).map(p => ({...p, t: 'PROY'})),
+                    ...db.kpis.filter(k => (k.objectiveId === oid && !k.projectId) || k.projectId === oid).map(k => ({...k, t: 'KPI'}))
+                ];
 
-        // Weights (Standard)
-        function openWeightModal(oid) { document.getElementById('weight-obj-id').value=oid; document.getElementById('modal-weights').classList.remove('hidden'); const children = [...db.projects.filter(p=>p.objectiveId===oid).map(p=>({...p,t:'PROY'})), ...db.kpis.filter(k=>k.objectiveId===oid && !k.projectId).map(k=>({...k,t:'KPI'}))]; const list = document.getElementById('weight-list'); list.innerHTML=''; if(!children.length) { list.innerHTML='<div class="text-xs text-gray-400 text-center">Vacío</div>'; updateTotalWeight(); return; } children.forEach(c => { list.innerHTML+=`<div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100"><span class="text-[9px] font-bold w-8 ${c.t==='PROY'?'text-accent-sage':'text-orange-500'}">${c.t}</span><span class="text-xs truncate flex-1">${c.title}</span><div class="flex flex-col items-end"><input type="range" max="100" value="${c.weight||0}" class="h-1 w-16" oninput="this.nextElementSibling.value=this.value+'%';updateTotalWeight()"><input type="text" value="${Math.round(c.weight||0)}%" class="text-[9px] font-bold text-primary bg-transparent text-right w-8 border-none p-0" readonly></div><input type="hidden" class="wid" value="${c.id}"><input type="hidden" class="wtype" value="${c.t}"></div>`; }); updateTotalWeight(); }
+                if(!children.length) {
+                    list.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">No hay elementos para ponderar</div>';
+                } else {
+                    children.forEach(c => {
+                        list.innerHTML += `<div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100"><span class="text-[9px] font-bold w-8 ${c.t==='PROY'?'text-accent-sage':'text-orange-500'}">${c.t}</span><span class="text-xs truncate flex-1">${c.title}</span><div class="flex flex-col items-end"><input type="range" max="100" value="${c.weight||0}" class="h-1 w-16" oninput="this.nextElementSibling.value=this.value+'%';updateTotalWeight()"><input type="text" value="${Math.round(c.weight||0)}%" class="text-[9px] font-bold text-primary bg-transparent text-right w-8 border-none p-0" readonly></div><input type="hidden" class="wid" value="${c.id}"><input type="hidden" class="wtype" value="${c.t}"></div>`;
+                    });
+                }
+                updateTotalWeight();
+                document.getElementById('modal-weights').classList.remove('hidden');
+            } catch(e) { console.error(e); }
+        }
+        function closeWeightModal() { document.getElementById('modal-weights').classList.add('hidden'); }
         function updateTotalWeight() { let sum=0; document.querySelectorAll('#weight-list input[type="range"]').forEach(i=>sum+=parseFloat(i.value)); const d = document.getElementById('weight-total-display'); const b=document.getElementById('btn-save-weights'); d.innerText=Math.round(sum)+"%"; d.className=sum===100?"font-bold text-sm text-emerald-600":"font-bold text-sm text-rose-500"; b.disabled=sum!==100; b.className=sum===100?"px-3 py-1 text-[10px] font-bold bg-primary text-white rounded":"px-3 py-1 text-[10px] font-bold bg-gray-300 text-white rounded cursor-not-allowed"; }
-        function saveWeights() { document.querySelectorAll('#weight-list > div').forEach(r=>{ const id=parseInt(r.querySelector('.wid').value), type=r.querySelector('.wtype').value, val=parseFloat(r.querySelector('input[type="range"]').value); if(type==='PROY'){const p=db.projects.find(x=>x.id===id); if(p) p.weight=val;} else {const k=db.kpis.find(x=>x.id===id); if(k) k.weight=val;} }); addLog('WEIGHT', document.getElementById('weight-obj-id').value, 'Pesos rebalanceados'); saveToGoogle(); document.getElementById('modal-weights').classList.add('hidden'); renderExplorer(); }
+        function saveWeights() { document.querySelectorAll('#weight-list > div').forEach(r=>{ const id=parseInt(r.querySelector('.wid').value), type=r.querySelector('.wtype').value, val=parseFloat(r.querySelector('input[type="range"]').value); if(type==='PROY'){const p=db.projects.find(x=>x.id===id); if(p) p.weight=val;} else {const k=db.kpis.find(x=>x.id===id); if(k) k.weight=val;} }); addLog('WEIGHT', document.getElementById('weight-obj-id').value, 'Pesos ajustados'); saveToGoogle(); closeWeightModal(); renderExplorer(); }
     </script>
 </body>
 </html>
