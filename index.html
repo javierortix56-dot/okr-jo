@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive OKR Manager v11.2 (Compact & Smart)</title>
+    <title>OKR Manager v11.3 | Compact Fix</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
     
@@ -19,17 +19,15 @@
                         "primary": "#325e67",
                         "primary-light": "#ecf2f3",
                         "secondary-text": "#637d83",
-                        "background-light": "#f6f8f9",
+                        "background-light": "#f8f9fa",
                         "surface-light": "#ffffff",
                         "accent-sage": "#8A9B8D",
                         "soft-gray": "#e2e8f0"
                     },
-                    fontFamily: {
-                        "sans": ["Manrope", "sans-serif"]
-                    },
+                    fontFamily: { "sans": ["Manrope", "sans-serif"] },
                     boxShadow: {
-                        'soft': '0 2px 10px -1px rgba(50, 94, 103, 0.05)',
-                        'soft-hover': '0 6px 15px -2px rgba(50, 94, 103, 0.1)',
+                        'soft': '0 1px 3px rgba(0,0,0,0.05)',
+                        'soft-hover': '0 4px 6px -1px rgba(0,0,0,0.05)',
                     }
                 }
             }
@@ -37,300 +35,238 @@
     </script>
 
     <style>
-        body { font-family: 'Manrope', sans-serif; background-color: #f6f8f9; }
+        body { font-family: 'Manrope', sans-serif; background-color: #f8f9fa; font-size: 13px; }
         
-        /* Acordeón Optimizado (Fix bug visual) */
-        .accordion-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; overflow: hidden; }
+        /* ACORDEÓN MEJORADO (Cierre Perfecto) */
+        .accordion-wrapper { 
+            display: grid; 
+            grid-template-rows: 0fr; 
+            transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            overflow: hidden; 
+        }
         .accordion-wrapper.open { grid-template-rows: 1fr; }
-        .accordion-inner { min-height: 0; }
-        
-        .soft-card-transition { transition: all 0.2s ease; }
-        .soft-card-transition:hover { transform: translateY(-1px); box-shadow: 0 6px 15px -2px rgba(50, 94, 103, 0.1); }
-        
-        .progress-bar { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        .rotate-icon { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .accordion-inner { min-height: 0; opacity: 0; transition: opacity 0.3s ease; }
+        .accordion-wrapper.open .accordion-inner { opacity: 1; }
+
+        .rotate-icon { transition: transform 0.2s; }
         .rotate-180 { transform: rotate(180deg); }
         .rotate-90 { transform: rotate(90deg); }
 
-        /* Scrollbar Fino */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* Inputs Compactos */
-        .input-soft { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; transition: all 0.2s; font-size: 0.8rem; }
-        .input-soft:focus { background: white; border-color: #325e67; outline: none; }
+        .progress-bar { transition: width 0.6s ease; }
         
-        /* Spinner */
-        .spinner { border: 2px solid rgba(50, 94, 103, 0.1); border-top: 2px solid #325e67; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Estilos Compactos */
+        .input-compact { 
+            background: transparent; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 4px; 
+            padding: 4px 8px; 
+            font-size: 11px;
+            width: 100%;
+        }
+        .input-compact:focus { background: white; border-color: #325e67; outline: none; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .spinner { border: 2px solid rgba(50, 94, 103, 0.1); border-top: 2px solid #325e67; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="text-[#121617] h-screen flex overflow-hidden text-sm">
+<body class="text-[#121617] h-screen flex overflow-hidden">
 
-    <aside class="w-16 lg:w-64 bg-surface-light border-r border-[#ebeff0] flex flex-col z-20 shadow-soft flex-shrink-0 transition-all duration-300">
-        <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-[#ebeff0] gap-3">
-            <div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+    <aside class="w-14 lg:w-56 bg-surface-light border-r border-gray-200 flex flex-col z-20 shadow-sm shrink-0">
+        <div class="h-12 flex items-center justify-center lg:justify-start lg:px-4 border-b border-gray-100 gap-2">
+            <div class="size-6 bg-primary/10 rounded flex items-center justify-center text-primary shrink-0">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i>
             </div>
-            <div class="hidden lg:block">
-                <h1 class="text-base font-bold tracking-tight text-primary">Famiq OKR</h1>
-                <p class="text-[10px] text-secondary-text font-medium">v11.2 Compact</p>
-            </div>
+            <span class="hidden lg:block font-bold text-primary text-sm">Famiq OKR</span>
         </div>
 
-        <div class="p-3 hidden lg:block">
-            <div class="relative group">
-                <select id="area-selector" onchange="switchArea(this.value)" class="w-full appearance-none bg-primary-light/50 pl-3 pr-8 py-2 rounded-lg text-xs font-bold text-primary border border-transparent hover:border-primary/20 focus:border-primary cursor-pointer outline-none transition-all">
-                    <option value="Oficina Técnica">Oficina Técnica</option>
-                    <option value="PXD">PXD</option>
-                    <option value="Planificación">Planificación</option>
-                    <option value="Pricing y Negocio">Pricing y Negocio</option>
-                </select>
-                <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
-                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                </div>
-            </div>
+        <div class="p-2 hidden lg:block">
+            <select id="area-selector" onchange="switchArea(this.value)" class="w-full bg-gray-50 border-transparent text-xs font-bold text-primary rounded focus:ring-0 cursor-pointer py-1.5">
+                <option value="Oficina Técnica">Oficina Técnica</option>
+                <option value="PXD">PXD</option>
+                <option value="Planificación">Planificación</option>
+                <option value="Pricing y Negocio">Pricing y Negocio</option>
+            </select>
         </div>
 
-        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-            <button onclick="switchView('explorer')" id="nav-explorer" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold bg-primary text-white shadow-soft transition-all">
-                <i data-lucide="layers" class="w-4 h-4"></i>
+        <nav class="flex-1 p-2 space-y-1 overflow-y-auto">
+            <button onclick="switchView('explorer')" id="nav-explorer" class="w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
                 <span class="hidden lg:block">Explorador</span>
             </button>
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-secondary-text hover:bg-primary-light/50 transition-all">
-                <i data-lucide="pie-chart" class="w-4 h-4"></i>
-                <span class="hidden lg:block">Reporte</span>
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50">
+                <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+                <span class="hidden lg:block">Resumen</span>
             </button>
         </nav>
 
-        <div class="p-4 border-t border-[#ebeff0]">
-             <div class="flex items-center gap-2 justify-center lg:justify-start">
-                 <div id="sync-icon" class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                 </div>
-                 <div class="hidden lg:block">
-                     <p id="sync-text" class="text-[10px] font-bold text-[#121617]">Online</p>
-                 </div>
+        <div class="p-3 border-t border-gray-100 text-[10px] text-center lg:text-left text-gray-400">
+             <div id="sync-indicator" class="flex items-center justify-center lg:justify-start gap-1.5">
+                 <span class="size-2 rounded-full bg-emerald-500"></span> Online
              </div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col relative bg-background-light overflow-hidden">
         
-        <div id="global-loader" class="absolute inset-0 bg-white/90 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity duration-300">
-            <div class="flex flex-col items-center gap-3">
+        <div id="global-loader" class="absolute inset-0 bg-white/90 z-50 flex items-center justify-center hidden">
+            <div class="flex flex-col items-center gap-2">
                 <div class="spinner"></div>
-                <p class="text-[10px] font-bold text-primary tracking-widest uppercase">Cargando...</p>
+                <span class="text-[10px] font-bold text-primary uppercase">Cargando</span>
             </div>
         </div>
 
-        <header class="h-16 px-6 flex items-center justify-between shrink-0 bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
-            <div class="flex items-center gap-4">
-                <h2 class="text-lg font-extrabold text-[#121617] tracking-tight">Objetivos</h2>
-                <div class="hidden md:flex bg-gray-100/50 rounded-lg p-0.5 gap-0.5">
-                    <button onclick="toggleFilter('ALL')" id="btn-f-ALL" class="px-3 py-1 rounded-md text-[10px] font-bold transition-all text-secondary-text hover:bg-white">2026</button>
-                    <button onclick="toggleFilter('Q1')" id="btn-f-Q1" class="px-3 py-1 rounded-md text-[10px] font-bold transition-all bg-white text-primary shadow-sm">Q1</button>
-                    <button onclick="toggleFilter('Q2')" id="btn-f-Q2" class="px-3 py-1 rounded-md text-[10px] font-bold transition-all text-secondary-text hover:bg-white">Q2</button>
-                    <button onclick="toggleFilter('Q3')" id="btn-f-Q3" class="px-3 py-1 rounded-md text-[10px] font-bold transition-all text-secondary-text hover:bg-white">Q3</button>
-                    <button onclick="toggleFilter('Q4')" id="btn-f-Q4" class="px-3 py-1 rounded-md text-[10px] font-bold transition-all text-secondary-text hover:bg-white">Q4</button>
+        <header class="h-12 px-4 flex items-center justify-between bg-white border-b border-gray-200 shrink-0">
+            <div class="flex items-center gap-3">
+                <h2 class="font-extrabold text-sm text-gray-800 uppercase tracking-wide">Mis Objetivos</h2>
+                <div class="hidden md:flex bg-gray-100 rounded p-0.5 gap-0.5">
+                    <button onclick="toggleFilter('ALL')" id="btn-f-ALL" class="px-2 py-0.5 rounded text-[10px] font-bold text-gray-500 hover:bg-white transition-all">Todo</button>
+                    <button onclick="toggleFilter('Q1')" id="btn-f-Q1" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white text-primary shadow-sm transition-all">Q1</button>
+                    <button onclick="toggleFilter('Q2')" id="btn-f-Q2" class="px-2 py-0.5 rounded text-[10px] font-bold text-gray-500 hover:bg-white transition-all">Q2</button>
+                    <button onclick="toggleFilter('Q3')" id="btn-f-Q3" class="px-2 py-0.5 rounded text-[10px] font-bold text-gray-500 hover:bg-white transition-all">Q3</button>
+                    <button onclick="toggleFilter('Q4')" id="btn-f-Q4" class="px-2 py-0.5 rounded text-[10px] font-bold text-gray-500 hover:bg-white transition-all">Q4</button>
                 </div>
             </div>
-
             <div class="flex items-center gap-2">
-                <button onclick="toggleAll(false)" class="size-8 rounded-lg bg-white border border-gray-200 text-secondary-text flex items-center justify-center hover:bg-gray-50 transition-colors" title="Contraer todo">
-                    <i data-lucide="minimize-2" class="w-3.5 h-3.5"></i>
-                </button>
-                <button onclick="toggleAll(true)" class="size-8 rounded-lg bg-white border border-gray-200 text-secondary-text flex items-center justify-center hover:bg-gray-50 transition-colors" title="Expandir todo">
-                    <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
-                </button>
-                <button onclick="openModal('objective')" class="ml-2 h-8 px-4 rounded-lg bg-primary text-white shadow-sm hover:bg-[#2a5058] flex items-center gap-1.5 transition-transform hover:scale-105 active:scale-95 font-bold text-xs">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo
+                <div class="flex bg-gray-100 rounded p-0.5">
+                    <button onclick="toggleAll(false)" class="p-1 rounded hover:bg-white text-gray-500" title="Contraer"><i data-lucide="minimize-2" class="w-3 h-3"></i></button>
+                    <button onclick="toggleAll(true)" class="p-1 rounded hover:bg-white text-gray-500" title="Expandir"><i data-lucide="maximize-2" class="w-3 h-3"></i></button>
+                </div>
+                <button onclick="openModal('objective')" class="bg-primary hover:bg-[#2a5058] text-white px-3 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow-sm active:scale-95 transition-transform">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Nuevo
                 </button>
             </div>
         </header>
 
-        <div id="view-explorer" class="flex-1 overflow-y-auto px-4 lg:px-6 pb-12 scroll-smooth bg-[#f6f8f9]">
-            <div id="tree-container" class="max-w-4xl mx-auto space-y-3 pt-4">
-                </div>
+        <div id="view-explorer" class="flex-1 overflow-y-auto px-4 py-4 scroll-smooth">
+            <div id="tree-container" class="max-w-4xl mx-auto space-y-3 pb-10"></div>
         </div>
 
         <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-6">
-            <div class="max-w-5xl mx-auto bg-surface-light rounded-2xl shadow-soft p-6 border border-white">
+            <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-soft p-5 border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-base font-bold text-primary">Reporte de Estado Ejecutivo</h3>
-                    <div class="text-[10px] text-secondary-text bg-gray-50 px-2 py-1 rounded flex gap-2">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> On Track</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Warning</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> At Risk</span>
+                    <h3 class="text-sm font-bold text-primary">Reporte de Salud de Objetivos</h3>
+                    <div class="flex gap-3 text-[10px] font-medium">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> A tiempo</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Desviación</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Riesgo</span>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="text-[10px] font-bold text-secondary-text uppercase border-b border-gray-100">
-                            <tr>
-                                <th class="p-3 w-1/2">Objetivo</th>
-                                <th class="p-3">Responsable</th>
-                                <th class="p-3 w-1/4">Performance (Tiempo vs Avance)</th>
-                                <th class="p-3 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="report-body" class="text-xs font-medium text-[#121617] divide-y divide-gray-50"></tbody>
-                    </table>
-                </div>
+                <table class="w-full text-left border-collapse">
+                    <thead class="text-[10px] font-bold text-gray-400 uppercase border-b border-gray-100">
+                        <tr>
+                            <th class="py-2 pl-2 w-5/12">Objetivo Estratégico</th>
+                            <th class="py-2">Responsable</th>
+                            <th class="py-2 w-4/12">Análisis de Riesgo (Tiempo vs Avance)</th>
+                            <th class="py-2 pr-2 text-right">Real</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-body" class="text-xs text-gray-700 divide-y divide-gray-50"></tbody>
+                </table>
             </div>
         </div>
-
     </main>
 
-    <datalist id="list-owners"></datalist>
-
-    <div id="modal-backdrop" class="fixed inset-0 bg-[#325e67]/30 backdrop-blur-[2px] hidden z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-surface-light w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
-            <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center bg-white/50 rounded-t-2xl">
-                <h3 id="modal-title" class="text-sm font-bold text-primary">Nuevo Item</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <div id="modal-backdrop" class="fixed inset-0 bg-primary/20 backdrop-blur-[1px] hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-lg shadow-xl flex flex-col max-h-[90vh] animate-[fadeIn_0.15s_ease-out]">
+            <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-lg">
+                <h3 id="modal-title" class="text-xs font-bold text-primary uppercase">Editar</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            
-            <div class="p-5 space-y-3 overflow-y-auto">
+            <div class="p-4 space-y-3 overflow-y-auto">
                 <input type="hidden" id="edit-id"><input type="hidden" id="parent-id"><input type="hidden" id="entity-type"><input type="hidden" id="context-type">
                 
-                <div id="move-wrapper" class="hidden bg-primary-light/50 p-3 rounded-lg border border-primary/10">
-                    <label class="block text-[10px] font-bold text-primary uppercase mb-1">Mover a otro Objetivo</label>
-                    <div class="relative">
-                        <select id="inp-move-parent" class="w-full appearance-none bg-white py-1.5 pl-2 pr-6 rounded border-0 text-xs font-bold text-gray-700 shadow-sm outline-none"></select>
-                    </div>
+                <div id="move-wrapper" class="hidden bg-blue-50 p-2 rounded border border-blue-100">
+                    <label class="block text-[9px] font-bold text-blue-600 uppercase mb-1">Mover a Objetivo</label>
+                    <select id="inp-move-parent" class="input-compact bg-white"></select>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-secondary-text uppercase mb-1">Título</label>
-                    <textarea id="inp-title" rows="2" class="input-soft w-full p-2.5 resize-none" placeholder="Nombre..."></textarea>
+                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Título</label>
+                    <textarea id="inp-title" rows="2" class="input-compact resize-none font-medium text-gray-700"></textarea>
                 </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-secondary-text uppercase mb-1">Resp.</label><input id="inp-owner" list="list-owners" class="input-soft w-full p-2"></div>
-                    <div><label class="block text-[10px] font-bold text-secondary-text uppercase mb-1">Inicio</label><input id="inp-start" type="date" class="input-soft w-full p-2"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Resp.</label><input id="inp-owner" list="list-owners" class="input-compact"></div>
+                    <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Inicio</label><input id="inp-start" type="date" class="input-compact"></div>
                 </div>
-
                 <div>
-                    <label class="block text-[10px] font-bold text-secondary-text uppercase mb-1">Deadline</label>
+                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Fecha Fin (Deadline)</label>
                     <div class="flex gap-2">
-                        <input id="inp-end" type="date" class="input-soft flex-1 p-2">
-                        <div class="flex bg-gray-100 p-0.5 rounded-lg">
-                            <button onclick="setQuarterDate(1)" class="px-2 rounded text-[9px] font-bold text-gray-500 hover:bg-white hover:text-primary transition-all">Q1</button>
-                            <button onclick="setQuarterDate(2)" class="px-2 rounded text-[9px] font-bold text-gray-500 hover:bg-white hover:text-primary transition-all">Q2</button>
-                            <button onclick="setQuarterDate(3)" class="px-2 rounded text-[9px] font-bold text-gray-500 hover:bg-white hover:text-primary transition-all">Q3</button>
-                            <button onclick="setQuarterDate(4)" class="px-2 rounded text-[9px] font-bold text-gray-500 hover:bg-white hover:text-primary transition-all">Q4</button>
+                        <input id="inp-end" type="date" class="input-compact flex-1">
+                        <div class="flex gap-0.5">
+                            <button onclick="setQuarterDate(1)" class="px-2 bg-gray-100 hover:bg-gray-200 rounded text-[9px] font-bold text-gray-600">Q1</button>
+                            <button onclick="setQuarterDate(2)" class="px-2 bg-gray-100 hover:bg-gray-200 rounded text-[9px] font-bold text-gray-600">Q2</button>
+                            <button onclick="setQuarterDate(3)" class="px-2 bg-gray-100 hover:bg-gray-200 rounded text-[9px] font-bold text-gray-600">Q3</button>
+                            <button onclick="setQuarterDate(4)" class="px-2 bg-gray-100 hover:bg-gray-200 rounded text-[9px] font-bold text-gray-600">Q4</button>
                         </div>
                     </div>
                 </div>
-
-                <div id="field-metrics" class="hidden bg-[#fff7ed] p-3 rounded-xl border border-orange-100 grid grid-cols-2 gap-3">
-                     <div class="col-span-2 flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-orange-700 uppercase">Métrica KPI</span>
-                        <select id="inp-kpi-trend" class="text-[9px] bg-white border border-orange-200 rounded px-1.5 py-0.5 text-orange-700 font-bold outline-none"><option value="asc">Ascendente</option><option value="desc">Descendente</option><option value="below">Mantener bajo</option></select>
-                     </div>
-                     <div><label class="block text-[9px] text-orange-600/70 font-bold uppercase mb-0.5">Base</label><input id="inp-val-start" type="number" class="w-full p-1.5 bg-white border border-orange-200 rounded text-center font-bold text-orange-800 outline-none text-xs"></div>
-                     <div><label class="block text-[9px] text-orange-600/70 font-bold uppercase mb-0.5">Meta</label><input id="inp-val-target" type="number" class="w-full p-1.5 bg-white border border-orange-200 rounded text-center font-bold text-orange-800 outline-none text-xs"></div>
+                <div id="field-metrics" class="hidden bg-orange-50 p-2 rounded border border-orange-100 grid grid-cols-2 gap-2">
+                     <div class="col-span-2 flex justify-between"><span class="text-[9px] font-bold text-orange-700 uppercase">Métrica</span><select id="inp-kpi-trend" class="text-[9px] p-0 border-0 bg-transparent font-bold text-orange-600"><option value="asc">Subir</option><option value="desc">Bajar</option><option value="below">Tope</option></select></div>
+                     <div><label class="block text-[9px] text-orange-400 font-bold uppercase">Base</label><input id="inp-val-start" type="number" class="input-compact bg-white text-center font-bold text-orange-800"></div>
+                     <div><label class="block text-[9px] text-orange-400 font-bold uppercase">Meta</label><input id="inp-val-target" type="number" class="input-compact bg-white text-center font-bold text-orange-800"></div>
                 </div>
             </div>
-
-            <div class="px-5 py-3 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-2xl">
-                <button id="btn-delete" onclick="deleteItem()" class="text-rose-500 hover:text-rose-700 text-[10px] font-bold hidden flex items-center gap-1"><i data-lucide="trash-2" class="w-3 h-3"></i> Borrar</button>
+            <div class="px-4 py-2 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-lg">
+                <button onclick="deleteItem()" id="btn-delete" class="text-rose-500 hover:text-rose-700 text-[10px] font-bold hidden">Eliminar</button>
                 <div class="flex gap-2 ml-auto">
-                    <button onclick="closeModal()" class="px-3 py-1.5 text-xs font-bold text-secondary-text hover:bg-gray-200 rounded-lg transition-colors">Cancelar</button>
-                    <button onclick="saveData()" class="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded-lg shadow-sm hover:shadow-md transition-all">Guardar</button>
+                    <button onclick="closeModal()" class="px-3 py-1 text-[10px] font-bold text-gray-500 hover:bg-gray-200 rounded">Cancelar</button>
+                    <button onclick="saveData()" class="px-3 py-1 text-[10px] font-bold bg-primary text-white rounded shadow-sm">Guardar</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="modal-weights" class="fixed inset-0 bg-[#325e67]/30 backdrop-blur-[2px] hidden z-[60] flex items-center justify-center p-4">
-        <div class="bg-surface-light w-full max-w-sm rounded-2xl shadow-2xl flex flex-col animate-[fadeIn_0.2s_ease-out]">
-            <div class="px-5 py-3 border-b border-gray-100">
-                <h3 class="text-sm font-bold text-primary flex items-center gap-2"><i data-lucide="scale" class="w-4 h-4"></i> Balancear Pesos</h3>
-            </div>
-            <div class="p-4 overflow-y-auto max-h-[50vh]">
-                <input type="hidden" id="weight-obj-id">
-                <div id="weight-list" class="space-y-2"></div>
-            </div>
-            <div class="px-5 py-3 bg-gray-50 rounded-b-2xl flex justify-between items-center border-t border-gray-100">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-secondary-text">Total:</span>
-                    <span id="weight-total-display" class="text-sm font-black text-[#121617]">0%</span>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="document.getElementById('modal-weights').classList.add('hidden')" class="px-3 py-1.5 text-xs font-bold text-secondary-text hover:bg-gray-200 rounded-lg">Cancelar</button>
-                    <button id="btn-save-weights" onclick="saveWeights()" class="px-3 py-1.5 text-xs font-bold bg-primary text-white rounded-lg shadow-sm">Confirmar</button>
-                </div>
+    
+    <div id="modal-weights" class="fixed inset-0 bg-primary/20 backdrop-blur-[1px] hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-lg shadow-xl flex flex-col animate-[fadeIn_0.15s_ease-out]">
+            <div class="p-3 border-b border-gray-100"><h3 class="text-xs font-bold text-primary">Ponderación de Pesos</h3></div>
+            <div class="p-3 overflow-y-auto max-h-[50vh] space-y-2" id="weight-list"><input type="hidden" id="weight-obj-id"></div>
+            <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-lg">
+                <span id="weight-total-display" class="font-bold text-sm">0%</span>
+                <button id="btn-save-weights" onclick="saveWeights()" class="px-3 py-1 text-[10px] font-bold bg-primary text-white rounded">Confirmar</button>
             </div>
         </div>
     </div>
+    <datalist id="list-owners"></datalist>
 
     <script>
-        // CONFIGURACIÓN
+        // --- CONFIG & STATE ---
         const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
         let API_URL = localStorage.getItem('okr_api_url') || DEFAULT_API_URL;
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
         let SELECTED_QUARTERS = ['Q1'];
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
 
-        // INIT
         document.getElementById('area-selector').value = CURRENT_AREA;
         loadFromGoogle(); 
 
-        // --- CORE FUNCTIONS ---
+        // --- CORE ---
         async function loadFromGoogle() {
             toggleLoader(true);
-            updateSyncStatus('loading');
             try {
                 const res = await fetch(API_URL);
-                if (!res.ok) throw new Error('Error en red');
+                if (!res.ok) throw new Error('Error de red');
                 db = await res.json();
                 updateSuggestions();
                 renderExplorer();
-                updateSyncStatus('success');
-            } catch(e) { 
-                console.error(e); 
-                updateSyncStatus('error');
-            } finally { toggleLoader(false); }
+            } catch(e) { console.error(e); } finally { toggleLoader(false); }
         }
 
         async function saveToGoogle() {
-            if(!API_URL) return;
-            updateSyncStatus('saving');
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(db) });
                 updateSuggestions();
-                setTimeout(()=> updateSyncStatus('success'), 1000);
-            } catch(e) { updateSyncStatus('error'); }
-        }
-
-        function updateSyncStatus(status) {
-            const icon = document.getElementById('sync-icon');
-            const text = document.getElementById('sync-text');
-            if(status === 'loading') {
-                icon.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>';
-                text.innerText = 'Cargando...';
-            } else if (status === 'saving') {
-                icon.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>';
-                text.innerText = 'Guardando...';
-            } else if (status === 'success') {
-                icon.innerHTML = '<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>';
-                text.innerText = 'Online';
-            } else {
-                icon.innerHTML = '<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>';
-                text.innerText = 'Error';
-            }
+            } catch(e) {}
         }
 
         function updateSuggestions() {
             const users = new Set();
             [...db.objectives, ...db.projects].forEach(i => { if(i.owner) users.add(i.owner) });
-            const datalist = document.getElementById('list-owners');
-            datalist.innerHTML = Array.from(users).map(u => `<option value="${u}">`).join('');
+            document.getElementById('list-owners').innerHTML = Array.from(users).map(u => `<option value="${u}">`).join('');
         }
 
         function toggleFilter(q) {
@@ -343,17 +279,13 @@
             }
             ['ALL','Q1','Q2','Q3','Q4'].forEach(k => {
                 const b = document.getElementById('btn-f-' + k);
-                if (SELECTED_QUARTERS.includes(k)) { 
-                    b.classList.remove('bg-white', 'text-secondary-text', 'hover:bg-white');
-                    b.classList.add('bg-white', 'text-primary', 'shadow-sm', 'font-extrabold'); // Active Style
-                } else { 
-                    b.classList.remove('bg-white', 'text-primary', 'shadow-sm', 'font-extrabold');
-                    b.classList.add('text-secondary-text', 'hover:bg-white'); // Inactive Style
-                }
+                const active = SELECTED_QUARTERS.includes(k);
+                b.className = active ? "px-2 py-0.5 rounded text-[10px] font-bold bg-white text-primary shadow-sm transition-all" : "px-2 py-0.5 rounded text-[10px] font-bold text-gray-500 hover:bg-white transition-all";
             });
             renderExplorer();
         }
 
+        // --- MATH ---
         function calculateProgress(item, type) {
             if (type === 'kpi') {
                 const s = parseFloat(item.startValue)||0, t = parseFloat(item.targetValue)||0;
@@ -378,14 +310,13 @@
                 db.kpis.filter(k => k.projectId === item.id).forEach(k => children.push({p: calculateProgress(k,'kpi'), w: parseFloat(k.weight)||0}));
                 db.tasks.filter(t => t.projectId === item.id).forEach(t => children.push({p: t.done?100:0, w: 1}));
             }
-
             if (!children.length) return 0;
             const totalWeight = children.reduce((acc, x) => acc + x.w, 0);
             if (totalWeight === 0) return Math.round(children.reduce((acc,x)=>acc+x.p,0) / children.length);
             return Math.round(children.reduce((acc, x) => acc + (x.p * (x.w / totalWeight)), 0));
         }
 
-        // --- RENDER COMPACTO ---
+        // --- RENDER ---
         function renderExplorer() {
             const container = document.getElementById('tree-container'); 
             container.innerHTML = '';
@@ -398,10 +329,7 @@
                 return SELECTED_QUARTERS.includes(q);
             });
 
-            if(!objs.length) { 
-                container.innerHTML=`<div class="flex flex-col items-center justify-center py-10 opacity-40"><i data-lucide="ghost" class="w-6 h-6 mb-2"></i><p class="text-xs">Sin objetivos</p></div>`; 
-                lucide.createIcons(); return; 
-            }
+            if(!objs.length) { container.innerHTML=`<div class="text-center text-gray-300 text-xs py-10">Sin objetivos</div>`; return; }
 
             objs.forEach(obj => {
                 const prog = calculateProgress(obj, 'objective');
@@ -412,89 +340,83 @@
                 db.kpis.filter(k=>k.objectiveId===obj.id && !k.projectId).forEach(k=> childrenHTML+=renderKpiRow(k));
                 db.projects.filter(p=>p.objectiveId===obj.id).forEach(p=> childrenHTML+=renderProjectRow(p));
 
-                const cardHTML = `
-                <article class="bg-surface-light rounded-xl p-4 shadow-soft soft-card-transition border border-transparent hover:border-primary/10 group">
-                    <div class="flex items-start justify-between gap-3 cursor-pointer" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
+                container.innerHTML += `
+                <div class="bg-white rounded-lg shadow-soft border border-gray-100 group">
+                    <div class="p-3 flex items-start justify-between cursor-pointer" onclick="toggleAccordion('obj-${obj.id}', 'icon-o-${obj.id}')">
                         <div class="flex gap-3 flex-1 min-w-0">
-                            <div class="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100 text-primary">
-                                <span class="font-extrabold text-sm">${prog}%</span>
-                            </div>
+                            <div class="w-10 h-10 rounded bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100 text-primary font-black text-sm">${prog}%</div>
                             <div class="min-w-0 flex-1">
-                                <h3 class="text-base font-bold text-[#121617] leading-tight truncate pr-2 group-hover:text-primary transition-colors">${obj.title}</h3>
-                                <div class="flex items-center gap-2 mt-0.5">
-                                    <span class="text-[10px] text-secondary-text font-medium flex items-center gap-1"><i data-lucide="calendar" class="w-2.5 h-2.5"></i> ${obj.endDate}</span>
-                                    <span class="text-[10px] text-secondary-text font-medium flex items-center gap-1"><i data-lucide="user" class="w-2.5 h-2.5"></i> ${obj.owner||'S/A'}</span>
+                                <h3 class="text-sm font-bold text-gray-800 leading-tight truncate group-hover:text-primary transition-colors">${obj.title}</h3>
+                                <div class="flex items-center gap-3 mt-1 text-[10px] text-gray-400 font-medium">
+                                    <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${obj.endDate}</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${obj.owner||'S/A'}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end gap-2 min-w-[80px]">
-                            <div class="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                <div class="${barColor} h-1.5 rounded-full progress-bar" style="width: ${prog}%"></div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="text-gray-400 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button>
-                                    <button onclick="event.stopPropagation(); openWeightModal(${obj.id})" class="text-gray-400 hover:text-purple-600"><i data-lucide="scale" class="w-3 h-3"></i></button>
-                                </div>
-                                <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="w-4 h-4 text-gray-300 rotate-icon ${isOpen?'rotate-180':''}"></i>
+                        <div class="flex flex-col items-end gap-1.5 w-24">
+                            <div class="w-full bg-gray-100 rounded-full h-1 overflow-hidden"><div class="${barColor} h-1 rounded-full progress-bar" style="width: ${prog}%"></div></div>
+                            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="event.stopPropagation(); openEdit('objective', ${obj.id})" class="text-gray-400 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button>
+                                <button onclick="event.stopPropagation(); openWeightModal(${obj.id})" class="text-gray-400 hover:text-purple-600"><i data-lucide="scale" class="w-3 h-3"></i></button>
+                                <i id="icon-o-${obj.id}" data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-300 rotate-icon ${isOpen?'rotate-180':''}"></i>
                             </div>
                         </div>
                     </div>
-
                     <div id="obj-${obj.id}" class="accordion-wrapper ${isOpen?'open':''}">
-                        <div class="accordion-inner pt-3">
-                            <div class="pl-2 md:pl-6 space-y-2 relative border-l border-dashed border-gray-200 ml-4 md:ml-2">
+                        <div class="accordion-inner pl-3 pr-2 pb-2">
+                             <div class="border-l border-dashed border-gray-200 pl-3 space-y-1">
                                 ${childrenHTML}
-                                <div class="flex gap-2 pt-1 pl-1">
-                                    <button onclick="openModal('project',${obj.id})" class="px-2 py-1 rounded-md bg-gray-50 hover:bg-accent-sage/20 text-[10px] font-bold text-gray-500 hover:text-accent-sage flex items-center gap-1 transition-colors">
-                                        <i data-lucide="folder-plus" class="w-3 h-3"></i> Proyecto
-                                    </button>
-                                    <button onclick="openModal('kpi',${obj.id},'objective')" class="px-2 py-1 rounded-md bg-gray-50 hover:bg-orange-50 text-[10px] font-bold text-gray-500 hover:text-orange-500 flex items-center gap-1 transition-colors">
-                                        <i data-lucide="bar-chart" class="w-3 h-3"></i> KPI
-                                    </button>
+                                <div class="flex gap-2 pt-1 opacity-50 hover:opacity-100 transition-opacity">
+                                    <button onclick="openModal('project',${obj.id})" class="text-[9px] font-bold text-gray-400 hover:text-primary flex items-center gap-1"><i data-lucide="folder-plus" class="w-3 h-3"></i> Proyecto</button>
+                                    <button onclick="openModal('kpi',${obj.id},'objective')" class="text-[9px] font-bold text-gray-400 hover:text-orange-500 flex items-center gap-1"><i data-lucide="bar-chart" class="w-3 h-3"></i> KPI</button>
                                 </div>
-                            </div>
+                             </div>
                         </div>
                     </div>
-                </article>`;
-                container.innerHTML += cardHTML;
+                </div>`;
             });
             lucide.createIcons();
         }
 
         function renderProjectRow(p) {
             const prog = calculateProgress(p, 'project');
+            const isOpen = !p.isCollapsed;
             let innerHTML = '';
+            
+            // Tasks
             db.tasks.filter(t=>t.projectId===p.id).forEach(t=> innerHTML+=`
-                <div class="flex items-center gap-2 py-1 pl-1 hover:bg-white rounded group/task transition-colors">
-                    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="size-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer">
-                    <span class="text-xs text-[#121617] font-medium flex-1 truncate ${t.done?'line-through opacity-50':''}">${t.title}</span>
+                <div class="flex items-center gap-2 py-0.5 hover:bg-white px-1 rounded group/task">
+                    <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" class="size-3 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer">
+                    <span class="text-[11px] text-gray-600 truncate flex-1 ${t.done?'line-through opacity-50':''}">${t.title}</span>
                     <button onclick="delTask(${t.id})" class="opacity-0 group-hover/task:opacity-100 text-rose-300 hover:text-rose-500"><i data-lucide="x" class="w-3 h-3"></i></button>
-                </div>
-            `);
-            innerHTML += `<div class="flex items-center gap-2 py-0.5 pl-1 mt-0.5"><i data-lucide="plus" class="w-3 h-3 text-gray-300"></i><input type="text" placeholder="Nueva tarea..." class="w-full text-xs bg-transparent border-none focus:ring-0 p-0 placeholder:text-gray-300 font-medium" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}"></div>`;
+                </div>`);
+            
+            // Input Tarea
+            innerHTML += `<div class="flex items-center gap-2 py-0.5 px-1 mt-1 opacity-60 hover:opacity-100"><i data-lucide="plus" class="w-3 h-3 text-gray-300"></i><input type="text" placeholder="Tarea..." class="w-full text-[10px] bg-transparent border-none p-0 focus:ring-0" onkeydown="if(event.key==='Enter'){addTask(${p.id},this.value);this.value=''}"></div>`;
+            
+            // KPIs in Project
             db.kpis.filter(k=>k.projectId===p.id).forEach(k=> innerHTML+=renderKpiRow(k));
 
-            // Fix del borde visual al cerrar: border-l-4 en vez de wrapper, bg-white en container principal
+            // Diseño Compacto: Sin margin-bottom, sin borde externo cuando cerrado, fondo suave al abrir
             return `
-            <div class="bg-white rounded-lg border border-gray-100 shadow-sm group/proj overflow-hidden mb-1">
-                <div class="p-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
+            <div class="rounded overflow-hidden transition-colors group/proj ${isOpen ? 'bg-gray-50/50 pb-2' : 'hover:bg-gray-50'}">
+                <div class="flex items-center justify-between p-1.5 cursor-pointer" onclick="toggleAccordion('proj-${p.id}', 'icon-p-${p.id}')">
                     <div class="flex items-center gap-2 min-w-0 flex-1">
-                        <i data-lucide="folder" class="w-3.5 h-3.5 text-accent-sage"></i>
-                        <span class="text-xs font-bold text-[#121617] truncate">${p.title}</span>
+                        <i data-lucide="folder" class="w-3.5 h-3.5 text-accent-sage/80 fill-current"></i>
+                        <span class="text-xs font-bold text-gray-700 truncate">${p.title}</span>
                         ${p.weight>0 ? `<span class="text-[9px] bg-purple-50 text-purple-600 px-1 rounded font-bold">${p.weight}%</span>`:''}
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="flex gap-1 opacity-0 group-hover/proj:opacity-100 transition-opacity">
-                            <button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="text-gray-400 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button>
-                            <button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="text-gray-400 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button>
+                         <div class="hidden group-hover/proj:flex gap-1">
+                            <button onclick="event.stopPropagation(); openEdit('project',${p.id})" class="text-gray-300 hover:text-primary"><i data-lucide="pencil" class="w-3 h-3"></i></button>
+                            <button onclick="event.stopPropagation(); openModal('kpi',${p.id},'project')" class="text-gray-300 hover:text-orange-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i></button>
                         </div>
                         <span class="text-[10px] font-bold text-accent-sage">${prog}%</span>
-                        <i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-3.5 h-3.5 text-gray-300 rotate-icon ${p.isCollapsed?'':'rotate-90'}"></i>
+                        <i id="icon-p-${p.id}" data-lucide="chevron-right" class="w-3 h-3 text-gray-300 rotate-icon ${isOpen?'rotate-90':''}"></i>
                     </div>
                 </div>
-                <div id="proj-${p.id}" class="accordion-wrapper ${p.isCollapsed?'':'open'}">
-                    <div class="accordion-inner px-2 py-2 bg-gray-50/50 border-t border-gray-100">
+                <div id="proj-${p.id}" class="accordion-wrapper ${isOpen?'open':''}">
+                    <div class="accordion-inner px-2 pt-1 space-y-0.5">
                         ${innerHTML}
                     </div>
                 </div>
@@ -503,106 +425,92 @@
 
         function renderKpiRow(k) {
             const prog = calculateProgress(k, 'kpi');
-            let trendIcon = k.trend === 'desc' ? '▼' : k.trend === 'below' ? '≤' : '';
-
+            let trend = k.trend === 'desc' ? '▼' : k.trend === 'below' ? '≤' : '';
             return `
-            <div class="flex items-center justify-between p-2 rounded-lg bg-orange-50/30 border border-orange-100/40 hover:border-orange-200 transition-colors group/kpi mt-1">
-                <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <i data-lucide="hash" class="w-3 h-3 text-orange-500"></i>
-                    <div class="min-w-0 flex items-center gap-1">
-                         <span class="text-xs font-bold text-gray-700 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title}</span>
-                         ${trendIcon ? `<span class="text-[9px] text-orange-600 font-bold bg-orange-100 px-1 rounded">${trendIcon}</span>` : ''}
-                         ${k.weight>0 ? `<span class="text-[9px] text-gray-400 font-medium ml-1">(${k.weight}%)</span>`:''}
-                    </div>
+            <div class="flex items-center justify-between p-1 pl-2 rounded hover:bg-white group/kpi">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <span class="text-[9px] font-bold text-orange-400 border border-orange-100 px-1 rounded bg-white">KPI</span>
+                    <span class="text-[11px] font-medium text-gray-600 truncate cursor-pointer hover:text-orange-600" onclick="openEdit('kpi',${k.id})">${k.title} ${trend}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-0.5 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">
-                        <input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-8 text-center text-[10px] font-bold text-orange-600 bg-transparent border-none p-0 focus:ring-0">
+                    <div class="flex items-center gap-1">
+                        <input type="number" value="${k.currentValue}" onchange="updateKpiVal(${k.id},this.value)" class="w-8 text-right text-[10px] font-bold text-gray-700 bg-transparent border-none p-0 focus:ring-0">
                         <span class="text-[9px] text-gray-300">/ ${k.targetValue}</span>
                     </div>
-                    <div class="w-6 h-6 rounded-full border border-orange-100 flex items-center justify-center text-[8px] font-bold text-orange-500 bg-white shadow-sm">
-                        ${prog}%
-                    </div>
+                    <div class="w-5 text-right"><span class="text-[10px] font-bold ${prog>=100?'text-emerald-500':'text-orange-500'}">${prog}%</span></div>
                 </div>
             </div>`;
         }
 
         // --- DASHBOARD INTELIGENTE ---
-        function calculateRiskColor(start, end, progress) {
-            const now = new Date();
-            const s = new Date(start);
-            const e = new Date(end);
+        function getRisk(start, end, prog) {
+            const now = new Date(), s = new Date(start), e = new Date(end);
+            if (now < s) return { color: 'bg-gray-200', text: 'text-gray-400', label: 'Futuro' };
+            const total = (e - s), elapsed = (now - s);
+            const expected = Math.min(100, (elapsed / total) * 100);
             
-            if (now < s) return { color: 'bg-gray-200', text: 'bg-gray-200' }; // No iniciado
-            if (progress >= 100) return { color: 'bg-emerald-500', text: 'text-emerald-600' };
+            if (elapsed > total && prog < 100) return { color: 'bg-rose-500', text: 'text-rose-600', label: 'Vencido' };
+            const diff = expected - prog;
             
-            const totalDays = (e - s) / (1000 * 60 * 60 * 24);
-            const elapsedDays = (now - s) / (1000 * 60 * 60 * 24);
-            const expectedProgress = (elapsedDays / totalDays) * 100;
-            
-            if (elapsedDays > totalDays) return { color: 'bg-rose-500', text: 'text-rose-600' }; // Vencido y no completado
-            
-            const diff = expectedProgress - progress;
-            
-            if (diff > 20) return { color: 'bg-rose-500', text: 'text-rose-600' }; // Crítico (>20% desviación)
-            if (diff > 10) return { color: 'bg-amber-400', text: 'text-amber-500' }; // Riesgo (>10% desviación)
-            return { color: 'bg-emerald-500', text: 'text-emerald-500' }; // On track
+            if (diff > 20) return { color: 'bg-rose-500', text: 'text-rose-600', label: 'Crítico' };
+            if (diff > 10) return { color: 'bg-amber-400', text: 'text-amber-500', label: 'Riesgo' };
+            return { color: 'bg-emerald-500', text: 'text-emerald-600', label: 'OK' };
         }
 
         function renderDashboard() {
-            const b=document.getElementById('report-body'); b.innerHTML='';
+            const b = document.getElementById('report-body'); b.innerHTML = '';
             db.objectives.filter(o=>(o.area||'Oficina Técnica')===CURRENT_AREA).forEach(o=>{
-                const p=calculateProgress(o,'objective');
-                const risk = calculateRiskColor(o.startDate, o.endDate, p);
-                const status = p>=100?'<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold">Hecho</span>':
-                               p>0 ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">En curso</span>':
-                               '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-bold">Pendiente</span>';
-                               
-                b.innerHTML+=`<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0">
-                    <td class="p-3 font-bold text-primary text-xs">${o.title}</td>
-                    <td class="p-3 text-secondary-text text-xs">${o.owner||'-'}</td>
-                    <td class="p-3 align-middle">
-                        <div class="w-full flex items-center gap-3">
-                            <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                <div class="${risk.color} h-1.5 rounded-full" style="width:${p}%"></div>
+                const p = calculateProgress(o,'objective');
+                const risk = getRisk(o.startDate, o.endDate, p);
+                
+                b.innerHTML += `
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="py-2 pl-2"><div class="font-bold text-gray-700 truncate" title="${o.title}">${o.title}</div></td>
+                    <td class="py-2 text-gray-500 text-[11px]">${o.owner||'-'}</td>
+                    <td class="py-2">
+                        <div class="flex items-center gap-2 w-full max-w-[180px]">
+                            <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="${risk.color} h-full rounded-full" style="width: ${p}%"></div>
                             </div>
-                            <span class="text-xs font-bold ${risk.text}">${p}%</span>
+                            <span class="text-[10px] font-bold ${risk.text}">${risk.label}</span>
                         </div>
                     </td>
-                    <td class="p-3 text-center">${status}</td>
+                    <td class="py-2 pr-2 text-right font-bold text-primary">${p}%</td>
                 </tr>`;
             });
         }
 
-        // --- UTILS ---
-        function setQuarterDate(q) {
-            const year = "2026";
-            const dates = { 1: "-03-31", 2: "-06-30", 3: "-09-30", 4: "-12-31" };
-            document.getElementById('inp-end').value = year + dates[q];
-        }
+        // --- UTILS & ACCORDION LOGIC ---
         function toggleAccordion(id, iconId) {
-            document.getElementById(id).classList.toggle('open');
+            const el = document.getElementById(id);
             const icon = document.getElementById(iconId);
-            if(icon) icon.classList.toggle(id.includes('proj') ? 'rotate-90' : 'rotate-180');
-            const isOpen = document.getElementById(id).classList.contains('open');
-            if(id.includes('proj-')) {
-                const pid = parseInt(id.split('-')[1]);
-                const p = db.projects.find(x=>x.id===pid);
-                if(p) p.isCollapsed = !isOpen;
-            } else if(id.includes('obj-')) {
-                const oid = parseInt(id.split('-')[1]);
-                const o = db.objectives.find(x=>x.id===oid);
-                if(o) o.isCollapsed = !isOpen;
+            const isOpen = el.classList.contains('open');
+            
+            if(isOpen) {
+                el.classList.remove('open');
+                if(icon) icon.classList.remove(id.includes('proj') ? 'rotate-90' : 'rotate-180');
+            } else {
+                el.classList.add('open');
+                if(icon) icon.classList.add(id.includes('proj') ? 'rotate-90' : 'rotate-180');
             }
+            
+            // Persist State
+            const numId = parseInt(id.split('-')[1]);
+            if(id.includes('obj')) { const o = db.objectives.find(x=>x.id===numId); if(o) o.isCollapsed = isOpen; }
+            if(id.includes('proj')) { const p = db.projects.find(x=>x.id===numId); if(p) p.isCollapsed = isOpen; }
         }
+
+        function toggleAll(exp) {
+            db.objectives.forEach(o => o.isCollapsed = !exp);
+            db.projects.forEach(p => p.isCollapsed = !exp);
+            renderExplorer();
+        }
+
+        // --- CRUD & MODALS (Standard Logic) ---
         function openModal(type, pid, ctx) {
             document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.getElementById('entity-type').value=type; 
-            document.getElementById('parent-id').value=pid||''; 
-            document.getElementById('context-type').value=ctx||'';
-            document.getElementById('edit-id').value='';
-            const titles = { 'objective': 'Nuevo Objetivo', 'project': 'Nuevo Proyecto', 'kpi': 'Nuevo KPI' };
-            document.getElementById('modal-title').innerText = titles[type];
+            document.getElementById('entity-type').value=type; document.getElementById('parent-id').value=pid||''; document.getElementById('context-type').value=ctx||''; document.getElementById('edit-id').value='';
+            document.getElementById('modal-title').innerText = type === 'objective' ? 'Nuevo Objetivo' : type === 'project' ? 'Nuevo Proyecto' : 'Nuevo KPI';
             document.getElementById('field-metrics').classList.toggle('hidden', type!=='kpi');
             document.getElementById('move-wrapper').classList.add('hidden');
             document.getElementById('btn-delete').classList.add('hidden');
@@ -612,154 +520,89 @@
             const i = (type==='objective'?db.objectives:type==='project'?db.projects:db.kpis).find(x=>x.id===id);
             if(!i)return;
             openModal(type, null, null);
-            document.getElementById('edit-id').value = id;
-            document.getElementById('modal-title').innerText = "Editar " + (type==='objective'?'Objetivo':type==='project'?'Proyecto':'KPI');
-            document.getElementById('btn-delete').classList.remove('hidden');
-            document.getElementById('inp-title').value = i.title;
-            document.getElementById('inp-owner').value = i.owner||'';
-            document.getElementById('inp-start').value = i.startDate;
-            document.getElementById('inp-end').value = i.endDate;
-            const moveWrapper = document.getElementById('move-wrapper');
+            document.getElementById('edit-id').value=id; document.getElementById('btn-delete').classList.remove('hidden');
+            document.getElementById('inp-title').value=i.title; document.getElementById('inp-owner').value=i.owner||''; document.getElementById('inp-start').value=i.startDate; document.getElementById('inp-end').value=i.endDate;
+            
+            // Move Logic
             const moveSelect = document.getElementById('inp-move-parent');
-            moveWrapper.classList.add('hidden');
+            const moveWrapper = document.getElementById('move-wrapper');
             if(type === 'project' || (type === 'kpi' && i.objectiveId && !i.projectId)) {
-                const potentialParents = db.objectives.filter(o => (o.area||'Oficina Técnica') === CURRENT_AREA);
-                if(potentialParents.length > 0) {
-                    moveSelect.innerHTML = potentialParents.map(p => `<option value="${p.id}" ${p.id === i.objectiveId ? 'selected' : ''}>${p.title}</option>`).join('');
+                const parents = db.objectives.filter(o => (o.area||'Oficina Técnica') === CURRENT_AREA);
+                if(parents.length) {
+                    moveSelect.innerHTML = parents.map(p => `<option value="${p.id}" ${p.id === i.objectiveId ? 'selected' : ''}>${p.title}</option>`).join('');
                     moveWrapper.classList.remove('hidden');
                 }
-            } 
-            if(type==='kpi'){
-                document.getElementById('inp-val-start').value = i.startValue;
-                document.getElementById('inp-val-target').value = i.targetValue;
-                document.getElementById('inp-kpi-trend').value = i.trend || 'asc';
             }
+            if(type==='kpi'){ document.getElementById('inp-val-start').value=i.startValue; document.getElementById('inp-val-target').value=i.targetValue; document.getElementById('inp-kpi-trend').value=i.trend||'asc'; }
         }
         function saveData() {
             const id = document.getElementById('edit-id').value;
             const type = document.getElementById('entity-type').value;
             const pid = parseInt(document.getElementById('parent-id').value);
-            const data = {
-                title: document.getElementById('inp-title').value,
-                owner: document.getElementById('inp-owner').value,
-                startDate: document.getElementById('inp-start').value,
-                endDate: document.getElementById('inp-end').value
-            };
-            if(id) { 
+            const data = { title: document.getElementById('inp-title').value, owner: document.getElementById('inp-owner').value, startDate: document.getElementById('inp-start').value, endDate: document.getElementById('inp-end').value };
+            
+            if(id) {
                 const list = type==='objective'?db.objectives:type==='project'?db.projects:db.kpis;
                 const idx = list.findIndex(x=>x.id==id);
                 if(idx!==-1) {
                     list[idx] = {...list[idx], ...data};
-                    if(type==='kpi'){
-                        list[idx].startValue = document.getElementById('inp-val-start').value;
-                        list[idx].targetValue = document.getElementById('inp-val-target').value;
-                        list[idx].trend = document.getElementById('inp-kpi-trend').value;
-                    }
+                    if(type==='kpi'){ list[idx].startValue=document.getElementById('inp-val-start').value; list[idx].targetValue=document.getElementById('inp-val-target').value; list[idx].trend=document.getElementById('inp-kpi-trend').value; }
                     const moveWrapper = document.getElementById('move-wrapper');
                     if(!moveWrapper.classList.contains('hidden')) {
-                        const newParentId = parseInt(document.getElementById('inp-move-parent').value);
-                        if(type === 'project' && list[idx].objectiveId !== newParentId) list[idx].objectiveId = newParentId;
-                        if(type === 'kpi' && list[idx].objectiveId && list[idx].objectiveId !== newParentId) list[idx].objectiveId = newParentId;
+                         const newPid = parseInt(document.getElementById('inp-move-parent').value);
+                         if(type === 'project' && list[idx].objectiveId !== newPid) list[idx].objectiveId = newPid;
+                         if(type === 'kpi' && list[idx].objectiveId && list[idx].objectiveId !== newPid) list[idx].objectiveId = newPid;
                     }
                 }
-            } else { 
-                const newItem = { id: Date.now(), ...data, weight: 0 }; 
+            } else {
+                const newItem = { id: Date.now(), ...data, weight: 0 };
                 if(type==='objective'){ newItem.area=CURRENT_AREA; db.objectives.push(newItem); }
                 else if(type==='project'){ newItem.objectiveId=pid; newItem.isCollapsed=false; db.projects.push(newItem); }
-                else { 
-                    newItem.startValue=document.getElementById('inp-val-start').value; 
-                    newItem.targetValue=document.getElementById('inp-val-target').value; 
-                    newItem.currentValue=newItem.startValue;
-                    newItem.trend = document.getElementById('inp-kpi-trend').value;
-                    if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid;
-                    db.kpis.push(newItem);
-                }
+                else { newItem.startValue=document.getElementById('inp-val-start').value; newItem.targetValue=document.getElementById('inp-val-target').value; newItem.currentValue=newItem.startValue; newItem.trend=document.getElementById('inp-kpi-trend').value; if(document.getElementById('context-type').value==='objective') newItem.objectiveId=pid; else newItem.projectId=pid; db.kpis.push(newItem); }
             }
             saveToGoogle(); closeModal(); renderExplorer();
         }
-        function deleteItem(){
-             const id=parseInt(document.getElementById('edit-id').value);
-             const type=document.getElementById('entity-type').value;
-             if(!confirm('¿Eliminar?'))return;
-             if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); }
-             else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); }
-             else { db.kpis=db.kpis.filter(x=>x.id!==id); }
-             saveToGoogle(); closeModal(); renderExplorer();
-        }
-        function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
-        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); }}
-        function updateKpiVal(id,v){ const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); }}
-        function addTask(pid,t){ if(t.trim()){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); }}
-        function delTask(id){ if(confirm('¿Borrar?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); }}
-        function switchArea(a){ CURRENT_AREA=a; localStorage.setItem('okr_current_area',a); renderExplorer(); }
-        function toggleLoader(s){ document.getElementById('global-loader').classList.toggle('hidden', !s); }
-        function switchView(v){ 
+        function deleteItem() { if(confirm('¿Eliminar?')) { const id=parseInt(document.getElementById('edit-id').value), type=document.getElementById('entity-type').value; if(type==='objective'){ db.objectives=db.objectives.filter(x=>x.id!==id); db.projects=db.projects.filter(x=>x.objectiveId!==id); db.kpis=db.kpis.filter(x=>x.objectiveId!==id); } else if(type==='project'){ db.projects=db.projects.filter(x=>x.id!==id); db.tasks=db.tasks.filter(x=>x.projectId!==id); db.kpis=db.kpis.filter(x=>x.projectId!==id); } else { db.kpis=db.kpis.filter(x=>x.id!==id); } saveToGoogle(); closeModal(); renderExplorer(); } }
+
+        function toggleTask(id) { const t=db.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveToGoogle(); renderExplorer(); } }
+        function updateKpiVal(id,v) { const k=db.kpis.find(x=>x.id===id); if(k){ k.currentValue=v; saveToGoogle(); renderExplorer(); } }
+        function addTask(pid,t) { if(t.trim()){ db.tasks.push({id:Date.now(), projectId:pid, title:t, done:false}); saveToGoogle(); renderExplorer(); } }
+        function delTask(id) { if(confirm('¿Borrar?')){ db.tasks=db.tasks.filter(t=>t.id!==id); saveToGoogle(); renderExplorer(); } }
+        function switchArea(a) { CURRENT_AREA=a; localStorage.setItem('okr_current_area',a); renderExplorer(); }
+        function switchView(v) { 
             document.getElementById('view-explorer').classList.toggle('hidden', v!=='explorer');
             document.getElementById('view-dashboard').classList.toggle('hidden', v!=='dashboard');
-            const btnExp = document.getElementById('nav-explorer');
-            const btnDash = document.getElementById('nav-dashboard');
-            if(v === 'explorer') {
-                 btnExp.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold bg-primary text-white shadow-soft transition-all";
-                 btnDash.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-secondary-text hover:bg-primary-light/50 transition-all";
-            } else {
-                 btnDash.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold bg-primary text-white shadow-soft transition-all";
-                 btnExp.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-secondary-text hover:bg-primary-light/50 transition-all";
-                 renderDashboard();
-            }
+            document.getElementById('nav-explorer').className = v==='explorer' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50";
+            document.getElementById('nav-dashboard').className = v==='dashboard' ? "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-bold bg-primary text-white" : "w-full flex items-center gap-2 px-3 py-2 rounded text-xs font-medium text-secondary-text hover:bg-gray-50";
+            if(v==='dashboard') renderDashboard();
         }
-        function toggleAll(exp){ db.objectives.forEach(o => o.isCollapsed = !exp); db.projects.forEach(p => p.isCollapsed = !exp); renderExplorer(); }
-        
-        // --- PESOS ---
-        function openWeightModal(objId) {
-            const modal = document.getElementById('modal-weights');
-            const list = document.getElementById('weight-list');
-            document.getElementById('weight-obj-id').value = objId;
-            list.innerHTML = '';
-            modal.classList.remove('hidden');
-            const children = [
-                ...db.projects.filter(p => p.objectiveId === objId).map(p => ({...p, type:'PROY'})),
-                ...db.kpis.filter(k => k.objectiveId === objId && !k.projectId).map(k => ({...k, type:'KPI'}))
-            ];
-            if(!children.length) { list.innerHTML = '<div class="text-gray-400 text-center text-[10px] py-2">Sin contenido.</div>'; updateTotalWeight(); return; }
+        function toggleLoader(s) { document.getElementById('global-loader').classList.toggle('hidden', !s); }
+        function closeModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
+        function setQuarterDate(q) { const y="2026", d={1:"-03-31",2:"-06-30",3:"-09-30",4:"-12-31"}; document.getElementById('inp-end').value=y+d[q]; }
+
+        // Weights
+        function openWeightModal(oid) {
+            document.getElementById('weight-obj-id').value=oid; document.getElementById('modal-weights').classList.remove('hidden');
+            const children = [...db.projects.filter(p=>p.objectiveId===oid).map(p=>({...p,t:'PROY'})), ...db.kpis.filter(k=>k.objectiveId===oid && !k.projectId).map(k=>({...k,t:'KPI'}))];
+            const list = document.getElementById('weight-list'); list.innerHTML='';
+            if(!children.length) { list.innerHTML='<div class="text-xs text-gray-400 text-center">Vacío</div>'; updateTotalWeight(); return; }
             children.forEach(c => {
-                const row = document.createElement('div');
-                row.className = "flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm";
-                row.innerHTML = `
-                    <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${c.type==='PROY'?'bg-accent-sage/20 text-accent-sage':'bg-orange-100 text-orange-600'} w-10 text-center">${c.type}</span>
-                    <span class="text-xs font-bold text-gray-700 flex-1 truncate">${c.title}</span>
-                    <div class="flex flex-col items-end gap-0.5">
-                        <input type="range" min="0" max="100" value="${c.weight||0}" step="1" class="w-16 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" oninput="this.nextElementSibling.value=this.value+'%'; updateTotalWeight()">
-                        <input type="text" value="${Math.round(c.weight||0)}%" class="w-8 text-right text-[9px] font-bold text-primary bg-transparent outline-none" readonly>
-                    </div>
-                    <input type="hidden" class="item-id" value="${c.id}"><input type="hidden" class="item-type" value="${c.type}">
-                `;
-                list.appendChild(row);
+                list.innerHTML+=`<div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100"><span class="text-[9px] font-bold w-8 ${c.t==='PROY'?'text-accent-sage':'text-orange-500'}">${c.t}</span><span class="text-xs truncate flex-1">${c.title}</span><div class="flex flex-col items-end"><input type="range" max="100" value="${c.weight||0}" class="h-1 w-16" oninput="this.nextElementSibling.value=this.value+'%';updateTotalWeight()"><input type="text" value="${Math.round(c.weight||0)}%" class="text-[9px] font-bold text-primary bg-transparent text-right w-8 border-none p-0" readonly></div><input type="hidden" class="wid" value="${c.id}"><input type="hidden" class="wtype" value="${c.t}"></div>`;
             });
             updateTotalWeight();
         }
         function updateTotalWeight() {
-            const inputs = document.querySelectorAll('#weight-list input[type="range"]');
-            let sum = 0;
-            inputs.forEach(i => sum += parseFloat(i.value));
-            sum = Math.round(sum);
-            const display = document.getElementById('weight-total-display');
-            const btn = document.getElementById('btn-save-weights');
-            display.innerText = sum + "%";
-            if(sum === 100) { display.className="text-sm font-black text-emerald-500"; btn.disabled=false; btn.classList.remove('opacity-50'); }
-            else { display.className="text-sm font-black text-rose-500"; btn.disabled=true; btn.classList.add('opacity-50'); }
+            let sum=0; document.querySelectorAll('#weight-list input[type="range"]').forEach(i=>sum+=parseFloat(i.value));
+            const d = document.getElementById('weight-total-display'); const b=document.getElementById('btn-save-weights');
+            d.innerText=Math.round(sum)+"%"; d.className=sum===100?"font-bold text-sm text-emerald-600":"font-bold text-sm text-rose-500";
+            b.disabled=sum!==100; b.className=sum===100?"px-3 py-1 text-[10px] font-bold bg-primary text-white rounded":"px-3 py-1 text-[10px] font-bold bg-gray-300 text-white rounded cursor-not-allowed";
         }
         function saveWeights() {
-            const rows = document.querySelectorAll('#weight-list > div');
-            rows.forEach(r => {
-                const id = parseInt(r.querySelector('.item-id').value);
-                const type = r.querySelector('.item-type').value;
-                const val = parseFloat(r.querySelector('input[type="range"]').value);
-                if(type==='PROY') { const p = db.projects.find(x=>x.id===id); if(p) p.weight = val; }
-                else { const k = db.kpis.find(x=>x.id===id); if(k) k.weight = val; }
+            document.querySelectorAll('#weight-list > div').forEach(r=>{
+                const id=parseInt(r.querySelector('.wid').value), type=r.querySelector('.wtype').value, val=parseFloat(r.querySelector('input[type="range"]').value);
+                if(type==='PROY'){const p=db.projects.find(x=>x.id===id); if(p) p.weight=val;} else {const k=db.kpis.find(x=>x.id===id); if(k) k.weight=val;}
             });
-            saveToGoogle();
-            document.getElementById('modal-weights').classList.add('hidden');
-            renderExplorer();
+            saveToGoogle(); document.getElementById('modal-weights').classList.add('hidden'); renderExplorer();
         }
     </script>
 </body>
