@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive OKR Manager v11.0</title>
+    <title>Executive OKR Manager v11.1 (Fixed)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
     
@@ -41,7 +41,7 @@
     <style>
         body { font-family: 'Manrope', sans-serif; background-color: #f6f8f9; }
         
-        /* Animaciones y Utilidades del Core v10.2 */
+        /* Animaciones y Utilidades */
         .accordion-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; overflow: hidden; }
         .accordion-wrapper.open { grid-template-rows: 1fr; }
         .accordion-inner { min-height: 0; }
@@ -51,7 +51,7 @@
         
         .progress-bar { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .rotate-icon { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .rotate-180 { transform: rotate(180deg); } /* Ajustado para Chevron Down */
+        .rotate-180 { transform: rotate(180deg); }
 
         /* Scrollbar Personalizado */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -279,8 +279,12 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN (Mantenida de v10.2)
-        let API_URL = localStorage.getItem('okr_api_url') || 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
+        // --- CONFIGURACIÓN PRINCIPAL (Fixed) ---
+        // Se define la URL fija para asegurar la conexión.
+        const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwvqc8WF33hbifl43JwMFGp1PH-ubndf7PT4cZhn3XPBR5jUoHoEEPoVBOPVje_MbE7hw/exec';
+        
+        // Se usa la variable fija como fallback prioritario
+        let API_URL = localStorage.getItem('okr_api_url') || DEFAULT_API_URL;
         let CURRENT_AREA = localStorage.getItem('okr_current_area') || 'Oficina Técnica';
         let SELECTED_QUARTERS = ['Q1'];
         let db = { objectives: [], projects: [], kpis: [], tasks: [] };
@@ -296,13 +300,15 @@
             toggleLoader(true);
             updateSyncStatus('loading');
             try {
+                // Usamos la variable API_URL que ahora sí tiene valor por defecto
                 const res = await fetch(API_URL);
+                if (!res.ok) throw new Error('Error en la respuesta de red');
                 db = await res.json();
                 updateSuggestions();
                 renderExplorer();
                 updateSyncStatus('success');
             } catch(e) { 
-                console.error(e); 
+                console.error("Error de conexión:", e); 
                 updateSyncStatus('error');
             } finally { toggleLoader(false); }
         }
@@ -323,16 +329,19 @@
             if(status === 'loading') {
                 icon.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>';
                 text.innerText = 'Cargando...';
+                text.className = "text-xs font-bold text-[#121617]";
             } else if (status === 'saving') {
                 icon.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>';
                 text.innerText = 'Guardando...';
+                text.className = "text-xs font-bold text-[#121617]";
             } else if (status === 'success') {
                 icon.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>';
                 text.innerText = 'Online & Sincronizado';
+                text.className = "text-xs font-bold text-[#121617]";
             } else {
                 icon.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>';
-                text.innerText = 'Error de conexión';
-                text.classList.add('text-rose-500');
+                text.innerText = 'Error Conexión';
+                text.className = "text-xs font-bold text-rose-500";
             }
         }
 
